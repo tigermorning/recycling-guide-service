@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>컴퓨터 마을 견학 — 컴퓨터의 세계로</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#0a0918;color:#e8e8f6;font-family:'Segoe UI',system-ui,sans-serif}
+
+#scene{position:fixed;inset:0;display:block;touch-action:none;cursor:grab}
+#scene:active{cursor:grabbing}
+
+/* ---- HUD ---- */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px;z-index:5;pointer-events:none}
+#hud>*{pointer-events:auto}
+.hud-title{font-size:1.1em;font-weight:700;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.hud-title small{display:block;font-weight:400;opacity:.7;font-size:.75em;margin-top:4px}
+.hud-right{display:flex;gap:8px;align-items:center}
+#progressChip{background:rgba(20,18,40,.7);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:8px 16px;font-size:.85em;backdrop-filter:blur(6px);white-space:nowrap}
+#drawerToggle{background:rgba(20,18,40,.7);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:.9em;backdrop-filter:blur(6px)}
+#drawerToggle:hover{background:rgba(108,92,231,.4)}
+
+/* ---- Phase Progress ---- */
+#phaseProgress{position:fixed;top:80px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6;pointer-events:none}
+.phase-item{display:flex;align-items:center;gap:6px;background:rgba(20,18,40,.8);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:6px 12px;font-size:.75em;backdrop-filter:blur(6px);opacity:.5;transition:all .3s}
+.phase-item.active{opacity:1;border-color:#6c5ce7;background:rgba(108,92,231,.2)}
+.phase-item.done{opacity:.8;border-color:#00cec9}
+.phase-item .num{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-weight:700}
+.phase-item.active .num{background:#6c5ce7}
+.phase-item.done .num{background:#00cec9}
+
+/* ---- Drawer ---- */
+#drawer{position:fixed;top:0;right:-320px;width:300px;height:100%;background:rgba(10,9,22,.95);backdrop-filter:blur(12px);border-left:1px solid rgba(255,255,255,.1);transition:right .35s ease;z-index:10;padding:70px 14px 16px;overflow-y:auto}
+#drawer.open{right:0}
+#drawer h4{font-size:.85em;color:#a29bfe;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;padding-left:6px}
+.station-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:10px;cursor:pointer;margin-bottom:4px;transition:all .2s;border:1px solid transparent}
+.station-item:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+.station-item .chk{width:22px;text-align:center;font-size:1em;opacity:.5}
+.station-item.visited .chk{opacity:1}
+.station-item .si-icon{font-size:1.4em}
+.station-item .si-text{flex:1}
+.station-item .si-label{font-size:.9em;font-weight:500}
+.station-item .si-tag{font-size:.73em;opacity:.6;margin-top:2px}
+.station-item .si-phase{font-size:.65em;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.1);margin-left:8px}
+
+/* ---- Caption panel ---- */
+#caption{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);width:min(700px,92vw);max-height:62vh;overflow-y:auto;background:rgba(13,11,26,.95);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:24px 26px;backdrop-filter:blur(16px);z-index:8;box-shadow:0 30px 80px rgba(0,0,0,.6);display:none}
+#caption.show{display:block;animation:capIn .4s ease}
+@keyframes capIn{from{opacity:0;transform:translate(-50%,24px)}to{opacity:1;transform:translate(-50%,0)}}
+#caption h3{font-size:1.3em;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+#caption .tag{display:inline-block;font-size:.72em;padding:4px 12px;border-radius:12px;background:rgba(255,255,255,.12);margin-bottom:14px;letter-spacing:.03em}
+#caption p{line-height:1.8;font-size:.95em;color:#e0e0f0}
+#caption .capBtns{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+button.cbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:.88em;transition:all .15s}
+button.cbtn.primary{background:linear-gradient(135deg,#6c5ce7,#00cec9);border:none}
+button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.interactive{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px}
+.interactive h5{font-size:.85em;color:#00cec9;margin-bottom:10px}
+
+/* ---- shared mini widgets ---- */
+.mini-term{background:#0a0d14;border:1px solid #263042;border-radius:10px;padding:12px 14px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.84em;max-height:160px;overflow-y:auto;margin-bottom:10px}
+.mini-term .p{color:#00cec9}.mini-term .o{color:#8a8aa8;margin:3px 0 8px 16px}.mini-term .e{color:#ff6b6b;margin:3px 0 8px 16px}
+.mini-row{display:flex;gap:8px}
+.mini-row input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px 12px;color:#fff;font-family:inherit;font-size:.88em;outline:none}
+.mini-row input:focus{border-color:#6c5ce7}
+.mini-row button{background:#6c5ce7;color:#fff;border:none;border-radius:8px;padding:0 16px;cursor:pointer;font-size:.88em}
+.mini-row button:hover{background:#5a4bd1}
+.flow2{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.flow2>div{flex:1;min-width:140px;background:rgba(255,255,255,.04);border-radius:10px;padding:12px}
+.flow2 h6{font-size:.78em;text-align:center;color:#a29bfe;margin-bottom:8px}
+.fitem{background:rgba(255,255,255,.06);border-left:3px solid #6c5ce7;border-radius:6px;padding:8px 10px;margin:6px 0;font-size:.8em;transition:all .3s}
+.fitem.active{border-left-color:#ffd93d;background:rgba(255,217,61,.12)}
+.fitem.done{border-left-color:#00cec9;opacity:.55}
+.pkt-track{position:relative;height:32px;background:rgba(255,255,255,.05);border-radius:16px;margin:12px 0;overflow:hidden}
+.pkt-dot{position:absolute;top:7px;left:7px;width:18px;height:18px;border-radius:50%;background:#ffd93d;box-shadow:0 0 12px #ffd93d;transition:left 1.5s ease}
+.pkt-msg{text-align:center;font-size:.85em;color:#8a8aa8;min-height:20px;margin-top:8px}
+
+/* ---- intro ---- */
+#intro{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(3,3,10,.9);backdrop-filter:blur(8px);transition:opacity .6s ease}
+#intro.hide{opacity:0;pointer-events:none}
+.intro-card{max-width:580px;text-align:center;padding:44px 40px;background:rgba(14,12,28,.85);border:1px solid rgba(255,255,255,.15);border-radius:28px}
+.intro-card h1{font-size:1.7em;background:linear-gradient(135deg,#a29bfe,#00cec9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:18px;line-height:1.4}
+.intro-card p{line-height:1.9;color:#d0d0e8;font-size:.95em;margin-bottom:12px}
+.intro-card .subtitle{font-size:.88em;color:#9090b0;margin-bottom:24px}
+.intro-card button{margin-top:16px;background:linear-gradient(135deg,#6c5ce7,#00cec9);border:none;color:#fff;padding:15px 36px;border-radius:14px;font-size:1.05em;cursor:pointer;font-weight:600}
+.intro-card button:hover{filter:brightness(1.15)}
+.intro-map{display:flex;justify-content:center;gap:10px;margin:24px 0;flex-wrap:wrap}
+.intro-map .map-step{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;font-size:.78em;text-align:center}
+.intro-map .map-step .icon{font-size:1.4em;margin-bottom:4px}
+.intro-map .map-step .num{font-size:.7em;color:#a29bfe;margin-bottom:2px}
+
+/* ---- hint toast ---- */
+#hint{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(20,18,40,.85);border:1px solid rgba(255,255,255,.2);border-radius:28px;padding:10px 22px;font-size:.85em;backdrop-filter:blur(10px);z-index:6;opacity:0;transition:opacity .5s ease;pointer-events:none;text-align:center}
+#hint.show{opacity:1}
+
+/* ---- finish toast ---- */
+#finish{position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(0,206,201,.2);border:1px solid #00cec9;border-radius:16px;padding:12px 24px;font-size:.9em;z-index:7;opacity:0;transition:opacity .5s ease;pointer-events:none;text-align:center}
+#finish.show{opacity:1}
+
+/* ---- welcome guide ---- */
+#welcomeGuide{position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(3,3,10,.8);backdrop-filter:blur(4px)}
+#welcomeGuide.show{display:flex}
+.guide-card{max-width:420px;text-align:center;padding:32px;background:rgba(14,12,28,.9);border:1px solid rgba(255,255,255,.15);border-radius:20px}
+.guide-card h3{font-size:1.1em;margin-bottom:16px;color:#a29bfe}
+.guide-card p{font-size:.9em;color:#c0c0e0;line-height:1.7;margin-bottom:20px}
+.guide-card .highlight{color:#ffd93d;font-weight:600}
+.guide-card button{background:linear-gradient(135deg,#6c5ce7,#00cec9);border:none;color:#fff;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:.95em}
+
+/* ---- relationship diagram ---- */
+#relationshipDiagram{position:fixed;inset:0;z-index:15;display:none;align-items:center;justify-content:center;background:rgba(3,3,10,.9);backdrop-filter:blur(6px)}
+#relationshipDiagram.show{display:flex}
+.diagram-card{max-width:800px;width:90vw;text-align:center;padding:32px;background:rgba(14,12,28,.95);border:1px solid rgba(255,255,255,.15);border-radius:20px}
+.diagram-card h3{font-size:1.2em;margin-bottom:20px;color:#a29bfe}
+.diagram-card .diagram{position:relative;height:300px;margin:20px 0}
+.diagram-card .diagram-node{position:absolute;padding:12px 16px;border-radius:12px;font-size:.85em;font-weight:600;border:2px solid;cursor:pointer;transition:all .3s}
+.diagram-card .diagram-node:hover{transform:scale(1.05)}
+.diagram-card .diagram-arrow{position:absolute;height:3px;background:rgba(255,255,255,.3);transform-origin:left center}
+.diagram-card .diagram-label{position:absolute;font-size:.7em;color:#8a8aa8;background:rgba(10,9,22,.8);padding:2px 6px;border-radius:4px}
+.diagram-card .close-btn{margin-top:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 24px;border-radius:10px;cursor:pointer;font-size:.9em}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#6c5ce7;border-radius:3px}
+
+@media(max-width:640px){
+  .hud-title{font-size:.95em}
+  #caption{width:94vw;padding:18px}
+  #phaseProgress{display:none}
+}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div id="hud">
+  <div class="hud-title">🏘️ 컴퓨터 마을 견학
+    <small>건물을 클릭하면 설명이 나옵니다 · 드래그로 회전 · 스크롤로 확대</small>
+  </div>
+  <div class="hud-right">
+    <div id="progressChip">0 / 10 방문</div>
+    <button id="relationshipBtn">🔗 관계 보기</button>
+    <button id="drawerToggle">☰ 장소 목록</button>
+  </div>
+</div>
+
+<div id="phaseProgress">
+  <div class="phase-item active" data-phase="1">
+    <span class="num">1</span>
+    <span>컴퓨터 구조</span>
+  </div>
+  <div class="phase-item" data-phase="2">
+    <span class="num">2</span>
+    <span>인터넷</span>
+  </div>
+  <div class="phase-item" data-phase="3">
+    <span class="num">3</span>
+    <span>서버</span>
+  </div>
+  <div class="phase-item" data-phase="4">
+    <span class="num">4</span>
+    <span>전체 조망</span>
+  </div>
+</div>
+
+<div id="drawer">
+  <h4>장소 목록</h4>
+  <div id="stationList"></div>
+</div>
+
+<div id="caption"></div>
+<div id="hint">💡 건물을 클릭하면 설명이 나옵니다 · 드래그로 회전 · 스크롤로 확대</div>
+<div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
+
+<div id="intro">
+  <div class="intro-card">
+    <h1>컴퓨터 마을에 오신 것을 환영합니다</h1>
+    <p>이 마을은 <b>컴퓨터의 작동원리</b>를 설명하는 세계입니다.</p>
+    <p>각 건물마다 컴퓨터의 어떤 부품이나 개념이 숨어 있습니다. 건물을 클릭하면 자세한 설명을 볼 수 있어요.</p>
+    <div class="subtitle">컴퓨터를 한 번도 본 적 없어도 괜찮습니다. 마을 하나를 이해하듯 천천히 둘러보세요.</div>
+    <div class="intro-map">
+      <div class="map-step">
+        <div class="num">1단계</div>
+        <div class="icon">🏠</div>
+        <div>컴퓨터 구조</div>
+      </div>
+      <div class="map-step">
+        <div class="num">2단계</div>
+        <div class="icon">📮</div>
+        <div>인터넷</div>
+      </div>
+      <div class="map-step">
+        <div class="num">3단계</div>
+        <div class="icon">🏭</div>
+        <div>서버</div>
+      </div>
+      <div class="map-step">
+        <div class="num">4단계</div>
+        <div class="icon">🔭</div>
+        <div>전체 조망</div>
+      </div>
+    </div>
+    <button id="enterBtn">마을 안으로 들어가기 →</button>
+  </div>
+</div>
+
+<div id="welcomeGuide">
+  <div class="guide-card">
+    <h3>🏘️ 마을 안으로 오신 것을 환영합니다!</h3>
+    <p>
+      여기가 <span class="highlight">컴퓨터 마을</span>입니다.<br>
+      각 건물에는 컴퓨터의 어떤 개념이 숨어 있어요.<br><br>
+      <span class="highlight">건물을 클릭</span>하면 설명이 나옵니다.<br>
+      <span class="highlight">드래그</span>로 회전하고, <span class="highlight">스크롤</span>로 확대할 수 있어요.<br><br>
+      <span class="highlight">"🔗 관계 보기"</span> 버튼을 누르면 컴퓨터 구성요소들이<br>
+      어떻게 연결되어 있는지 한눈에 볼 수 있습니다.
+    </p>
+    <button id="startBtn">첫 번째 건물로 가기 →</button>
+  </div>
+</div>
+
+<div id="relationshipDiagram">
+  <div class="diagram-card">
+    <h3>🔗 컴퓨터 구성요소들의 관계</h3>
+    <div class="diagram" id="diagramContainer"></div>
+    <p style="font-size:.85em;color:#8a8aa8;margin-top:10px">건물을 클릭하면 자세한 설명을 볼 수 있습니다</p>
+    <button class="close-btn" id="closeDiagram">닫기</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---- Scene Setup ---- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0918);
+scene.fog = new THREE.Fog(0x0a0918, 30, 90);
+
+const camera = new THREE.PerspectiveCamera(50, 16/9, 0.1, 200);
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+function fitRenderer(){
+  const w = Math.max(innerWidth||document.documentElement.clientWidth||0, 1);
+  const h = Math.max(innerHeight||document.documentElement.clientHeight||0, 1);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+fitRenderer();
+requestAnimationFrame(fitRenderer);
+setTimeout(fitRenderer, 300);
+addEventListener('resize', fitRenderer);
+new ResizeObserver(fitRenderer).observe(document.body);
+
+/* ---- Lights ---- */
+scene.add(new THREE.AmbientLight(0x404060, 0.7));
+const dir1 = new THREE.DirectionalLight(0xffffff, 0.9); 
+dir1.position.set(12, 25, 12); 
+dir1.castShadow = true;
+dir1.shadow.mapSize.width = 2048;
+dir1.shadow.mapSize.height = 2048;
+dir1.shadow.camera.near = 0.5;
+dir1.shadow.camera.far = 60;
+dir1.shadow.camera.left = -20;
+dir1.shadow.camera.right = 20;
+dir1.shadow.camera.top = 20;
+dir1.shadow.camera.bottom = -20;
+scene.add(dir1);
+scene.add(new THREE.DirectionalLight(0x6c5ce7, 0.4).position.set(-10, 8, -10));
+const pointLight = new THREE.PointLight(0xffd93d, 0.6, 40);
+pointLight.position.set(0, 10, 0);
+scene.add(pointLight);
+
+/* ---- Starfield ---- */
+(function starfield(){
+  const N=1500; const pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){ 
+    pos[i*3]=(Math.random()-0.5)*140; 
+    pos[i*3+1]=Math.random()*70+15; 
+    pos[i*3+2]=(Math.random()-0.5)*140; 
+  }
+  const g = new THREE.BufferGeometry(); 
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0x9aa3ff, size:0.1, transparent:true, opacity:0.6})));
+})();
+
+/* ---- Ground ---- */
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(120, 120),
+  new THREE.MeshStandardMaterial({color:0x1a1a2e, roughness:0.9})
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -0.1;
+ground.receiveShadow = true;
+scene.add(ground);
+
+/* ---- Roads ---- */
+function createRoad(points, width=1.2){
+  const curve = new THREE.CatmullRomCurve3(points);
+  const geometry = new THREE.TubeGeometry(curve, 30, width/2, 8, false);
+  const material = new THREE.MeshStandardMaterial({color:0x2d2d44, roughness:0.8});
+  const road = new THREE.Mesh(geometry, material);
+  road.position.y = 0.02;
+  road.receiveShadow = true;
+  return road;
+}
+
+// 메인 도로 (좌우)
+scene.add(createRoad([
+  new THREE.Vector3(-20, 0, 0),
+  new THREE.Vector3(-8, 0, 0),
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(8, 0, 0),
+  new THREE.Vector3(20, 0, 0)
+]));
+
+// 횡단도로 (상하)
+scene.add(createRoad([
+  new THREE.Vector3(0, 0, -12),
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(0, 0, 12)
+]));
+
+/* ---- 메인보드 (울타리) ---- */
+// CPU+RAM과 저장장치를 감싸는 울타리
+const motherboardFence = new THREE.Group();
+
+// 울타리 바닥 (메인보드 표면)
+const mbFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(7, 0.1, 5),
+  new THREE.MeshStandardMaterial({color:0x1a5c1a, roughness:0.8})
+);
+mbFloor.position.set(-6, -0.05, 5);
+mbFloor.receiveShadow = true;
+motherboardFence.add(mbFloor);
+
+// 울타리 기둥 (4 모서리)
+const pillarGeo = new THREE.BoxGeometry(0.2, 0.8, 0.2);
+const pillarMat = new THREE.MeshStandardMaterial({color:0x2d5a2d, roughness:0.7});
+const pillarPositions = [
+  [-9.5, 0.4, 2.5],
+  [-2.5, 0.4, 2.5],
+  [-9.5, 0.4, 7.5],
+  [-2.5, 0.4, 7.5]
+];
+pillarPositions.forEach(pos => {
+  const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+  pillar.position.set(...pos);
+  pillar.castShadow = true;
+  motherboardFence.add(pillar);
+});
+
+// 울타리 난간 (위쪽 가로줄)
+const railGeo = new THREE.BoxGeometry(7, 0.08, 0.08);
+const railMat = new THREE.MeshStandardMaterial({color:0x3a7a3a, roughness:0.7});
+
+// 앞쪽 난간
+const frontRail = new THREE.Mesh(railGeo, railMat);
+frontRail.position.set(-6, 0.7, 2.5);
+motherboardFence.add(frontRail);
+
+// 뒤쪽 난간
+const backRail = new THREE.Mesh(railGeo, railMat);
+backRail.position.set(-6, 0.7, 7.5);
+motherboardFence.add(backRail);
+
+// 옆쪽 난간
+const sideRailGeo = new THREE.BoxGeometry(0.08, 0.08, 5);
+const leftRail = new THREE.Mesh(sideRailGeo, railMat);
+leftRail.position.set(-9.5, 0.7, 5);
+motherboardFence.add(leftRail);
+
+const rightRail = new THREE.Mesh(sideRailGeo, railMat);
+rightRail.position.set(-2.5, 0.7, 5);
+motherboardFence.add(rightRail);
+
+// 메인보드 라벨
+const mbLabelCanvas = document.createElement('canvas');
+mbLabelCanvas.width = 512;
+mbLabelCanvas.height = 128;
+const mbCtx = mbLabelCanvas.getContext('2d');
+mbCtx.fillStyle = 'rgba(26,92,26,0.9)';
+mbCtx.beginPath();
+mbCtx.roundRect(10, 10, 492, 108, 16);
+mbCtx.fill();
+mbCtx.fillStyle = '#ffffff';
+mbCtx.font = 'bold 48px Arial';
+mbCtx.textAlign = 'center';
+mbCtx.fillText('메인보드', 256, 70);
+mbCtx.font = '28px Arial';
+mbCtx.fillStyle = '#a0c0a0';
+mbCtx.fillText('모든 부품이 연결되는 골조', 256, 110);
+
+const mbLabelTexture = new THREE.CanvasTexture(mbLabelCanvas);
+const mbLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(3, 0.75),
+  new THREE.MeshBasicMaterial({map:mbLabelTexture, transparent:true, side:THREE.DoubleSide})
+);
+mbLabel.position.set(-6, 6.0, 5);
+mbLabel.rotation.x = -0.15;
+motherboardFence.add(mbLabel);
+
+scene.add(motherboardFence);
+
+/* ---- Building Factory ---- */
+function createBuilding(options){
+  const {position, size, color, roofColor, windowColor=0x87ceeb, name, tag, icon, phase=1, description} = options;
+  
+  const group = new THREE.Group();
+  group.userData = {name, tag, icon, phase, description};
+  
+  // 본체
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(size.x, size.y, size.z),
+    new THREE.MeshStandardMaterial({color, roughness:0.7})
+  );
+  body.position.y = size.y/2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  group.add(body);
+  
+  // 지붕
+  if(roofColor){
+    const roof = new THREE.Mesh(
+      new THREE.ConeGeometry(size.x*0.75, size.y*0.45, 4),
+      new THREE.MeshStandardMaterial({color:roofColor, roughness:0.6})
+    );
+    roof.position.y = size.y + size.y*0.22;
+    roof.rotation.y = Math.PI/4;
+    roof.castShadow = true;
+    group.add(roof);
+  }
+  
+  // 문
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(size.x*0.25, size.y*0.45, 0.15),
+    new THREE.MeshStandardMaterial({color:0x5d4037})
+  );
+  door.position.set(0, size.y*0.22, size.z/2 + 0.08);
+  group.add(door);
+  
+  // 창문
+  const winGeo = new THREE.BoxGeometry(size.x*0.18, size.y*0.18, 0.12);
+  const winMat = new THREE.MeshStandardMaterial({color:windowColor, emissive:windowColor, emissiveIntensity:0.4});
+  [-size.x*0.28, size.x*0.28].forEach(x => {
+    const win = new THREE.Mesh(winGeo, winMat);
+    win.position.set(x, size.y*0.6, size.z/2 + 0.06);
+    group.add(win);
+  });
+  
+  // 이름표 (더 크고 명확하게)
+  const labelCanvas = document.createElement('canvas');
+  labelCanvas.width = 512;
+  labelCanvas.height = 128;
+  const ctx = labelCanvas.getContext('2d');
+  
+  // 배경
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.beginPath();
+  ctx.roundRect(10, 10, 492, 108, 16);
+  ctx.fill();
+  
+  // 테두리
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(10, 10, 492, 108, 16);
+  ctx.stroke();
+  
+  // 이름
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 48px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, 256, 70);
+  
+  // 태그
+  ctx.font = '28px Arial';
+  ctx.fillStyle = '#a0a0c0';
+  ctx.fillText(tag, 256, 110);
+  
+  const texture = new THREE.CanvasTexture(labelCanvas);
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(3, 0.75),
+    new THREE.MeshBasicMaterial({map:texture, transparent:true, side:THREE.DoubleSide})
+  );
+  label.position.set(0, size.y + 2.0, 0);
+  label.rotation.x = -0.2;
+  group.add(label);
+  
+  group.position.copy(position);
+  return group;
+}
+
+/* ---- Characters ---- */
+function createPerson(position, color=0x6c5ce7){
+  const group = new THREE.Group();
+  
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.14, 0.5, 10),
+    new THREE.MeshStandardMaterial({color})
+  );
+  body.position.y = 0.35;
+  body.castShadow = true;
+  group.add(body);
+  
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 12, 12),
+    new THREE.MeshStandardMaterial({color:0xffdbac})
+  );
+  head.position.y = 0.7;
+  head.castShadow = true;
+  group.add(head);
+  
+  group.position.copy(position);
+  return group;
+}
+
+function createMailman(){
+  const group = new THREE.Group();
+  
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.12, 0.45, 10),
+    new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.4})
+  );
+  body.position.y = 0.3;
+  body.castShadow = true;
+  group.add(body);
+  
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 12, 12),
+    new THREE.MeshStandardMaterial({color:0xffdbac})
+  );
+  head.position.y = 0.6;
+  group.add(head);
+  
+  const hat = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14, 0.18, 0.1, 10),
+    new THREE.MeshStandardMaterial({color:0x6c5ce7})
+  );
+  hat.position.y = 0.72;
+  group.add(hat);
+  
+  const bag = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.25, 0.12),
+    new THREE.MeshStandardMaterial({color:0x8b4513})
+  );
+  bag.position.set(0.22, 0.35, 0);
+  group.add(bag);
+  
+  return group;
+}
+
+/* ============================================================
+   Buildings - Phase 1: 컴퓨터 구조 (왜 주택인가?)
+   ============================================================ */
+// CPU + RAM: 같은 건물 안에 배치 (1층 구조에서 방을 나누기)
+const cpuRamHouse = createBuilding({
+  position: new THREE.Vector3(-8, 0, 5),
+  size: new THREE.Vector3(4.5, 2.4, 2.8),  // 더 넓은 건물
+  color: 0x8b7355,
+  roofColor: 0xcd853f,
+  name: '주택 (CPU + RAM)',
+  tag: '중앙처리장치 + 단기기억',
+  phase: 1,
+  description: '같은 건물 안에 CPU 방(큰 방)과 RAM 방(작은 방)이 있는 구조'
+});
+scene.add(cpuRamHouse);
+
+// 지하 공간 (저장장치) - 측면에서 볼 수 있도록 땅 아래에 표시
+const basementGroup = new THREE.Group();
+
+// 지하 벽 (앞면이 투명해서 안이 보이도록)
+const basementWalls = new THREE.Mesh(
+  new THREE.BoxGeometry(4.0, 1.5, 2.4),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8, transparent:true, opacity:0.6})
+);
+basementWalls.position.set(-8, -0.75, 5);
+basementGroup.add(basementWalls);
+
+// 지하 바닥
+const basementFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(4.0, 0.1, 2.4),
+  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.9})
+);
+basementFloor.position.set(-8, -1.5, 5);
+basementGroup.add(basementFloor);
+
+// 지하 내부 - 상자들 (저장된 데이터 표현)
+const boxGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+const boxMat = new THREE.MeshStandardMaterial({color:0xdaa520, roughness:0.7});
+const boxPositions = [
+  [-8.8, -1.1, 4.5], [-8.3, -1.1, 4.5], [-7.8, -1.1, 4.5],
+  [-8.8, -1.1, 5.5], [-8.3, -1.1, 5.5], [-7.8, -1.1, 5.5],
+  [-8.5, -0.7, 5.0], [-8.0, -0.7, 5.0]
+];
+boxPositions.forEach(pos => {
+  const box = new THREE.Mesh(boxGeo, boxMat);
+  box.position.set(...pos);
+  box.rotation.y = Math.random() * 0.3;
+  basementGroup.add(box);
+});
+
+scene.add(basementGroup);
+
+// CPU+RAM 건물 안에 방 구분 표시 (문 두 개)
+const cpuRoomDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 1.2, 0.15),
+  new THREE.MeshStandardMaterial({color:0x5d4037})
+);
+cpuRoomDoor.position.set(-0.8, 0.6, 2.8/2 + 0.08);
+cpuRamHouse.add(cpuRoomDoor);
+
+const ramRoomDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4a3728})
+);
+ramRoomDoor.position.set(0.8, 0.5, 2.8/2 + 0.08);
+cpuRamHouse.add(ramRoomDoor);
+
+// CPU 방 라벨
+const cpuLabelCanvas = document.createElement('canvas');
+cpuLabelCanvas.width = 256;
+cpuLabelCanvas.height = 64;
+const cpuCtx = cpuLabelCanvas.getContext('2d');
+cpuCtx.fillStyle = 'rgba(139,115,85,0.9)';
+cpuCtx.beginPath();
+cpuCtx.roundRect(5, 5, 246, 54, 8);
+cpuCtx.fill();
+cpuCtx.fillStyle = '#ffffff';
+cpuCtx.font = 'bold 24px Arial';
+cpuCtx.textAlign = 'center';
+cpuCtx.fillText('CPU 방 (큰 방)', 128, 40);
+const cpuLabelTexture = new THREE.CanvasTexture(cpuLabelCanvas);
+const cpuRoomLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.5, 0.4),
+  new THREE.MeshBasicMaterial({map:cpuLabelTexture, transparent:true, side:THREE.DoubleSide})
+);
+cpuRoomLabel.position.set(-0.8, 1.8, 2.8/2 + 0.1);
+cpuRamHouse.add(cpuRoomLabel);
+
+// RAM 방 라벨
+const ramLabelCanvas = document.createElement('canvas');
+ramLabelCanvas.width = 256;
+ramLabelCanvas.height = 64;
+const ramCtx = ramLabelCanvas.getContext('2d');
+ramCtx.fillStyle = 'rgba(112,128,144,0.9)';
+ramCtx.beginPath();
+ramCtx.roundRect(5, 5, 246, 54, 8);
+ramCtx.fill();
+ramCtx.fillStyle = '#ffffff';
+ramCtx.font = 'bold 24px Arial';
+ramCtx.textAlign = 'center';
+ramCtx.fillText('RAM 방 (작은 방)', 128, 40);
+const ramLabelTexture = new THREE.CanvasTexture(ramLabelCanvas);
+const ramRoomLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.5, 0.4),
+  new THREE.MeshBasicMaterial({map:ramLabelTexture, transparent:true, side:THREE.DoubleSide})
+);
+ramRoomLabel.position.set(0.8, 1.8, 2.8/2 + 0.1);
+cpuRamHouse.add(ramRoomLabel);
+
+// 저장장치: CPU+RAM 건물 안의 지하실
+// (별도 건물 없이, CPU+RAM 건물 안에 지하실 표시)
+
+// 지하실 입구 (건물 앞면 아래쪽)
+const basementDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.6, 0.1),
+  new THREE.MeshStandardMaterial({color:0x8b6914})
+);
+basementDoor.position.set(0, 0.3, 2.8/2 + 0.08);
+cpuRamHouse.add(basementDoor);
+
+// 지하실 라벨
+const basementLabelCanvas = document.createElement('canvas');
+basementLabelCanvas.width = 256;
+basementLabelCanvas.height = 64;
+const basementCtx = basementLabelCanvas.getContext('2d');
+basementCtx.fillStyle = 'rgba(218,165,32,0.9)';
+basementCtx.beginPath();
+basementCtx.roundRect(5, 5, 246, 54, 8);
+basementCtx.fill();
+basementCtx.fillStyle = '#ffffff';
+basementCtx.font = 'bold 24px Arial';
+basementCtx.textAlign = 'center';
+basementCtx.fillText('지하실 (저장장치)', 128, 40);
+const basementLabelTexture = new THREE.CanvasTexture(basementLabelCanvas);
+const basementLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.0, 0.5),
+  new THREE.MeshBasicMaterial({map:basementLabelTexture, transparent:true, side:THREE.DoubleSide})
+);
+basementLabel.position.set(0, -0.8, 2.8/2 + 0.4);
+cpuRamHouse.add(basementLabel);
+
+/* ============================================================
+   Buildings - Phase 2: 인터넷
+   ============================================================ */
+const postOffice = createBuilding({
+  position: new THREE.Vector3(0, 0, 8),
+  size: new THREE.Vector3(2.5, 2.5, 2.5),
+  color: 0x1565c0,
+  roofColor: 0x0d47a1,
+  windowColor: 0x64b5f6,
+  name: '우체국 (DNS)',
+  tag: '이름 → 주소 변환',
+  phase: 2,
+  description: '전화번호부 = 이름을 번호로 바꿔주는 곳'
+});
+scene.add(postOffice);
+
+const routerTower = createBuilding({
+  position: new THREE.Vector3(0, 0, -8),
+  size: new THREE.Vector3(1.5, 3, 1.5),
+  color: 0x00897b,
+  roofColor: 0x004d40,
+  windowColor: 0x80cbc4,
+  name: '교차로 (라우터)',
+  tag: '데이터 경로 결정',
+  phase: 2,
+  description: '교차로 = 데이터가 갈 길을 정해주는 곳'
+});
+scene.add(routerTower);
+
+/* ============================================================
+   Buildings - Phase 3: 서버
+   ============================================================ */
+const serverFactory = createBuilding({
+  position: new THREE.Vector3(8, 0, 5),
+  size: new THREE.Vector3(3.5, 3.5, 3.5),
+  color: 0x4a4a6a,
+  roofColor: 0x2d2d44,
+  windowColor: 0x90caf9,
+  name: '공장 (서버)',
+  tag: '백엔드 · 24시간 가동',
+  phase: 3,
+  description: '공장 = 24시간 쉬지 않고 돌아가는 곳'
+});
+scene.add(serverFactory);
+
+/* ---- 포탈 (카테고리 이동) ---- */
+// 다음 카테고리로 이동하는 포탈
+const portalDoor = createBuilding({
+  position: new THREE.Vector3(15, 0, 0),
+  size: new THREE.Vector3(1.5, 2.5, 0.5),
+  color: 0x9c27b0,
+  roofColor: 0x7b1fa2,
+  windowColor: 0xce93d8,
+  name: '🚪 포탈',
+  tag: '다음 카테고리로 이동',
+  phase: 4,
+  description: '클릭하면 다음 카테고리로 이동합니다'
+});
+scene.add(portalDoor);
+
+const databaseWarehouse = createBuilding({
+  position: new THREE.Vector3(8, 0, -5),
+  size: new THREE.Vector3(3, 2.5, 3),
+  color: 0x5d4037,
+  roofColor: 0x3e2723,
+  windowColor: 0xffcc80,
+  name: '창고 (데이터베이스)',
+  tag: '데이터 저장소',
+  phase: 3,
+  description: '창고 = 수많은 기록을 정리해 보관하는 곳'
+});
+scene.add(databaseWarehouse);
+
+const firewallGate = createBuilding({
+  position: new THREE.Vector3(4, 0, -8),
+  size: new THREE.Vector3(1.8, 2.2, 1.8),
+  color: 0xc62828,
+  roofColor: 0xb71c1c,
+  windowColor: 0xef9a9a,
+  name: '문 (방화벽)',
+  tag: '보안 · 출입 통제',
+  phase: 3,
+  description: '문 = 출입을 통제하는 보안 장치'
+});
+scene.add(firewallGate);
+
+/* ---- Characters ---- */
+const people = [];
+for(let i=0; i<6; i++){
+  const person = createPerson(new THREE.Vector3(
+    -12 + Math.random()*24,
+    0,
+    -8 + Math.random()*16
+  ), [0x6c5ce7, 0x00cec9, 0xffd93d, 0xff7675, 0xa29bfe, 0xfd79a8][i]);
+  scene.add(person);
+  people.push(person);
+}
+
+const mailman = createMailman();
+mailman.position.set(0, 0, 3);
+scene.add(mailman);
+
+/* ---- Data Flow Lines ---- */
+function createFlowLine(from, to, color=0xffd93d){
+  const start = from.clone().add(new THREE.Vector3(0, 1.5, 0));
+  const end = to.clone().add(new THREE.Vector3(0, 1.5, 0));
+  const mid = start.clone().lerp(end, 0.5);
+  mid.y = 3;
+  
+  const curve = new THREE.LineCurve3(start, mid);
+  const curve2 = new THREE.LineCurve3(mid, end);
+  
+  const geo1 = new THREE.TubeGeometry(curve, 10, 0.05, 8, false);
+  const geo2 = new THREE.TubeGeometry(curve2, 10, 0.05, 8, false);
+  
+  const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.5});
+  
+  const line1 = new THREE.Mesh(geo1, mat);
+  const line2 = new THREE.Mesh(geo2, mat);
+  
+  const group = new THREE.Group();
+  group.add(line1, line2);
+  return group;
+}
+
+scene.add(createFlowLine(cpuRamHouse.position, serverFactory.position, 0xffd93d)); // 데이터 요청 (노란색)
+scene.add(createFlowLine(serverFactory.position, databaseWarehouse.position, 0x00cec9)); // 데이터 저장 (초록색)
+scene.add(createFlowLine(postOffice.position, cpuRamHouse.position, 0x6c5ce7)); // DNS 변환 (보라색)
+
+/* ---- Animated Packet ---- */
+const packet = new THREE.Mesh(
+  new THREE.SphereGeometry(0.2, 12, 12),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:1})
+);
+packet.visible = false;
+scene.add(packet);
+
+/* ============================================================
+   Hotspots
+   ============================================================ */
+function makeHotspot(color){
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 16, 16),
+    new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:1.5})
+  );
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6, 16, 16),
+    new THREE.MeshBasicMaterial({color, transparent:true, opacity:.25, side:THREE.BackSide})
+  );
+  g.add(core, halo);
+  g.userData = {core, halo};
+  return g;
+}
+
+const STATIONS = [
+  // Phase 1: 컴퓨터 구조
+  {id:'motherboard', phase:1, icon:'🔌', label:'메인보드', tag:'모든 부품이 연결되는 골조', color:0x2d5a2d,
+   pos:new THREE.Vector3(-6, 0.2, 5), camPos:new THREE.Vector3(-4, 2, 10),
+   levels:[
+    `<b>왜 울타리로 표현했을까요?</b><br><br>메인보드는 <b>모든 부품이 연결되는 골조</b>입니다. 마치 집의 골조처럼, CPU, RAM, 저장장치 등 모든 부품이 이 위에 올라갑니다.`,
+    `<b>메인보드의 역할</b><br><br>메인보드는 부품들끼리 <b>데이터를 주고받는 통로</b>입니다. 마치 집 안의 배관처럼, 모든 곳으로 데이터가 흘러갑니다.`,
+    `<b>메인보드가 없으면?</b><br><br>메인보드가 없으면 부품들이 서로 연결될 수 없습니다. 마치 집의 골조 없이 벽과 지붕을 세울 수 없는 것과 같습니다.`
+   ]},
+  
+  {id:'cpu', phase:1, icon:'🏠', label:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', color:0xcd853f,
+   pos:new THREE.Vector3(-8, 1.5, 5), camPos:new THREE.Vector3(-10, 4, 10),
+   levels:[
+    `<b>왜 같은 건물 안에 방을 나눴을까요?</b><br><br>CPU와 RAM은 <b>같은 컴퓨터 안에서 함께 작동</b>합니다. 마치 집 안에서 요리사(CPU)가 식탁(RAM)에서 재료를 꺼내쓰는 것처럼요.<br><br>그래서 <b>같은 건물 안에 방을 나눠서</b> 표현했습니다.`,
+    `<b>CPU 방 (큰 방)</b><br><br>CPU는 컴퓨터의 <b>가장 큰 일꾼</b>입니다. 모든 계산과 명령을 처리합니다.<br><br>큰 방으로 표현한 이유는 <b>가장 많은 일을 하기 때문</b>입니다.`,
+    `<b>RAM 방 (작은 방)</b><br><br>RAM은 <b>지금 당장 필요한 것만 두는 작은 방</b>입니다. 마치 책상 위에 오늘 쓸 책만 올려놓는 것처럼요.<br><br>전원을 끄면 <b>깨끗이 비워집니다</b>.`
+   ]},
+  
+  {id:'ram', phase:1, icon:'💭', label:'RAM 방 (작은 방)', tag:'단기 기억', color:0x607d8b,
+   pos:new THREE.Vector3(-8, 1, 5), camPos:new THREE.Vector3(-6, 3, 8),
+   levels:[
+    `<b>RAM 방은 왜 작을까요?</b><br><br>RAM은 <b>빠르지만 좁은 공간</b>입니다. 지금 당장 필요한 것만 두기 때문에 작게 표현했습니다.<br><br>마치 책상 위에는 오늘 쓸 책만 두는 것처럼요.`,
+    `<b>CPU와의 관계</b><br><br>CPU가 계산할 때마다 RAM에서 데이터를 가져갑니다. 마치 요리사가 요리할 때마다 식탁에서 재료를 꺼내는 것처럼요.<br><br>RAM이 <b>같은 건물 안</b>에 있는 이유는 <b>자주 왔다갔다 해야 하기 때문</b>입니다.`,
+    `<b>저장장치와의 관계</b><br><br>RAM은 빠르지만 좁고, 저장장치(지하실)는 느리지만 넓습니다. 그래서 <b>지금 당장 필요한 것만 RAM에 두고</b>, 나머지는 저장장치에 보관합니다.`
+   ]},
+  
+  {id:'storage', phase:1, icon:'🗄️', label:'지하실 (저장장치)', tag:'장기 기억', color:0xf9a825,
+   pos:new THREE.Vector3(-8, 0.3, 5), camPos:new THREE.Vector3(-6, 2, 8),
+   levels:[
+    `<b>왜 집 안의 지하실로 표현했을까요?</b><br><br>저장장치는 <b>CPU+RAM 건물 안의 지하실</b>입니다. 같은 집 안에 있지만, CPU와 RAM과는 별도의 공간입니다.<br><br>마치 집 안의 지하실처럼, 같은 집 안에 있지만 다른 층에 있습니다.`,
+    `<b>저장장치의 역할</b><br><br>저장장치는 <b>오래된 물건을 보관하는 지하실</b>입니다. 전원을 끄고 다시 켜도 <b>그대로 남아있습니다</b>.<br><br>어릴 적 장난감처럼, 수년이 지나도 보관됩니다.`,
+    `<b>저장장치와 RAM의 관계</b><br><br>저장장치는 느리지만 넓고, RAM은 빠르지만 좁습니다. 그래서 <b>지금 당장 필요한 것만 RAM에 두고</b>, 나머지는 저장장치에 보관합니다.<br><br>마치 책장에는 자주 안 보는 책을 두고, 책상 위에는 자주 보는 책을 두는 것과 같습니다.`
+   ]},
+  
+  // Phase 2: 인터넷
+  {id:'dns', phase:2, icon:'📮', label:'우체국 (DNS)', tag:'이름 → 주소 변환', color:0x1565c0,
+   pos:new THREE.Vector3(0, 1.5, 8), camPos:new THREE.Vector3(-3, 4, 12),
+   levels:[
+    `<b>왜 우체국으로 표현했을까요?</b><br><br>DNS는 <b>이름을 주소로 바꿔주는 전화번호부</b>입니다. 마치 우체국에서 "김밥천국"이라고 하면 "02-1234-5678"이라고 알려주는 것처럼요.`,
+    `<b>DNS의 역할</b><br><br>"mysite.com"이라고 치면, DNS가 "142.250.72.14입니다" 하고 IP 주소를 알려줍니다.<br><br>인터넷의 모든 컴퓨터에는 번호(IP 주소)가 있지만, 이 숫자를 일일이 외우기 힘들죠. 그래서 도메인(이름)을 사용합니다.`,
+    `<b>도메인의 힘</b><br><br>도메인은 1년에 만 원 안팎이면 등록할 수 있습니다. 가게가 이사를 가도 상호는 그대로라서, 단골은 상호만 기억하면 되는 것과 같죠.<br><br>도메인은 "외우기 편한 번호"가 아니라, "내 서비스의 이름과 정체성을 지켜주는 방패"입니다.`
+   ]},
+  
+  {id:'router', phase:2, icon:'🚦', label:'교차로 (라우터)', tag:'데이터 경로 결정', color:0x00897b,
+   pos:new THREE.Vector3(0, 1.8, -8), camPos:new THREE.Vector3(-3, 4, -5),
+   levels:[
+    `<b>왜 교차로로 표현했을까요?</b><br><br>라우터는 <b>데이터가 갈 길을 정해주는 교차로</b>입니다. 마치 교차로에서 차량이 어디로 갈지 정해지는 것처럼, 데이터도 라우터에서 목적지를 정합니다.`,
+    `<b>라우터의 역할</b><br><br>편지(데이터)가 목적지까지 가장 빠른 길로 가도록 안내합니다.<br><br>집 안의 공유기도 하나의 라우터입니다. 인터넷 회선과 집 안 기기들을 연결해주는 역할을 하죠.`,
+    `<b>라우터가 없으면?</b><br><br>라우터가 없으면 데이터가 목적지를 찾지 못하고 헤매게 됩니다. 마치 교차로 없이 길이 막힌 것처럼요.<br><br>그래서 라우터는 인터넷의 핵심 장비입니다.`
+   ]},
+  
+  // Phase 3: 서버
+  {id:'server', phase:3, icon:'🏭', label:'공장 (서버)', tag:'백엔드 · 24시간 가동', color:0xffd93d,
+   pos:new THREE.Vector3(8, 2, 5), camPos:new THREE.Vector3(10, 5, 10),
+   levels:[
+    `<b>왜 공장으로 표현했을까요?</b><br><br>서버는 <b>24시간 쉬지 않고 돌아가는 거대한 컴퓨터</b>입니다. 마치 공장이 쉬지 않고 제품을 만드는 것처럼요.`,
+    `<b>서버의 역할</b><br><br>수많은 사람들의 요청을 동시에 처리해야 합니다. "이 사람이 맞는 비밀번호를 입력했나?", "이 사람 글을 창고에서 찾아라" 같은, 눈에 안 보이지만 중요한 판단을 내립니다.`,
+    `<b>서버와 프론트엔드의 관계</b><br><br>이렇게 눈에 안 보이는 곳에서 일하는 부분을 통틀어 <b>백엔드(Backend)</b>라고 부릅니다.<br><br>여러분이 직접 보거나 만질 수는 없고, 오직 택배기사(API)를 통해서만 연락할 수 있습니다.`
+   ]},
+  
+  {id:'database', phase:3, icon:'📦', label:'창고 (데이터베이스)', tag:'데이터 저장소', color:0xfd79a8,
+   pos:new THREE.Vector3(8, 1.2, -5), camPos:new THREE.Vector3(10, 3.5, -2),
+   levels:[
+    `<b>왜 창고로 표현했을까요?</b><br><br>데이터베이스는 <b>수많은 사람들의 기록을 깔끔하게 정리해 보관하는 창고</b>입니다.<br><br>표(테이블) 형태로 정리되어 있어 빠르게 찾을 수 있습니다.`,
+    `<b>데이터베이스의 역할</b><br><br>여러분이 어떤 앱에 회원가입을 하면, 이름과 이메일이 바로 이런 창고 어딘가에 한 줄로 저장됩니다.<br><br>다음에 로그인할 때 공장(서버)의 뇌가 이 창고를 뒤져 "아, 이 사람 맞네" 하고 확인해주는 것입니다.`,
+    `<b>데이터베이스와 저장장치의 관계</b><br><br>집 안의 저장장치는 "나만 쓰는 서랍"이고, 데이터베이스는 "수많은 사람들의 기록을 정리해둔 거대한 도서관 서가"에 가깝습니다.<br><br>마치 집 안의 서랍과 공장의 창고가 다른 것처럼요.`
+   ]},
+  
+  {id:'firewall', phase:3, icon:'🛡️', label:'문 (방화벽)', tag:'보안 · 출입 통제', color:0xc62828,
+   pos:new THREE.Vector3(4, 1.2, -8), camPos:new THREE.Vector3(2, 3, -5),
+   levels:[
+    `<b>왜 문으로 표현했을까요?</b><br><br>방화벽은 <b>컴퓨터의 보안을 담당하는 경비원</b>입니다. 마치 건물의 문을 지키는 경비원처럼요.`,
+    `<b>방화벽의 역할</b><br><br>허용된 요청만 들여보내고, 나머지는 막습니다.<br><br>방화벽 없이 인터넷에 연결되면, 누군가가 여러분의 컴퓨터에 원격으로 접속할 수 있습니다.`,
+    `<b>방화벽이 중요한 이유</b><br><br>그래서 방화벽은 컴퓨터 보안의 첫 번째 라인이 됩니다. 바이러스나 해커가 침입하는 것을 막아줍니다.<br><br>마치 건물의 문을 잠그는 것과 같습니다.`
+   ]},
+  
+  // Phase 4: 전체 조망
+  {id:'overview', phase:4, icon:'🔭', label:'전체 조망', tag:'풀스택 · 모든 것의 연결', color:0xffffff,
+   pos:new THREE.Vector3(0, 10, 0), camPos:new THREE.Vector3(0, 25, 30), lookAt:new THREE.Vector3(0, 0, 0),
+   levels:[
+    `<b>이제 멀리서 마을 전체를 한눈에 봅시다.</b><br><br>왼쪽 주택가는 <b>프론트엔드</b>(여러분이 보고 만지는 화면), 오른쪽 공장/창고는 <b>백엔드</b>(숨어서 일하는 서버)입니다.`,
+    `<b>컴퓨터 구조 (왼쪽)</b><br><br>CPU+RAM 건물은 같은 집 안에 있고, 저장장치는 바로 옆 건물로 연결되어 있습니다.<br><br>메인보드(골조)를 통해 모든 것이 연결되어 있습니다.`,
+    `<b>데이터 흐름</b><br><br>사용자가 버튼을 누르면, 택배기사(API)가 공장으로 달려가고, 공장이 창고에서 정보를 찾아돌려보내고, 우체국이 주소를 확인해줍니다.<br><br>이 전체 흐름을 <b>풀스택(Full Stack)</b>이라고 합니다.`
+   ]},
+  
+  {id:'portal', phase:4, icon:'🚪', label:'포탈', tag:'다음 카테고리로 이동', color:0x9c27b0,
+   pos:new THREE.Vector3(15, 1.5, 0), camPos:new THREE.Vector3(18, 3, 5),
+   levels:[
+    `<b>다음 카테고리로 이동합니다.</b><br><br>이 포탈을 클릭하면 <b>다음 카테고리</b>로 이동합니다.<br><br>각 카테고리는 컴퓨터의 다른 영역을 설명합니다.`,
+    `<b>카테고리 목록</b><br><br>1. 컴퓨터 구조 (현재 위치)<br>2. 인터넷<br>3. 프로그래밍 언어<br>4. 프론트엔드<br>5. 백엔드<br>6. Git<br>7. 보안`,
+    `<b>자유롭게 이동</b><br><br>원하는 카테고리를 자유롭게 선택할 수 있습니다.<br><br>각 카테고리는 독립적인 맵으로 구성되어 있습니다.`
+   ]},
+];
+
+const hotspots=[]; const raycastTargets=[];
+STATIONS.forEach((s,i)=>{
+  const h = makeHotspot(s.color);
+  h.position.copy(s.pos);
+  scene.add(h);
+  h.userData.core.userData.stationId = s.id;
+  h.userData.halo.userData.stationId = s.id;
+  raycastTargets.push(h.userData.core, h.userData.halo);
+  s.marker = h; s.phaseNum = s.phase; s.animPhase = i*0.7;
+});
+
+/* ============================================================
+   Camera Controls
+   ============================================================ */
+let isFlying=false;
+const camState = {
+  target: new THREE.Vector3(0, 2, 0),
+  radius: 22,
+  theta: 0.35,
+  phi: 1.25
+};
+
+function applyCamera(){
+  camera.position.set(
+    camState.target.x + camState.radius*Math.sin(camState.phi)*Math.sin(camState.theta),
+    camState.target.y + camState.radius*Math.cos(camState.phi),
+    camState.target.z + camState.radius*Math.sin(camState.phi)*Math.cos(camState.theta)
+  );
+  camera.lookAt(camState.target);
+}
+applyCamera();
+
+// 마우스 컨트롤
+let ptrDown = {x:0, y:0};
+let isCtrl = false;
+let moved = 0;
+
+canvas.addEventListener('pointerdown', e=>{
+  ptrDown.x = e.clientX;
+  ptrDown.y = e.clientY;
+  isCtrl = e.ctrlKey || e.metaKey;
+  moved = 0;
+});
+addEventListener('pointermove', e=>{
+  if(moved === null) return;
+  const dx = e.clientX - ptrDown.x;
+  const dy = e.clientY - ptrDown.y;
+  moved += Math.abs(dx) + Math.abs(dy);
+  if(isFlying) return;
+  
+  if(isCtrl){
+    // Ctrl + 드래그: 회전
+    camState.theta -= dx * 0.005;
+    camState.phi = clamp(camState.phi - dy * 0.005, 0.2, Math.PI - 0.2);
+    applyCamera();
+  } else {
+    // 일반 드래그: 이동 (팬)
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    camera.getWorldDirection(right);
+    right.cross(up).normalize();
+    const forward = new THREE.Vector3().copy(right).cross(camera.up).normalize();
+    
+    const panSpeed = camState.radius * 0.002;
+    camState.target.add(right.multiplyScalar(-dx * panSpeed));
+    camState.target.add(forward.multiplyScalar(dy * panSpeed));
+    applyCamera();
+  }
+  ptrDown.x = e.clientX;
+  ptrDown.y = e.clientY;
+});
+addEventListener('pointerup', e=>{
+  if(moved < 8 && !isFlying) handlePick(e);
+  moved = null;
+});
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  if(!isFlying){
+    camState.radius = clamp(camState.radius + e.deltaY * 0.02, 5, 55);
+    applyCamera();
+  }
+},{passive:false});
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+function handlePick(e){
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  pointer.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(raycastTargets);
+  if(hits.length){
+    const id = hits[0].object.userData.stationId;
+    const st = STATIONS.find(s=>s.id===id);
+    if(st) visitStation(st);
+  }
+}
+
+function flyTo(endPos, endLook, duration=1600){
+  return new Promise(resolve=>{
+    isFlying = true;
+    const startPos = camera.position.clone();
+    const startLook = camState.target.clone();
+    const t0 = performance.now();
+    function step(now){
+      const t = Math.min((now-t0)/duration,1);
+      const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+      camera.position.lerpVectors(startPos, endPos, ease);
+      const look = new THREE.Vector3().lerpVectors(startLook, endLook, ease);
+      camera.lookAt(look);
+      if(t<1){ requestAnimationFrame(step); }
+      else{
+        camState.target.copy(endLook);
+        isFlying=false;
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ============================================================
+   Station Visit / Caption / Drawer
+   ============================================================ */
+const visited = new Set();
+const captionEl = document.getElementById('caption');
+const progressChip = document.getElementById('progressChip');
+const stationList = document.getElementById('stationList');
+const finishToast = document.getElementById('finish');
+const phaseProgress = document.getElementById('phaseProgress');
+
+function renderDrawer(){
+  const visitedOrder = Array.from(visited);
+  stationList.innerHTML = STATIONS.map((s, i)=>{
+    const orderNum = visitedOrder.indexOf(s.id);
+    const isVisited = orderNum !== -1;
+    return `
+    <div class="station-item ${isVisited?'visited':''}" data-id="${s.id}">
+      <span class="chk">${isVisited ? (orderNum+1) : '○'}</span>
+      <span class="si-icon">${s.icon}</span>
+      <span class="si-text">
+        <div class="si-label">${s.label}</div>
+        <div class="si-tag">${s.tag}</div>
+      </span>
+      <span class="si-phase">${s.phase}단계</span>
+    </div>`;
+  }).join('');
+  stationList.querySelectorAll('.station-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const st = STATIONS.find(s=>s.id===el.dataset.id);
+      if(st) visitStation(st);
+      document.getElementById('drawer').classList.remove('open');
+    });
+  });
+}
+renderDrawer();
+
+document.getElementById('drawerToggle').addEventListener('click', ()=>{
+  document.getElementById('drawer').classList.toggle('open');
+});
+
+function updatePhaseProgress(currentPhase){
+  phaseProgress.querySelectorAll('.phase-item').forEach(item=>{
+    const phase = parseInt(item.dataset.phase);
+    item.classList.remove('active', 'done');
+    if(phase < currentPhase) item.classList.add('done');
+    else if(phase === currentPhase) item.classList.add('active');
+  });
+}
+
+async function visitStation(st){
+  document.getElementById('drawer').classList.remove('open');
+  await flyTo(st.camPos, st.lookAt || st.pos);
+  visited.add(st.id);
+  progressChip.textContent = `${visited.size} / ${STATIONS.length} 방문`;
+  renderDrawer();
+  updatePhaseProgress(st.phase);
+  if(visited.size === STATIONS.length){
+    finishToast.classList.add('show');
+    setTimeout(()=>finishToast.classList.remove('show'), 5000);
+  }
+  showCaption(st);
+}
+
+function showCaption(st){
+  const idx = STATIONS.indexOf(st);
+  const levels = st.levels || [];
+  captionEl.innerHTML = `
+    <h3>${st.icon} ${st.label}</h3>
+    <div class="tag">${st.tag}</div>
+    <div id="levelStack"></div>
+    <div class="interactive" id="interactiveSlot" style="display:none"></div>
+    <div class="capBtns">
+      <button class="cbtn" id="closeBtn">닫기</button>
+      <button class="cbtn primary" id="deeperBtn" style="display:none"></button>
+      <button class="cbtn primary" id="nextBtn">다음 장소 →</button>
+    </div>`;
+  captionEl.classList.add('show');
+  captionEl.scrollTop = 0;
+
+  const stack = document.getElementById('levelStack');
+  const deeperBtn = document.getElementById('deeperBtn');
+  const deeperLabels = ['👉 더 알아보기', '🔬 더 깊이 보기'];
+  let shown = 0;
+  
+  function addLevel(){
+    const p = document.createElement('p');
+    if(shown>0){ 
+      p.style.marginTop='14px'; 
+      p.style.paddingTop='14px'; 
+      p.style.borderTop='1px solid rgba(255,255,255,.12)'; 
+    }
+    p.innerHTML = levels[shown];
+    stack.appendChild(p);
+    shown++;
+    if(shown < levels.length){
+      deeperBtn.style.display='inline-block';
+      deeperBtn.textContent = deeperLabels[Math.min(shown-1, deeperLabels.length-1)];
+    } else {
+      deeperBtn.style.display='none';
+    }
+  }
+  addLevel();
+  deeperBtn.addEventListener('click', addLevel);
+
+  document.getElementById('closeBtn').addEventListener('click', ()=>{
+    captionEl.classList.remove('show');
+    isFlying = false;
+  });
+  
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    const next = STATIONS[(idx+1) % STATIONS.length];
+    visitStation(next);
+  });
+}
+
+/* ============================================================
+   Relationship Diagram
+   ============================================================ */
+document.getElementById('relationshipBtn').addEventListener('click', ()=>{
+  document.getElementById('relationshipDiagram').classList.add('show');
+  renderRelationshipDiagram();
+});
+
+document.getElementById('closeDiagram').addEventListener('click', ()=>{
+  document.getElementById('relationshipDiagram').classList.remove('show');
+});
+
+function renderRelationshipDiagram(){
+  const container = document.getElementById('diagramContainer');
+  container.innerHTML = `
+    <!-- 컴퓨터 구조 -->
+    <div style="position:absolute;left:5%;top:10%;width:25%;height:80%;border:2px dashed #cd853f;border-radius:12px;padding:10px">
+      <div style="text-align:center;font-size:.8em;color:#cd853f;margin-bottom:10px">컴퓨터 구조</div>
+      <div class="diagram-node" style="left:10%;top:25%;background:rgba(139,115,85,.3);border-color:#cd853f;width:80%" onclick="visitStationById('cpu')">
+        🏠 CPU 방 (큰 방)
+      </div>
+      <div class="diagram-node" style="left:10%;top:45%;background:rgba(112,128,144,.3);border-color:#607d8b;width:80%" onclick="visitStationById('ram')">
+        💭 RAM 방 (작은 방)
+      </div>
+      <div class="diagram-node" style="left:10%;top:65%;background:rgba(218,165,32,.3);border-color:#f9a825;width:80%" onclick="visitStationById('storage')">
+        🗄️ 지하실 (저장장치)
+      </div>
+      <div style="position:absolute;left:10%;top:85%;font-size:.7em;color:#8a8aa8">같은 건물 안에 배치</div>
+    </div>
+    
+    <!-- 인터넷 -->
+    <div style="position:absolute;left:35%;top:10%;width:25%;height:40%;border:2px dashed #1565c0;border-radius:12px;padding:10px">
+      <div style="text-align:center;font-size:.8em;color:#1565c0;margin-bottom:10px">인터넷</div>
+      <div class="diagram-node" style="left:10%;top:30%;background:rgba(21,101,192,.3);border-color:#1565c0;width:80%" onclick="visitStationById('dns')">
+        📮 DNS
+      </div>
+      <div class="diagram-node" style="left:10%;top:60%;background:rgba(0,137,123,.3);border-color:#00897b;width:80%" onclick="visitStationById('router')">
+        🚦 라우터
+      </div>
+    </div>
+    
+    <!-- 서버 -->
+    <div style="position:absolute;left:35%;top:55%;width:25%;height:40%;border:2px dashed #ffd93d;border-radius:12px;padding:10px">
+      <div style="text-align:center;font-size:.8em;color:#ffd93d;margin-bottom:10px">서버</div>
+      <div class="diagram-node" style="left:10%;top:25%;background:rgba(74,74,106,.3);border-color:#ffd93d;width:80%" onclick="visitStationById('server')">
+        🏭 서버
+      </div>
+      <div class="diagram-node" style="left:10%;top:50%;background:rgba(93,64,55,.3);border-color:#fd79a8;width:80%" onclick="visitStationById('database')">
+        📦 데이터베이스
+      </div>
+      <div class="diagram-node" style="left:10%;top:75%;background:rgba(198,40,40,.3);border-color:#c62828;width:80%" onclick="visitStationById('firewall')">
+        🛡️ 방화벽
+      </div>
+    </div>
+    
+    <!-- 전체 조망 -->
+    <div style="position:absolute;left:65%;top:10%;width:30%;height:80%;border:2px dashed #ffffff;border-radius:12px;padding:10px">
+      <div style="text-align:center;font-size:.8em;color:#ffffff;margin-bottom:10px">전체 조망</div>
+      <div class="diagram-node" style="left:10%;top:15%;background:rgba(255,255,255,.1);border-color:#ffffff;width:80%" onclick="visitStationById('overview')">
+        🔭 전체 조망
+      </div>
+      <div class="diagram-node" style="left:10%;top:40%;background:rgba(156,39,176,.1);border-color:#9c27b0;width:80%" onclick="visitStationById('portal')">
+        🚪 포탈
+      </div>
+      <div style="position:absolute;left:10%;top:70%;font-size:.7em;color:#8a8aa8">모든 것을 연결하는 흐름</div>
+    </div>
+    
+    <!-- 연결선 -->
+    <div class="diagram-arrow" style="left:30%;top:30%;width:5%;transform:rotate(0deg)"></div>
+    <div class="diagram-label" style="left:30%;top:25%">연결</div>
+    
+    <div class="diagram-arrow" style="left:30%;top:70%;width:5%;transform:rotate(0deg)"></div>
+    <div class="diagram-label" style="left:30%;top:65%">연결</div>
+    
+    <div class="diagram-arrow" style="left:60%;top:30%;width:5%;transform:rotate(0deg)"></div>
+    <div class="diagram-label" style="left:60%;top:25%">연결</div>
+    
+    <div class="diagram-arrow" style="left:60%;top:70%;width:5%;transform:rotate(0deg)"></div>
+    <div class="diagram-label" style="left:60%;top:65%">연결</div>
+  `;
+}
+
+// 전역 함수로 등록
+window.visitStationById = function(id) {
+  const st = STATIONS.find(s => s.id === id);
+  if(st) {
+    document.getElementById('relationshipDiagram').classList.remove('show');
+    visitStation(st);
+  }
+};
+
+/* ============================================================
+   Animation Loop
+   ============================================================ */
+function animate(){
+  requestAnimationFrame(animate);
+  const t = performance.now()*0.001;
+  if(!isFlying) applyCamera();
+
+  // Buildings float
+  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, portalDoor].forEach((b, i) => {
+    b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
+  });
+
+  // Mailman walks
+  mailman.position.x = Math.sin(t * 0.25) * 3;
+  mailman.position.z = 3 + Math.cos(t * 0.25) * 3;
+  mailman.rotation.y = Math.atan2(Math.cos(t * 0.25), -Math.sin(t * 0.25));
+
+  // People wander
+  people.forEach((p, i) => {
+    p.position.x += Math.sin(t * 0.15 + i * 2) * 0.003;
+    p.position.z += Math.cos(t * 0.15 + i * 2) * 0.003;
+  });
+
+  // Hotspots pulse
+  STATIONS.forEach((s,i)=>{
+    const sc = 1 + 0.18*Math.sin(t*2.5 + s.animPhase);
+    s.marker.userData.core.scale.setScalar(sc);
+    s.marker.userData.halo.scale.setScalar(sc);
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ============================================================
+   Intro & Welcome
+   ============================================================ */
+document.getElementById('enterBtn').addEventListener('click', ()=>{
+  document.getElementById('intro').classList.add('hide');
+  setTimeout(()=>{
+    document.getElementById('welcomeGuide').classList.add('show');
+  }, 400);
+});
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  document.getElementById('welcomeGuide').classList.remove('show');
+  visitStation(STATIONS[0]);
+  
+  const hint = document.getElementById('hint');
+  hint.classList.add('show');
+  setTimeout(()=>hint.classList.remove('show'), 6000);
+});
+</script>
+</body>
+</html>
