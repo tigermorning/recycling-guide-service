@@ -135,7 +135,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 
 <div id="hud">
   <div class="hud-title">🏘️ 컴퓨터 마을 견학
-    <small>건물을 클릭하면 설명이 나옵니다 · 드래그로 회전 · 스크롤로 확대</small>
+    <small>건물 클릭: 설명 · 드래그: 맵 이동 · 오른쪽 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>
   </div>
   <div class="hud-right">
     <div id="progressChip">0 / 10 방문</div>
@@ -169,7 +169,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 </div>
 
 <div id="caption"></div>
-<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 이동 &nbsp;·&nbsp; Shift+드래그: 위아래 &nbsp;·&nbsp; Ctrl+드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대</div>
+<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 맵 이동 &nbsp;·&nbsp; 오른쪽 드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대/축소 &nbsp;·&nbsp; 더블클릭: 확대 이동</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
 
 <div id="intro">
@@ -211,7 +211,9 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
       여기가 <span class="highlight">컴퓨터 마을</span>입니다.<br>
       각 건물에는 컴퓨터의 어떤 개념이 숨어 있어요.<br><br>
       <span class="highlight">건물을 클릭</span>하면 설명이 나옵니다.<br>
-      <span class="highlight">드래그</span>로 회전하고, <span class="highlight">스크롤</span>로 확대할 수 있어요.<br><br>
+      <span class="highlight">드래그</span>로 맵을 이동하고, <span class="highlight">오른쪽 드래그</span>로 회전할 수 있어요.<br>
+      <span class="highlight">스크롤</span>로 확대/축소하고,<br>
+      <span class="highlight">더블클릭</span>으로 원하는 위치를 확대해서 볼 수 있어요.<br><br>
       <span class="highlight">"🔗 관계 보기"</span> 버튼을 누르면 컴퓨터 구성요소들이<br>
       어떻게 연결되어 있는지 한눈에 볼 수 있습니다.
     </p>
@@ -978,9 +980,9 @@ STATIONS.forEach((s,i)=>{
 });
 
 /* ============================================================
-   Camera Controls
+   Camera Controls - Map Drag Style
    ============================================================ */
-let isFlying=false;
+let isFlying = false;
 const camState = {
   target: new THREE.Vector3(0, 2, 0),
   radius: 22,
@@ -988,7 +990,6 @@ const camState = {
   phi: 1.25
 };
 
-// 부드러운 이동을 위한 보간용 목표값
 const camGoal = {
   target: new THREE.Vector3(0, 2, 0),
   radius: 22,
@@ -996,75 +997,111 @@ const camGoal = {
   phi: 1.25
 };
 
-function applyCamera(){
+function applyCamera() {
   camera.position.set(
-    camState.target.x + camState.radius*Math.sin(camState.phi)*Math.sin(camState.theta),
-    camState.target.y + camState.radius*Math.cos(camState.phi),
-    camState.target.z + camState.radius*Math.sin(camState.phi)*Math.cos(camState.theta)
+    camState.target.x + camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta),
+    camState.target.y + camState.radius * Math.cos(camState.phi),
+    camState.target.z + camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta)
   );
   camera.lookAt(camState.target);
 }
 applyCamera();
 
-// 마우스 컨트롤
-let ptrDown = {x:0, y:0};
-let isCtrl = false;
-let isShift = false;
+let isDragging = false;
+let lastMouse = { x: 0, y: 0 };
 let moved = 0;
-let prevTime = 0;
 
-canvas.addEventListener('pointerdown', e=>{
-  ptrDown.x = e.clientX;
-  ptrDown.y = e.clientY;
-  prevTime = performance.now();
-  isCtrl = e.ctrlKey || e.metaKey;
-  isShift = e.shiftKey;
-  moved = 0;
-  camVel.x = 0; camVel.y = 0; camVel.theta = 0; camVel.phi = 0;
-});
-addEventListener('pointermove', e=>{
-  if(moved === null) return;
-  const dx = e.clientX - ptrDown.x;
-  const dy = e.clientY - ptrDown.y;
-  moved += Math.abs(dx) + Math.abs(dy);
-  if(isFlying) return;
-
-  const panSpeed = camGoal.radius * 0.0015;
+canvas.addEventListener('pointerdown', e => {
+  if (isFlying) return;
   
-  if(isCtrl){
-    // Ctrl + 드래그: 회전
-    camGoal.theta -= dx * 0.003;
-    camGoal.phi = clamp(camGoal.phi - dy * 0.003, 0.3, Math.PI - 0.3);
-  } else {
-    // 방향 벡터 계산
-    const worldUp = new THREE.Vector3(0, 1, 0);
-    const camDir = new THREE.Vector3();
-    camera.getWorldDirection(camDir);
-    const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
-    const forward = new THREE.Vector3().crossVectors(worldUp, right).normalize();
+  isDragging = true;
+  lastMouse.x = e.clientX;
+  lastMouse.y = e.clientY;
+  moved = 0;
+  
+  canvas.style.cursor = 'grabbing';
+});
+
+addEventListener('pointermove', e => {
+  if (!isDragging || isFlying) return;
+  
+  const dx = e.clientX - lastMouse.x;
+  const dy = e.clientY - lastMouse.y;
+  moved += Math.abs(dx) + Math.abs(dy);
+  
+  const panSpeed = camGoal.radius * 0.002;
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const camDir = new THREE.Vector3();
+  camera.getWorldDirection(camDir);
+  const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
+  
+  camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
+  camGoal.target.y += dy * panSpeed;
+  
+  lastMouse.x = e.clientX;
+  lastMouse.y = e.clientY;
+});
+
+addEventListener('pointerup', e => {
+  if (moved < 5 && !isFlying && e.button === 0) {
+    handlePick(e);
+  }
+  isDragging = false;
+  canvas.style.cursor = 'grab';
+});
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('pointerdown', e => {
+  if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
+    isDragging = true;
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
+    canvas.style.cursor = 'crosshair';
+  }
+});
+
+addEventListener('pointermove', e => {
+  if (!isDragging || isFlying) return;
+  
+  if (e.buttons === 2 || (e.buttons === 1 && e.ctrlKey)) {
+    const dx = e.clientX - lastMouse.x;
+    const dy = e.clientY - lastMouse.y;
     
-    if(isShift){
-      // Shift + 드래그: 위아래 이동
-      camGoal.target.y += -dy * panSpeed;
-    } else {
-      // 일반 드래그: 좌우 + 앞뒤 이동
-      camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
-      camGoal.target.add(forward.multiplyScalar(-dy * panSpeed));
-    }
+    camGoal.theta -= dx * 0.005;
+    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.2, Math.PI - 0.2);
+    
+    lastMouse.x = e.clientX;
+    lastMouse.y = e.clientY;
   }
-  ptrDown.x = e.clientX;
-  ptrDown.y = e.clientY;
 });
-addEventListener('pointerup', e=>{
-  if(moved < 8 && !isFlying) handlePick(e);
-  moved = null;
+
+canvas.addEventListener('dblclick', e => {
+  if (isFlying) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  
+  const groundHits = raycaster.intersectObject(ground);
+  if (groundHits.length) {
+    const point = groundHits[0].point;
+    flyTo(
+      new THREE.Vector3(point.x + 8, 6, point.z + 8),
+      point,
+      1000
+    );
+  }
 });
-canvas.addEventListener('wheel', e=>{
+
+canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  if(!isFlying){
-    camGoal.radius = clamp(camGoal.radius + e.deltaY * 0.02, 5, 55);
+  if (!isFlying) {
+    const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+    camGoal.radius = clamp(camGoal.radius * zoomFactor, 4, 60);
   }
-},{passive:false});
+}, { passive: false });
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
