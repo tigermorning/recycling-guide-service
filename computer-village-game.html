@@ -169,7 +169,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 </div>
 
 <div id="caption"></div>
-<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 좌우상하 이동 &nbsp;·&nbsp; Shift+드래그: 앞뒤 이동 &nbsp;·&nbsp; Ctrl+드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대</div>
+<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 이동 &nbsp;·&nbsp; Shift+드래그: 위아래 &nbsp;·&nbsp; Ctrl+드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
 
 <div id="intro">
@@ -782,6 +782,19 @@ const firewallGate = createBuilding({
 });
 scene.add(firewallGate);
 
+const hostingCloud = createBuilding({
+  position: new THREE.Vector3(-2, 0, -8),
+  size: new THREE.Vector3(2.5, 2, 2.5),
+  color: 0x00838f,
+  roofColor: 0x006064,
+  windowColor: 0x80deea,
+  name: '☁️ 무료 호스팅',
+  tag: '공짜로 세상에 올리기',
+  phase: 3,
+  description: '구름 = 인터넷에 무료로 올리는 곳'
+});
+scene.add(hostingCloud);
+
 /* ---- Characters ---- */
 const people = [];
 for(let i=0; i<6; i++){
@@ -927,6 +940,14 @@ const STATIONS = [
     `<b>방화벽이 중요한 이유</b><br><br>그래서 방화벽은 컴퓨터 보안의 첫 번째 라인이 됩니다. 바이러스나 해커가 침입하는 것을 막아줍니다.<br><br>마치 건물의 문을 잠그는 것과 같습니다.`
    ]},
   
+  {id:'hosting', phase:3, icon:'☁️', label:'무료 호스팅', tag:'공짜로 세상에 올리기', color:0x00bcd4,
+   pos:new THREE.Vector3(-2, 1.5, -8), camPos:new THREE.Vector3(-5, 4, -5),
+   levels:[
+    `<b>공짜로 세상에 올리기</b><br><br>여러분이 만든 웹사이트를 남들이 볼 수 있게 인터넷에 올리고 싶죠?为此 서버가 필요합니다.<br><br>공짜로 서버를 주는 곳이 여럿 있지만, "공짜의 세계는 줄어드는 중"입니다.<br><br>Heroku(2022년 종료), Railway(2023년), Fly.io(2024년), Glitch(2025년 7월 종료) 등 무료 서비스들이 사라졌습니다. 암호화폐 채굴 같은 악용 때문이죠.<br><br><b>지금 무료인 것도 언젠가 바뀔 수 있다</b>는 전제로, 가입 전에 공식 요금 페이지를 확인하는 습관이 안전합니다.`,
+    `<b>뭘 올리느냐에 따라 고르면 됩니다</b><br><br>가입할 때 "신용카드 번호를 입력하세요"라고 물어보는 곳이 있습니다. 공짜인데 왜냐면, 무료 한도를 넘기면 유료로 전환되기 때문입니다. 카드를 안 등록하면 안 넘을 수 있으니 안심해도 되지만, 등록하면 실수로 요금이 나올 수도 있습니다.<br><br>그러니 처음엔 <b>카드를 요구하지 않는 곳</b>부터 시작하는 게 가장 안전합니다.<br><br><b>HTML/CSS로 만든 화면만 있는 사이트</b> (포트폴리오, 소개 페이지 등)<br>→ GitHub Pages 또는 Cloudflare Pages (가장 간단, 카드 불필요)<br><br><b>React/Vue 등으로 만든 인터랙티브한 화면</b><br>→ Vercel 또는 Netlify (코드 저장소에서 바로 배포, 카드 불필요)<br><br><b>로그인·데이터 저장이 필요한 서비스</b> (서버가 데이터를 처리해야 할 때)<br>→ Supabase (DB+로그인 한 번에 제공, 카드 불필요)<br>→ Render (API 서버가 따로 필요할 때, 카드 불필요)<br><br><b>"진짜 서버를 만져 보며 공부"하고 싶을 때</b><br>→ Oracle Always Free (진짜 컴퓨터를 줌. 단 설정 어려움, 카드 필요)`,
+    `<b>시작 전에 알아 둘 세 가지 함정</b><br><br><b>1. 잠듦(spin-down)</b> - 무료 백엔드는 한동안 아무도 안 오면 잠듭니다. Render가 대표적. 다시 깨는 데 ~1분 걸림(고장 아님).<br><br><b>2. 기한·일시정지</b> - DB를 공짜로 주는 곳은 30일~90일 안 쓰면 만료되는 곳이 있습니다. Supabase는 7일 미사용 시 일시정지(데이터는 보존). 중요한 데이터는 백업을 꼭!<br><br><b>3. 요금 폭탄 방지</b> - 카드를 등록한 곳은 무료 한도를 넘으면 돈이 나갑니다. 미리 예산 상한을 걸어 두면 안전합니다. 트래픽이 갑자기 튀거나 실수로 비싼 기능을 켜면 청구서가 나올 수 있으니 주의하세요.<br><br><b>정리</b> - 무료는 "배우고 시연하기"엔 충분합니다. "많은 사람에게 안정적으로 24시간 제공"하는 단계가 오면, 그때 유료를 검토하면 됩니다.`
+   ]},
+  
   // Phase 4: 전체 조망
   {id:'overview', phase:4, icon:'🔭', label:'전체 조망', tag:'풀스택 · 모든 것의 연결', color:0xffffff,
    pos:new THREE.Vector3(0, 10, 0), camPos:new THREE.Vector3(0, 25, 30), lookAt:new THREE.Vector3(0, 0, 0),
@@ -967,6 +988,14 @@ const camState = {
   phi: 1.25
 };
 
+// 부드러운 이동을 위한 보간용 목표값
+const camGoal = {
+  target: new THREE.Vector3(0, 2, 0),
+  radius: 22,
+  theta: 0.35,
+  phi: 1.25
+};
+
 function applyCamera(){
   camera.position.set(
     camState.target.x + camState.radius*Math.sin(camState.phi)*Math.sin(camState.theta),
@@ -982,13 +1011,16 @@ let ptrDown = {x:0, y:0};
 let isCtrl = false;
 let isShift = false;
 let moved = 0;
+let prevTime = 0;
 
 canvas.addEventListener('pointerdown', e=>{
   ptrDown.x = e.clientX;
   ptrDown.y = e.clientY;
+  prevTime = performance.now();
   isCtrl = e.ctrlKey || e.metaKey;
   isShift = e.shiftKey;
   moved = 0;
+  camVel.x = 0; camVel.y = 0; camVel.theta = 0; camVel.phi = 0;
 });
 addEventListener('pointermove', e=>{
   if(moved === null) return;
@@ -996,12 +1028,13 @@ addEventListener('pointermove', e=>{
   const dy = e.clientY - ptrDown.y;
   moved += Math.abs(dx) + Math.abs(dy);
   if(isFlying) return;
+
+  const panSpeed = camGoal.radius * 0.0015;
   
   if(isCtrl){
     // Ctrl + 드래그: 회전
-    camState.theta -= dx * 0.005;
-    camState.phi = clamp(camState.phi - dy * 0.005, 0.2, Math.PI - 0.2);
-    applyCamera();
+    camGoal.theta -= dx * 0.003;
+    camGoal.phi = clamp(camGoal.phi - dy * 0.003, 0.3, Math.PI - 0.3);
   } else {
     // 방향 벡터 계산
     const worldUp = new THREE.Vector3(0, 1, 0);
@@ -1010,18 +1043,14 @@ addEventListener('pointermove', e=>{
     const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
     const forward = new THREE.Vector3().crossVectors(worldUp, right).normalize();
     
-    const panSpeed = camState.radius * 0.003;
-    
     if(isShift){
-      // Shift + 드래그: 앞뒤 + 상하 이동
-      camState.target.add(forward.multiplyScalar(-dy * panSpeed));
-      camState.target.y += dx * panSpeed;
+      // Shift + 드래그: 위아래 이동
+      camGoal.target.y += -dy * panSpeed;
     } else {
-      // 일반 드래그: 좌우 + 상하 이동
-      camState.target.add(right.multiplyScalar(-dx * panSpeed));
-      camState.target.y += -dy * panSpeed;
+      // 일반 드래그: 좌우 + 앞뒤 이동
+      camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
+      camGoal.target.add(forward.multiplyScalar(-dy * panSpeed));
     }
-    applyCamera();
   }
   ptrDown.x = e.clientX;
   ptrDown.y = e.clientY;
@@ -1033,8 +1062,7 @@ addEventListener('pointerup', e=>{
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   if(!isFlying){
-    camState.radius = clamp(camState.radius + e.deltaY * 0.02, 5, 55);
-    applyCamera();
+    camGoal.radius = clamp(camGoal.radius + e.deltaY * 0.02, 5, 55);
   }
 },{passive:false});
 
@@ -1068,6 +1096,7 @@ function flyTo(endPos, endLook, duration=1600){
       if(t<1){ requestAnimationFrame(step); }
       else{
         camState.target.copy(endLook);
+        camGoal.target.copy(endLook);
         isFlying=false;
         resolve();
       }
@@ -1080,6 +1109,7 @@ function flyTo(endPos, endLook, duration=1600){
    Station Visit / Caption / Drawer
    ============================================================ */
 const visited = new Set();
+const visitHistory = [];  // 방문 순서 기록
 const captionEl = document.getElementById('caption');
 const progressChip = document.getElementById('progressChip');
 const stationList = document.getElementById('stationList');
@@ -1128,6 +1158,9 @@ function updatePhaseProgress(currentPhase){
 async function visitStation(st){
   document.getElementById('drawer').classList.remove('open');
   await flyTo(st.camPos, st.lookAt || st.pos);
+  if(!visited.has(st.id)){
+    visitHistory.push(st.id);
+  }
   visited.add(st.id);
   progressChip.textContent = `${visited.size} / ${STATIONS.length} 방문`;
   renderDrawer();
@@ -1139,9 +1172,17 @@ async function visitStation(st){
   showCaption(st);
 }
 
+function visitStationById(id){
+  const st = STATIONS.find(s=>s.id===id);
+  if(st) visitStation(st);
+}
+
 function showCaption(st){
   const idx = STATIONS.indexOf(st);
   const levels = st.levels || [];
+  const historyIdx = visitHistory.indexOf(st.id);
+  const hasPrev = historyIdx > 0;
+  
   captionEl.innerHTML = `
     <h3>${st.icon} ${st.label}</h3>
     <div class="tag">${st.tag}</div>
@@ -1149,6 +1190,7 @@ function showCaption(st){
     <div class="interactive" id="interactiveSlot" style="display:none"></div>
     <div class="capBtns">
       <button class="cbtn" id="closeBtn">닫기</button>
+      ${hasPrev ? '<button class="cbtn" id="prevBtn">← 이전 장소</button>' : ''}
       <button class="cbtn primary" id="deeperBtn" style="display:none"></button>
       <button class="cbtn primary" id="nextBtn">다음 장소 →</button>
     </div>`;
@@ -1184,6 +1226,15 @@ function showCaption(st){
     captionEl.classList.remove('show');
     isFlying = false;
   });
+  
+  const prevBtn = document.getElementById('prevBtn');
+  if(prevBtn){
+    prevBtn.addEventListener('click', ()=>{
+      const prevId = visitHistory[visitHistory.indexOf(st.id) - 1];
+      const prev = STATIONS.find(s=>s.id===prevId);
+      if(prev) visitStation(prev);
+    });
+  }
   
   document.getElementById('nextBtn').addEventListener('click', ()=>{
     const next = STATIONS[(idx+1) % STATIONS.length];
@@ -1244,6 +1295,9 @@ function renderRelationshipDiagram(){
       <div class="diagram-node" style="left:10%;top:75%;background:rgba(198,40,40,.3);border-color:#c62828;width:80%" onclick="visitStationById('firewall')">
         🛡️ 방화벽
       </div>
+      <div class="diagram-node" style="left:10%;top:90%;background:rgba(0,188,212,.3);border-color:#00bcd4;width:80%;font-size:.75em" onclick="visitStationById('hosting')">
+        ☁️ 무료 호스팅
+      </div>
     </div>
     
     <!-- 전체 조망 -->
@@ -1288,7 +1342,15 @@ window.visitStationById = function(id) {
 function animate(){
   requestAnimationFrame(animate);
   const t = performance.now()*0.001;
-  if(!isFlying) applyCamera();
+  if(!isFlying){
+    // 부드러운 보간 (lerp)
+    const lerp = 0.08;
+    camState.target.lerp(camGoal.target, lerp);
+    camState.radius += (camGoal.radius - camState.radius) * lerp;
+    camState.theta += (camGoal.theta - camState.theta) * lerp;
+    camState.phi += (camGoal.phi - camState.phi) * lerp;
+    applyCamera();
+  }
 
   // Buildings float
   [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, portalDoor].forEach((b, i) => {
