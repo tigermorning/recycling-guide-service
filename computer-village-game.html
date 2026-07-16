@@ -98,6 +98,20 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 #finish{position:fixed;top:120px;left:50%;transform:translateX(-50%);background:rgba(0,206,201,.2);border:1px solid #00cec9;border-radius:16px;padding:12px 24px;font-size:.9em;z-index:7;opacity:0;transition:opacity .5s ease;pointer-events:none;text-align:center}
 #finish.show{opacity:1}
 
+/* ---- level chip ---- */
+#levelChip{background:rgba(108,92,231,.3);border:1px solid #6c5ce7;border-radius:20px;padding:8px 16px;font-size:.85em;backdrop-filter:blur(6px);white-space:nowrap;font-weight:600;color:#a29bfe}
+
+/* ---- level unlock toast ---- */
+#levelUnlock{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,9,22,.95);border:2px solid #ffd93d;border-radius:24px;padding:40px 48px;font-size:1em;z-index:20;opacity:0;transition:opacity .6s ease;pointer-events:none;text-align:center;backdrop-filter:blur(16px);box-shadow:0 0 80px rgba(255,217,61,.3)}
+#levelUnlock.show{opacity:1;pointer-events:auto}
+#levelUnlock h2{font-size:1.5em;color:#ffd93d;margin-bottom:12px}
+#levelUnlock p{line-height:1.8;color:#d0d0e8;margin-bottom:8px}
+#levelUnlock .level-badge{display:inline-block;padding:6px 18px;border-radius:12px;font-size:1.1em;font-weight:700;margin:12px 0}
+#levelUnlock .level-badge.inter{background:rgba(0,206,201,.2);border:1px solid #00cec9;color:#00cec9}
+#levelUnlock .level-badge.adv{background:rgba(255,107,107,.2);border:1px solid #ff6b6b;color:#ff6b6b}
+#levelUnlock button{margin-top:16px;background:linear-gradient(135deg,#6c5ce7,#00cec9);border:none;color:#fff;padding:14px 32px;border-radius:12px;font-size:1em;cursor:pointer;font-weight:600}
+#levelUnlock button:hover{filter:brightness(1.15)}
+
 /* ---- welcome guide ---- */
 #welcomeGuide{position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;background:rgba(3,3,10,.8);backdrop-filter:blur(4px)}
 #welcomeGuide.show{display:flex}
@@ -138,7 +152,8 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
     <small>건물 클릭: 설명 · 드래그: 이동 · 오른쪽 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>
   </div>
   <div class="hud-right">
-    <div id="progressChip">0 / 10 방문</div>
+    <div id="levelChip">초급</div>
+    <div id="progressChip">0 / 12 방문</div>
     <button id="relationshipBtn">🔗 관계 보기</button>
     <button id="drawerToggle">☰ 장소 목록</button>
   </div>
@@ -171,6 +186,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 <div id="caption"></div>
 <div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 맵 이동 &nbsp;·&nbsp; 오른쪽 드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대/축소 &nbsp;·&nbsp; 더블클릭: 확대 이동</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
+<div id="levelUnlock"></div>
 
 <div id="intro">
   <div class="intro-card">
@@ -234,6 +250,14 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---- Level System ---- */
+let currentLevel = 1;
+const LEVEL_NAMES = {1:'초급', 2:'중급', 3:'고급'};
+const LEVEL_UNLOCK_MSG = {
+  2: {title:'🔓 중급이 열렸습니다!', desc:'이제 건물 안으로 들어가 내부 구조를 탐험할 수 있습니다.', badge:'중급', cls:'inter'},
+  3: {title:'🔓 고급이 열렸습니다!', desc:'전문적인 개념까지 자유롭게 둘러보세요.', badge:'고급', cls:'adv'}
+};
 
 /* ---- Scene Setup ---- */
 const scene = new THREE.Scene();
@@ -797,6 +821,191 @@ const hostingCloud = createBuilding({
 });
 scene.add(hostingCloud);
 
+/* ============================================================
+   Additional Buildings - Level 2 & 3 Stations
+   ============================================================ */
+const gpuBuilding = createBuilding({
+  position: new THREE.Vector3(-4, 0, 3),
+  size: new THREE.Vector3(2, 2.5, 2),
+  color: 0x7c4dff,
+  roofColor: 0x651fff,
+  windowColor: 0xb388ff,
+  name: '그래픽 공방 (GPU)',
+  tag: '화면을 그리는 전문가',
+  phase: 1,
+  description: '그래픽을 전문적으로 처리하는 방'
+});
+scene.add(gpuBuilding);
+
+const monitorBuilding = createBuilding({
+  position: new THREE.Vector3(-12, 0, 3),
+  size: new THREE.Vector3(2.2, 2, 1.8),
+  color: 0x00838f,
+  roofColor: 0x006064,
+  windowColor: 0x00e5ff,
+  name: '전시장 (모니터)',
+  tag: '결과물을 눈에 보이게',
+  phase: 1,
+  description: '컴퓨터의 결과물을 전시하는 공간'
+});
+scene.add(monitorBuilding);
+
+const htmlCssBuilding = createBuilding({
+  position: new THREE.Vector3(5, 0, 10),
+  size: new THREE.Vector3(2.2, 2.2, 2.2),
+  color: 0xff7043,
+  roofColor: 0xe64a19,
+  windowColor: 0xffab91,
+  name: '도안실 (HTML/CSS)',
+  tag: '웹페이지의 골조와 옷',
+  phase: 2,
+  description: '웹페이지의 구조와 디자인을 만드는 곳'
+});
+scene.add(htmlCssBuilding);
+
+const javascriptBuilding = createBuilding({
+  position: new THREE.Vector3(-6, 0, -5),
+  size: new THREE.Vector3(2, 2.8, 2),
+  color: 0xf9a825,
+  roofColor: 0xf57f17,
+  windowColor: 0xffee58,
+  name: '제어소 (JavaScript)',
+  tag: '웹페이지의 두뇌',
+  phase: 2,
+  description: '웹페이지에 동작을 부여하는 제어 센터'
+});
+scene.add(javascriptBuilding);
+
+const nodejsBuilding = createBuilding({
+  position: new THREE.Vector3(3, 0, 12),
+  size: new THREE.Vector3(2.5, 2.2, 2),
+  color: 0x43a047,
+  roofColor: 0x2e7d32,
+  windowColor: 0x69f0ae,
+  name: '작업장 (Node.js/Python)',
+  tag: '서버 측 처리',
+  phase: 2,
+  description: '서버에서 데이터를 처리하는 작업장'
+});
+scene.add(nodejsBuilding);
+
+const cloudBuilding = createBuilding({
+  position: new THREE.Vector3(13, 0, 2),
+  size: new THREE.Vector3(2.5, 3.5, 2.5),
+  color: 0x29b6f6,
+  roofColor: 0x0288d1,
+  windowColor: 0x81d4fa,
+  name: '구름 도시 (AWS/Azure)',
+  tag: '클라우드 서비스',
+  phase: 3,
+  description: '인터넷 위의 거대한 클라우드 도시'
+});
+scene.add(cloudBuilding);
+
+const loadbalancerBuilding = createBuilding({
+  position: new THREE.Vector3(12, 0, -7),
+  size: new THREE.Vector3(2, 2, 2),
+  color: 0x00897b,
+  roofColor: 0x00695c,
+  windowColor: 0x80cbc4,
+  name: '교차로 배분기 (LB)',
+  tag: '요청 균등 배분',
+  phase: 3,
+  description: '사용자 요청을 서버에 골고루 나눠주는 장치'
+});
+scene.add(loadbalancerBuilding);
+
+const gitBuilding = createBuilding({
+  position: new THREE.Vector3(-14, 0, -3),
+  size: new THREE.Vector3(2, 2.5, 2),
+  color: 0xe53935,
+  roofColor: 0xc62828,
+  windowColor: 0xef9a9a,
+  name: '기록실 (Git)',
+  tag: '코드 변경 기록',
+  phase: 4,
+  description: '코드의 모든 변경 기록을 보관하는 곳'
+});
+scene.add(gitBuilding);
+
+const cacheBuilding = createBuilding({
+  position: new THREE.Vector3(-11, 0, 8),
+  size: new THREE.Vector3(1.8, 2, 1.8),
+  color: 0xffab00,
+  roofColor: 0xff8f00,
+  windowColor: 0xffd54f,
+  name: '속도 경보 (캐시)',
+  tag: '자주 쓰는 데이터 보관',
+  phase: 1,
+  description: '자주 쓰는 데이터를 빠르게 보관하는 곳'
+});
+scene.add(cacheBuilding);
+
+const reactBuilding = createBuilding({
+  position: new THREE.Vector3(0, 0, 14),
+  size: new THREE.Vector3(2.5, 2.5, 2.5),
+  color: 0x1e88e5,
+  roofColor: 0x1565c0,
+  windowColor: 0x64b5f6,
+  name: '프레임워크 광장 (React/Vue)',
+  tag: '재사용 가능한 블록',
+  phase: 2,
+  description: '미리 만든 블록으로 빠르게 웹페이지를 조립하는 곳'
+});
+scene.add(reactBuilding);
+
+const httpBuilding = createBuilding({
+  position: new THREE.Vector3(-8, 0, -12),
+  size: new THREE.Vector3(2, 2.2, 2),
+  color: 0x3949ab,
+  roofColor: 0x283593,
+  windowColor: 0x7986cb,
+  name: '우편 규칙 (HTTP)',
+  tag: '데이터 전송 규칙',
+  phase: 2,
+  description: '인터넷에서 데이터가 오가는 규칙'
+});
+scene.add(httpBuilding);
+
+const dockerBuilding = createBuilding({
+  position: new THREE.Vector3(14, 0, 8),
+  size: new THREE.Vector3(2.5, 2, 2.5),
+  color: 0x00acc1,
+  roofColor: 0x00838f,
+  windowColor: 0x80deea,
+  name: '컨테이너 야적장 (Docker)',
+  tag: '이식 가능한 실행 환경',
+  phase: 3,
+  description: '프로그램을 컨테이너에 담아 어디서든 실행되게 하는 곳'
+});
+scene.add(dockerBuilding);
+
+const cicdBuilding = createBuilding({
+  position: new THREE.Vector3(15, 0, -5),
+  size: new THREE.Vector3(2, 2.5, 1.8),
+  color: 0x009688,
+  roofColor: 0x00796b,
+  windowColor: 0x80cbc4,
+  name: '자동 공정 (CI/CD)',
+  tag: '자동 테스트 · 배포',
+  phase: 3,
+  description: '코드를 자동으로 테스트하고 배포하는 공정'
+});
+scene.add(cicdBuilding);
+
+const securityBuilding = createBuilding({
+  position: new THREE.Vector3(-14, 0, -8),
+  size: new THREE.Vector3(2, 2.8, 2),
+  color: 0x7b1fa2,
+  roofColor: 0x6a1b9a,
+  windowColor: 0xce93d8,
+  name: '금고 (보안)',
+  tag: '데이터 보호',
+  phase: 3,
+  description: '소중한 데이터를 안전하게 지키는 금고'
+});
+scene.add(securityBuilding);
+
 /* ---- Characters ---- */
 const people = [];
 for(let i=0; i<6; i++){
@@ -868,7 +1077,7 @@ function makeHotspot(color){
 
 const STATIONS = [
   // Phase 1: 컴퓨터 구조
-  {id:'motherboard', phase:1, icon:'🔌', label:'메인보드', tag:'모든 부품이 연결되는 골조', color:0x2d5a2d,
+  {id:'motherboard', minLevel:1, phase:1, icon:'🔌', label:'메인보드', tag:'모든 부품이 연결되는 골조', color:0x2d5a2d,
    pos:new THREE.Vector3(-6, 0.2, 5), camPos:new THREE.Vector3(-4, 2, 10),
    levels:[
     `<b>왜 울타리로 표현했을까요?</b><br><br>메인보드는 <b>모든 부품이 연결되는 골조</b>입니다. 마치 집의 골조처럼, CPU, RAM, 저장장치 등 모든 부품이 이 위에 올라갑니다.`,
@@ -876,7 +1085,7 @@ const STATIONS = [
     `<b>메인보드가 없으면?</b><br><br>메인보드가 없으면 부품들이 서로 연결될 수 없습니다. 마치 집의 골조 없이 벽과 지붕을 세울 수 없는 것과 같습니다.`
    ]},
   
-  {id:'cpu', phase:1, icon:'🏠', label:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', color:0xcd853f,
+  {id:'cpu', minLevel:1, phase:1, icon:'🏠', label:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', color:0xcd853f,
    pos:new THREE.Vector3(-8, 1.5, 5), camPos:new THREE.Vector3(-10, 4, 10),
    levels:[
     `<b>왜 같은 건물 안에 방을 나눴을까요?</b><br><br>CPU와 RAM은 <b>같은 컴퓨터 안에서 함께 작동</b>합니다. 마치 집 안에서 요리사(CPU)가 식탁(RAM)에서 재료를 꺼내쓰는 것처럼요.<br><br>그래서 <b>같은 건물 안에 방을 나눠서</b> 표현했습니다.`,
@@ -884,7 +1093,7 @@ const STATIONS = [
     `<b>RAM 방 (작은 방)</b><br><br>RAM은 <b>지금 당장 필요한 것만 두는 작은 방</b>입니다. 마치 책상 위에 오늘 쓸 책만 올려놓는 것처럼요.<br><br>전원을 끄면 <b>깨끗이 비워집니다</b>.`
    ]},
   
-  {id:'ram', phase:1, icon:'💭', label:'RAM 방 (작은 방)', tag:'단기 기억', color:0x607d8b,
+  {id:'ram', minLevel:1, phase:1, icon:'💭', label:'RAM 방 (작은 방)', tag:'단기 기억', color:0x607d8b,
    pos:new THREE.Vector3(-8, 1, 5), camPos:new THREE.Vector3(-6, 3, 8),
    levels:[
     `<b>RAM 방은 왜 작을까요?</b><br><br>RAM은 <b>빠르지만 좁은 공간</b>입니다. 지금 당장 필요한 것만 두기 때문에 작게 표현했습니다.<br><br>마치 책상 위에는 오늘 쓸 책만 두는 것처럼요.`,
@@ -892,7 +1101,7 @@ const STATIONS = [
     `<b>저장장치와의 관계</b><br><br>RAM은 빠르지만 좁고, 저장장치(지하실)는 느리지만 넓습니다. 그래서 <b>지금 당장 필요한 것만 RAM에 두고</b>, 나머지는 저장장치에 보관합니다.`
    ]},
   
-  {id:'storage', phase:1, icon:'🗄️', label:'지하실 (저장장치)', tag:'장기 기억', color:0xf9a825,
+  {id:'storage', minLevel:1, phase:1, icon:'🗄️', label:'지하실 (저장장치)', tag:'장기 기억', color:0xf9a825,
    pos:new THREE.Vector3(-8, 0.3, 5), camPos:new THREE.Vector3(-6, 2, 8),
    levels:[
     `<b>왜 집 안의 지하실로 표현했을까요?</b><br><br>저장장치는 <b>CPU+RAM 건물 안의 지하실</b>입니다. 같은 집 안에 있지만, CPU와 RAM과는 별도의 공간입니다.<br><br>마치 집 안의 지하실처럼, 같은 집 안에 있지만 다른 층에 있습니다.`,
@@ -901,7 +1110,7 @@ const STATIONS = [
    ]},
   
   // Phase 2: 인터넷
-  {id:'dns', phase:2, icon:'📮', label:'우체국 (DNS)', tag:'이름 → 주소 변환', color:0x1565c0,
+  {id:'dns', minLevel:1, phase:2, icon:'📮', label:'우체국 (DNS)', tag:'이름 → 주소 변환', color:0x1565c0,
    pos:new THREE.Vector3(0, 1.5, 8), camPos:new THREE.Vector3(-3, 4, 12),
    levels:[
     `<b>왜 우체국으로 표현했을까요?</b><br><br>DNS는 <b>이름을 주소로 바꿔주는 전화번호부</b>입니다. 마치 우체국에서 "김밥천국"이라고 하면 "02-1234-5678"이라고 알려주는 것처럼요.`,
@@ -909,7 +1118,7 @@ const STATIONS = [
     `<b>도메인의 힘</b><br><br>도메인은 1년에 만 원 안팎이면 등록할 수 있습니다. 가게가 이사를 가도 상호는 그대로라서, 단골은 상호만 기억하면 되는 것과 같죠.<br><br>도메인은 "외우기 편한 번호"가 아니라, "내 서비스의 이름과 정체성을 지켜주는 방패"입니다.`
    ]},
   
-  {id:'router', phase:2, icon:'🚦', label:'교차로 (라우터)', tag:'데이터 경로 결정', color:0x00897b,
+  {id:'router', minLevel:1, phase:2, icon:'🚦', label:'교차로 (라우터)', tag:'데이터 경로 결정', color:0x00897b,
    pos:new THREE.Vector3(0, 1.8, -8), camPos:new THREE.Vector3(-3, 4, -5),
    levels:[
     `<b>왜 교차로로 표현했을까요?</b><br><br>라우터는 <b>데이터가 갈 길을 정해주는 교차로</b>입니다. 마치 교차로에서 차량이 어디로 갈지 정해지는 것처럼, 데이터도 라우터에서 목적지를 정합니다.`,
@@ -918,7 +1127,7 @@ const STATIONS = [
    ]},
   
   // Phase 3: 서버
-  {id:'server', phase:3, icon:'🏭', label:'공장 (서버)', tag:'백엔드 · 24시간 가동', color:0xffd93d,
+  {id:'server', minLevel:1, phase:3, icon:'🏭', label:'공장 (서버)', tag:'백엔드 · 24시간 가동', color:0xffd93d,
    pos:new THREE.Vector3(8, 2, 5), camPos:new THREE.Vector3(10, 5, 10),
    levels:[
     `<b>왜 공장으로 표현했을까요?</b><br><br>서버는 <b>24시간 쉬지 않고 돌아가는 거대한 컴퓨터</b>입니다. 마치 공장이 쉬지 않고 제품을 만드는 것처럼요.`,
@@ -926,7 +1135,7 @@ const STATIONS = [
     `<b>서버와 프론트엔드의 관계</b><br><br>이렇게 눈에 안 보이는 곳에서 일하는 부분을 통틀어 <b>백엔드(Backend)</b>라고 부릅니다.<br><br>여러분이 직접 보거나 만질 수는 없고, 오직 택배기사(API)를 통해서만 연락할 수 있습니다.`
    ]},
   
-  {id:'database', phase:3, icon:'📦', label:'창고 (데이터베이스)', tag:'데이터 저장소', color:0xfd79a8,
+  {id:'database', minLevel:1, phase:3, icon:'📦', label:'창고 (데이터베이스)', tag:'데이터 저장소', color:0xfd79a8,
    pos:new THREE.Vector3(8, 1.2, -5), camPos:new THREE.Vector3(10, 3.5, -2),
    levels:[
     `<b>왜 창고로 표현했을까요?</b><br><br>데이터베이스는 <b>수많은 사람들의 기록을 깔끔하게 정리해 보관하는 창고</b>입니다.<br><br>표(테이블) 형태로 정리되어 있어 빠르게 찾을 수 있습니다.`,
@@ -934,7 +1143,7 @@ const STATIONS = [
     `<b>데이터베이스와 저장장치의 관계</b><br><br>집 안의 저장장치는 "나만 쓰는 서랍"이고, 데이터베이스는 "수많은 사람들의 기록을 정리해둔 거대한 도서관 서가"에 가깝습니다.<br><br>마치 집 안의 서랍과 공장의 창고가 다른 것처럼요.`
    ]},
   
-  {id:'firewall', phase:3, icon:'🛡️', label:'문 (방화벽)', tag:'보안 · 출입 통제', color:0xc62828,
+  {id:'firewall', minLevel:1, phase:3, icon:'🛡️', label:'문 (방화벽)', tag:'보안 · 출입 통제', color:0xc62828,
    pos:new THREE.Vector3(4, 1.2, -8), camPos:new THREE.Vector3(2, 3, -5),
    levels:[
     `<b>왜 문으로 표현했을까요?</b><br><br>방화벽은 <b>컴퓨터의 보안을 담당하는 경비원</b>입니다. 마치 건물의 문을 지키는 경비원처럼요.`,
@@ -942,7 +1151,7 @@ const STATIONS = [
     `<b>방화벽이 중요한 이유</b><br><br>그래서 방화벽은 컴퓨터 보안의 첫 번째 라인이 됩니다. 바이러스나 해커가 침입하는 것을 막아줍니다.<br><br>마치 건물의 문을 잠그는 것과 같습니다.`
    ]},
   
-  {id:'hosting', phase:3, icon:'☁️', label:'무료 호스팅', tag:'공짜로 세상에 올리기', color:0x00bcd4,
+  {id:'hosting', minLevel:1, phase:3, icon:'☁️', label:'무료 호스팅', tag:'공짜로 세상에 올리기', color:0x00bcd4,
    pos:new THREE.Vector3(-2, 1.5, -8), camPos:new THREE.Vector3(-5, 4, -5),
    levels:[
     `<b>공짜로 세상에 올리기</b><br><br>여러분이 만든 웹사이트를 남들이 볼 수 있게 인터넷에 올리고 싶죠?为此 서버가 필요합니다.<br><br>공짜로 서버를 주는 곳이 여럿 있지만, "공짜의 세계는 줄어드는 중"입니다.<br><br>Heroku(2022년 종료), Railway(2023년), Fly.io(2024년), Glitch(2025년 7월 종료) 등 무료 서비스들이 사라졌습니다. 암호화폐 채굴 같은 악용 때문이죠.<br><br><b>지금 무료인 것도 언젠가 바뀔 수 있다</b>는 전제로, 가입 전에 공식 요금 페이지를 확인하는 습관이 안전합니다.`,
@@ -951,7 +1160,7 @@ const STATIONS = [
    ]},
   
   // Phase 4: 전체 조망
-  {id:'overview', phase:4, icon:'🔭', label:'전체 조망', tag:'풀스택 · 모든 것의 연결', color:0xffffff,
+  {id:'overview', minLevel:1, phase:4, icon:'🔭', label:'전체 조망', tag:'풀스택 · 모든 것의 연결', color:0xffffff,
    pos:new THREE.Vector3(0, 10, 0), camPos:new THREE.Vector3(0, 25, 30), lookAt:new THREE.Vector3(0, 0, 0),
    levels:[
     `<b>이제 멀리서 마을 전체를 한눈에 봅시다.</b><br><br>왼쪽 주택가는 <b>프론트엔드</b>(여러분이 보고 만지는 화면), 오른쪽 공장/창고는 <b>백엔드</b>(숨어서 일하는 서버)입니다.`,
@@ -959,25 +1168,165 @@ const STATIONS = [
     `<b>데이터 흐름</b><br><br>사용자가 버튼을 누르면, 택배기사(API)가 공장으로 달려가고, 공장이 창고에서 정보를 찾아돌려보내고, 우체국이 주소를 확인해줍니다.<br><br>이 전체 흐름을 <b>풀스택(Full Stack)</b>이라고 합니다.`
    ]},
   
-  {id:'portal', phase:4, icon:'🚪', label:'포탈', tag:'다음 카테고리로 이동', color:0x9c27b0,
+  {id:'portal', minLevel:1, phase:4, icon:'🚪', label:'포탈', tag:'다음 카테고리로 이동', color:0x9c27b0,
    pos:new THREE.Vector3(15, 1.5, 0), camPos:new THREE.Vector3(18, 3, 5),
    levels:[
     `<b>다음 카테고리로 이동합니다.</b><br><br>이 포탈을 클릭하면 <b>다음 카테고리</b>로 이동합니다.<br><br>각 카테고리는 컴퓨터의 다른 영역을 설명합니다.`,
     `<b>카테고리 목록</b><br><br>1. 컴퓨터 구조 (현재 위치)<br>2. 인터넷<br>3. 프로그래밍 언어<br>4. 프론트엔드<br>5. 백엔드<br>6. Git<br>7. 보안`,
     `<b>자유롭게 이동</b><br><br>원하는 카테고리를 자유롭게 선택할 수 있습니다.<br><br>각 카테고리는 독립적인 맵으로 구성되어 있습니다.`
    ]},
+
+  // Level 2 stations (중급)
+  {id:'gpu', minLevel:2, phase:1, icon:'🎮', label:'그래픽 공방 (GPU)', tag:'화면을 그리는 전문가', color:0x7c4dff,
+   pos:new THREE.Vector3(-4, 1.2, 3), camPos:new THREE.Vector3(-2, 4, 7),
+   levels:[
+    `<b>왜 별도의 그림 방이 있을까요?</b><br><br>GPU는 화면에 보이는 모든 그림과 영상을 그리는 전문가입니다. CPU가 수학 문제를 푸는 것이라면, GPU는 그림을 그리는 것입니다!`,
+    `<b>GPU의 역할</b><br><br>게임, 동영상, 3D 모델링 등 화면에 보이는 모든 것을 빠르게 그립니다. 수천 개의 작은 계산을 동시에 할 수 있어요.`,
+    `<b>GPU와 CPU의 관계</b><br><br>CPU는 모든 일을 다 하지만 한 번에 하나만, GPU는 그림 그리기에만 특화되어 있어 엄청 빠릅니다. 둘이 함께 일하면 최고의 성능!`
+   ]},
+
+  {id:'monitor', minLevel:2, phase:1, icon:'🖥️', label:'전시장 (모니터)', tag:'결과물을 눈에 보이게', color:0x00e5ff,
+   pos:new THREE.Vector3(-12, 1.5, 3), camPos:new THREE.Vector3(-14, 4, 7),
+   levels:[
+    `<b>왜 전시장으로 표현했을까요?</b><br><br>모니터는 컴퓨터가 만든 결과물을 보여주는 전시 공간입니다. 마치 미술관의 전시장처럼요.`,
+    `<b>모니터의 역할</b><br><br>컴퓨터가 처리한 결과를 눈에 보이는 hình상으로 바꿔서 보여줍니다. 해상도, 주사율, 색상 표현력이 중요해요.`,
+    `<b>모니터와 GPU의 관계</b><br><br>GPU가 그린 그림을 모니터가 보여줍니다. GPU가 빨리 그려도 모니터가 느리면 소용없어요. 둘의 균형이 중요합니다.`
+   ]},
+
+  {id:'html_css', minLevel:2, phase:2, icon:'🎨', label:'도안실 (HTML/CSS)', tag:'웹페이지의 골조와 옷', color:0xff7043,
+   pos:new THREE.Vector3(5, 1.2, 10), camPos:new THREE.Vector3(2, 4, 14),
+   levels:[
+    `<b>왜 도안실로 표현했을까요?</b><br><br>HTML/CSS는 웹페이지의 골조와 옷을 만드는 디자인실입니다. 마치 건축의 설계도처럼요.`,
+    `<b>HTML의 역할</b><br><br>웹페이지의 뼈대를 만듭니다. 제목, 본문, 이미지, 버튼 등 모든 요소의 구조를 정해줘요.`,
+    `<b>CSS의 역할</b><br><br>HTML로 만든 골조에 색상, 크기, 간격, 애니메이션 등 예쁜 옷을 입혀줍니다. 같은 HTML도 CSS에 따라 전혀 달라 보여요.`
+   ]},
+
+  {id:'javascript', minLevel:2, phase:2, icon:'⚡', label:'제어소 (JavaScript)', tag:'웹페이지의 두뇌', color:0xffd600,
+   pos:new THREE.Vector3(-6, 1.5, -5), camPos:new THREE.Vector3(-8, 4, -2),
+   levels:[
+    `<b>왜 제어소로 표현했을까요?</b><br><br>JavaScript는 웹페이지에 동작을 부여하는 두뇌입니다. 마치 로봇의 제어반처럼요.`,
+    `<b>JavaScript의 역할</b><br><br>버튼을 누르면 반응하고, 데이터를 불러오고, 화면을 바꾸는 모든 동작을 담당합니다.`,
+    `<b>JavaScript와 HTML/CSS의 관계</b><br><br>HTML이 골조, CSS가 옷이라면, JavaScript는 몸입니다. 셋이 합쳐져야 살아있는 웹페이지가 됩니다.`
+   ]},
+
+  {id:'nodejs', minLevel:2, phase:2, icon:'🔧', label:'작업장 (Node.js/Python)', tag:'서버 측 처리', color:0x69f0ae,
+   pos:new THREE.Vector3(3, 1.2, 12), camPos:new THREE.Vector3(0, 4, 15),
+   levels:[
+    `<b>왜 작업장으로 표현했을까요?</b><br><br>서버 측 언어는 실제 데이터를 처리하는 작업실입니다. 웹페이지 뒤에서 쉬지 않고 일하는 장인들!`,
+    `<b>Node.js와 Python</b><br><br>Node.js는 JavaScript로 서버를 만들 수 있게 해주고, Python은 간결하고 강력한 언어입니다. 둘 다 서버에서 많이 쓰여요.`,
+    `<b>백엔드 언어의 역할</b><br><br>사용자의 요청을 받아서 데이터베이스에서 정보를 찾고, 계산하고, 결과를 돌려보내는 모든 처리를 담당합니다.`
+   ]},
+
+  {id:'cloud', minLevel:2, phase:3, icon:'🏙️', label:'구름 도시 (AWS/Azure)', tag:'클라우드 서비스', color:0x40c4ff,
+   pos:new THREE.Vector3(13, 2, 2), camPos:new THREE.Vector3(15, 5, 6),
+   levels:[
+    `<b>왜 구름 도시로 표현했을까요?</b><br><br>클라우드 서비스는 인터넷 위의 거대한 도시입니다. 세계 곳곳의 컴퓨터들이 연결되어 있어요.`,
+    `<b>AWS와 Azure의 역할</b><br><br>서버, 데이터베이스, 저장공간 등을 인터넷으로 빌려주는 서비스입니다. 직접 컴퓨터를 사지 않고도 인터넷으로 빌려 쓸 수 있어요.`,
+    `<b>클라우드의 장점</b><br><br>처음엔 비싸 보이지만, 쓴 만큼만 내면 됩니다. 마치 수도세처럼요. 필요할 때 늘리고, 안 쓸 때 줄일 수 있어요.`
+   ]},
+
+  {id:'loadbalancer', minLevel:2, phase:3, icon:'⚖️', label:'교차로 배분기 (로드밸런서)', tag:'요청 균등 배분', color:0x1de9b6,
+   pos:new THREE.Vector3(12, 1.5, -7), camPos:new THREE.Vector3(14, 4, -4),
+   levels:[
+    `<b>왜 교차로 배분기로 표현했을까요?</b><br><br>로드밸런서는 수많은 사용자의 요청을 서버들에 골고루 나눠주는 교차로의 신호등입니다.`,
+    `<b>로드밸런서의 역할</b><br><br>한 서버에 요청이 몰리면 느려지잖아요. 로드밸런서가 요청을 균등하게 나눠서 모든 서버가 골고루 일하게 해줘요.`,
+    `<b>로드밸런서가 없으면?</b><br><br>인기 있는 서비스에 많은 사람이 동시에 접속하면, 한 서버가 과부하로 쓰러질 수 있습니다. 로드밸런서가 이를 막아줍니다.`
+   ]},
+
+  {id:'git', minLevel:2, phase:4, icon:'📖', label:'기록실 (Git)', tag:'코드 변경 기록', color:0xff5252,
+   pos:new THREE.Vector3(-14, 1.5, -3), camPos:new THREE.Vector3(-16, 4, 1),
+   levels:[
+    `<b>왜 기록실로 표현했을까요?</b><br><br>Git은 코드의 모든 변경 기록을 보관하는 시간 여행 장치입니다. 과거의 어떤 시점으로든 돌아갈 수 있어요.`,
+    `<b>Git의 역할</b><br><br>코드를 수정할 때마다 자동으로 기록을 남깁니다. 실수로 코드를 망가뜨려도 이전 버전으로 되돌릴 수 있어요.`,
+    `<b>Git과 버전 관리</b><br><br>여러 명이 동시에 같은 코드를 작업할 때, Git이 누가 뭘 수정했는지 기록하고 충돌을 해결해줍니다. 프로그래밍의 필수 도구!`
+   ]},
+
+  // Level 3 stations (고급)
+  {id:'cache', minLevel:3, phase:1, icon:'⚡', label:'속도 경보 (캐시)', tag:'자주 쓰는 데이터 보관', color:0xffab00,
+   pos:new THREE.Vector3(-11, 1.2, 8), camPos:new THREE.Vector3(-13, 4, 11),
+   levels:[
+    `<b>왜 속도 경보로 표현했을까요?</b><br><br>캐시는 자주 쓰는 데이터를 빠르게 꺼내는 비밀 통로입니다. 마치 단골집의 단골 메뉴처럼요.`,
+    `<b>캐시의 역할</b><br><br>같은 데이터를 계속 찾아보면 느려지잖아요. 캐시는 자주 쓰는 데이터를 가까이에 빠르게 보관해뒀다가 즉시 줍니다.`,
+    `<b>캐시와 저장장치의 관계</b><br><br>저장장치는 느리지만 넓고, 캐시는 엄청 빠르지만 아주 좁습니다. 자주 안 쓰는 건 저장장치에, 자주 쓰는 건 캐시에!`
+   ]},
+
+  {id:'react', minLevel:3, phase:2, icon:'⚛️', label:'프레임워크 광장 (React/Vue)', tag:'재사용 가능한 블록', color:0x448aff,
+   pos:new THREE.Vector3(0, 1.5, 14), camPos:new THREE.Vector3(-3, 4, 17),
+   levels:[
+    `<b>왜 프레임워크 광장으로 표현했을까요?</b><br><br>React/Vue는 웹페이지를 만들 때 쓰는 도구 상자입니다. 처음부터 다 만들지 않고, 미리 만든 블록으로 빠르게 조립해요.`,
+    `<b>React와 Vue</b><br><br>둘 다 복잡한 웹페이지를 쉽게 만들 수 있게 해줍니다. React는 페이스북이, Vue는 커뮤니티가 만들었어요.`,
+    `<b>프레임워크의 장점</b><br><br>매번 바퀴를 새로 만들 필요 없이, 검증된 뼈대 위에 내 로직만 얹으면 됩니다. 개발 속도가 엄청 빨라져요!`
+   ]},
+
+  {id:'http', minLevel:3, phase:2, icon:'📬', label:'우편 규칙 (HTTP)', tag:'데이터 전송 규칙', color:0x536dfe,
+   pos:new THREE.Vector3(-8, 1.2, -12), camPos:new THREE.Vector3(-10, 4, -9),
+   levels:[
+    `<b>왜 우편 규칙으로 표현했을까요?</b><br><br>HTTP는 인터넷에서 데이터가 오가는 규칙입니다. 마치 우편 서비스의 배송 규칙처럼요.`,
+    `<b>HTTP의 역할</b><br><br>GET, POST, PUT, DELETE 같은 메서드로 서버에 요청합니다. 웹페이지를 열면 브라우저가 HTTP로 서버에 데이터를 달라고 해요.`,
+    `<b>HTTP와 HTTPS</b><br><br>HTTPS는 암호화된 HTTP입니다. 중요한 정보(비밀번호, 카드번호)를 보낼 땐 반드시 HTTPS를 써야 안전합니다.`
+   ]},
+
+  {id:'docker', minLevel:3, phase:3, icon:'🐳', label:'컨테이너 야적장 (Docker)', tag:'이식 가능한 실행 환경', color:0x18ffff,
+   pos:new THREE.Vector3(14, 2, 8), camPos:new THREE.Vector3(16, 5, 11),
+   levels:[
+    `<b>왜 컨테이너 야적장으로 표현했을까요?</b><br><br>Docker는 프로그램을 컨테이너에 담아서 어디서든 똑같이 실행되게 하는 기술입니다.`,
+    `<b>Docker의 역할</b><br><br>'내 컴퓨터에서 잘 되는데 왜 너네 컴퓨터에선 안 되지?'라는 문제를 해결해줍니다. 프로그램과 필요한 모든 것을 컨테이너에 담아요.`,
+    `<b>Docker와 클라우드의 관계</b><br><br>클라우드에서 Docker 컨테이너를 배포하면, 세계 어디서든 똑같이 실행됩니다. 대규모 서비스의 필수 도구!`
+   ]},
+
+  {id:'cicd', minLevel:3, phase:3, icon:'🔄', label:'자동 공정 (CI/CD)', tag:'자동 테스트 · 배포', color:0x64ffda,
+   pos:new THREE.Vector3(15, 1.5, -5), camPos:new THREE.Vector3(17, 4, -2),
+   levels:[
+    `<b>왜 자동 공정으로 표현했을까요?</b><br><br>CI/CD는 코드를 자동으로 테스트하고 배포하는 공장의 자동화 라인입니다.`,
+    `<b>CI (지속적 통합)</b><br><br>코드를 수정하면 자동으로 테스트를 돌려서 문제가 없는지 확인해줍니다.`,
+    `<b>CD (지속적 배포)</b><br><br>테스트를 통과하면 자동으로 서비스에 반영됩니다. 수동으로 일일이 하지 않아도 되어요!`
+   ]},
+
+  {id:'security', minLevel:3, phase:3, icon:'🔐', label:'금고 (보안)', tag:'데이터 보호', color:0xb388ff,
+   pos:new THREE.Vector3(-14, 1.5, -8), camPos:new THREE.Vector3(-16, 4, -5),
+   levels:[
+    `<b>왜 금고로 표현했을까요?</b><br><br>보안은 컴퓨터 시스템의 소중한 데이터를 지키는 금고입니다.`,
+    `<b>보안의 역할</b><br><br>암호화, 인증, 접근 제어 등으로 데이터를 안전하게 지킵니다. 해커로부터 시스템을 보호하는 최후의 방어선이에요.`,
+    `<b>보안이 중요한 이유</b><br><br>하나의 보안 취약점으로 수백만 명의 개인정보가 유출될 수 있습니다. 보안은 개발의 마지막이 아니라 처음부터 고려해야 합니다.`
+   ]},
 ];
 
 const hotspots=[]; const raycastTargets=[];
-STATIONS.forEach((s,i)=>{
-  const h = makeHotspot(s.color);
-  h.position.copy(s.pos);
-  scene.add(h);
-  h.userData.core.userData.stationId = s.id;
-  h.userData.halo.userData.stationId = s.id;
-  raycastTargets.push(h.userData.core, h.userData.halo);
-  s.marker = h; s.phaseNum = s.phase; s.animPhase = i*0.7;
-});
+function rebuildHotspots(){
+  hotspots.forEach(h => scene.remove(h));
+  hotspots.length = 0;
+  raycastTargets.length = 0;
+  STATIONS.forEach((s, i) => {
+    if(s.minLevel > currentLevel) return;
+    const h = makeHotspot(s.color);
+    h.position.copy(s.pos);
+    scene.add(h);
+    h.userData.core.userData.stationId = s.id;
+    h.userData.halo.userData.stationId = s.id;
+    raycastTargets.push(h.userData.core, h.userData.halo);
+    s.marker = h;
+    s.animPhase = i * 0.7;
+    hotspots.push(h);
+  });
+}
+rebuildHotspots();
+
+function showLevelUnlock(level){
+  const msg = LEVEL_UNLOCK_MSG[level];
+  if(!msg) return;
+  const el = document.getElementById('levelUnlock');
+  el.innerHTML = `
+    <h2>${msg.title}</h2>
+    <p>${msg.desc}</p>
+    <div class="level-badge ${msg.cls}">${msg.badge}</div>
+    <br>
+    <button id="levelUnlockBtn">계속 탐험하기</button>
+  `;
+  el.classList.add('show');
+  document.getElementById('levelUnlockBtn').addEventListener('click', ()=>{
+    el.classList.remove('show');
+  });
+}
 
 /* ============================================================
    Camera Controls - Standard Map Style
@@ -1152,27 +1501,59 @@ const phaseProgress = document.getElementById('phaseProgress');
 
 function renderDrawer(){
   const visitedOrder = Array.from(visited);
-  stationList.innerHTML = STATIONS.map((s, i)=>{
-    const orderNum = visitedOrder.indexOf(s.id);
-    const isVisited = orderNum !== -1;
-    return `
-    <div class="station-item ${isVisited?'visited':''}" data-id="${s.id}">
-      <span class="chk">${isVisited ? (orderNum+1) : '○'}</span>
-      <span class="si-icon">${s.icon}</span>
-      <span class="si-text">
-        <div class="si-label">${s.label}</div>
-        <div class="si-tag">${s.tag}</div>
-      </span>
-      <span class="si-phase">${s.phase}단계</span>
-    </div>`;
-  }).join('');
-  stationList.querySelectorAll('.station-item').forEach(el=>{
+  const levelStations = STATIONS.filter(s => s.minLevel <= currentLevel);
+  const grouped = {};
+  for(let lv = 1; lv <= currentLevel; lv++){
+    grouped[lv] = STATIONS.filter(s => s.minLevel === lv);
+  }
+  let html = '';
+  for(let lv = 1; lv <= currentLevel; lv++){
+    const label = LEVEL_NAMES[lv];
+    html += `<h4 style="margin-top:14px;color:${lv===1?'#a29bfe':lv===2?'#00cec9':'#ff6b6b'}">${label}</h4>`;
+    grouped[lv].forEach(s => {
+      const orderNum = visitedOrder.indexOf(s.id);
+      const isVisited = orderNum !== -1;
+      html += `
+      <div class="station-item ${isVisited?'visited':''}" data-id="${s.id}">
+        <span class="chk">${isVisited ? (orderNum+1) : '○'}</span>
+        <span class="si-icon">${s.icon}</span>
+        <span class="si-text">
+          <div class="si-label">${s.label}</div>
+          <div class="si-tag">${s.tag}</div>
+        </span>
+        <span class="si-phase">${s.phase}단계</span>
+      </div>`;
+    });
+  }
+  // Show locked levels
+  for(let lv = currentLevel + 1; lv <= 3; lv++){
+    const label = LEVEL_NAMES[lv];
+    const lockedStations = STATIONS.filter(s => s.minLevel === lv);
+    html += `<h4 style="margin-top:14px;color:#555">🔒 ${label} (잠김)</h4>`;
+    lockedStations.forEach(s => {
+      html += `
+      <div class="station-item" data-id="${s.id}" style="opacity:.35;pointer-events:none">
+        <span class="chk">🔒</span>
+        <span class="si-icon">${s.icon}</span>
+        <span class="si-text">
+          <div class="si-label">${s.label}</div>
+          <div class="si-tag">${s.tag}</div>
+        </span>
+        <span class="si-phase">${s.phase}단계</span>
+      </div>`;
+    });
+  }
+  stationList.innerHTML = html;
+  stationList.querySelectorAll('.station-item:not([style*="pointer-events:none"])').forEach(el=>{
     el.addEventListener('click', ()=>{
       const st = STATIONS.find(s=>s.id===el.dataset.id);
       if(st) visitStation(st);
       document.getElementById('drawer').classList.remove('open');
     });
   });
+  // Update progress chip to be level-aware
+  const currentLevelCount = levelStations.length;
+  progressChip.textContent = `${visited.size} / ${currentLevelCount} 방문`;
 }
 renderDrawer();
 
@@ -1196,12 +1577,22 @@ async function visitStation(st){
     visitHistory.push(st.id);
   }
   visited.add(st.id);
-  progressChip.textContent = `${visited.size} / ${STATIONS.length} 방문`;
   renderDrawer();
   updatePhaseProgress(st.phase);
   if(visited.size === STATIONS.length){
     finishToast.classList.add('show');
     setTimeout(()=>finishToast.classList.remove('show'), 5000);
+  }
+  // Check if current level is complete
+  const currentLevelStations = STATIONS.filter(s => s.minLevel === currentLevel);
+  const currentLevelVisited = currentLevelStations.every(s => visited.has(s.id));
+  if(currentLevelVisited && currentLevel < 3){
+    const nextLevel = currentLevel + 1;
+    currentLevel = nextLevel;
+    document.getElementById('levelChip').textContent = LEVEL_NAMES[nextLevel];
+    showLevelUnlock(nextLevel);
+    rebuildHotspots();
+    renderDrawer();
   }
   showCaption(st);
 }
@@ -1271,7 +1662,9 @@ function showCaption(st){
   }
   
   document.getElementById('nextBtn').addEventListener('click', ()=>{
-    const next = STATIONS[(idx+1) % STATIONS.length];
+    const visible = STATIONS.filter(s => s.minLevel <= currentLevel);
+    const curIdx = visible.findIndex(s => s.id === st.id);
+    const next = visible[(curIdx + 1) % visible.length];
     visitStation(next);
   });
 }
@@ -1387,7 +1780,7 @@ function animate(){
   }
 
   // Buildings float
-  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, portalDoor].forEach((b, i) => {
+  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, portalDoor, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, cacheBuilding, reactBuilding, httpBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
     b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
   });
 
@@ -1403,7 +1796,8 @@ function animate(){
   });
 
   // Hotspots pulse
-  STATIONS.forEach((s,i)=>{
+  STATIONS.forEach((s)=>{
+    if(!s.marker || s.minLevel > currentLevel) return;
     const sc = 1 + 0.18*Math.sin(t*2.5 + s.animPhase);
     s.marker.userData.core.scale.setScalar(sc);
     s.marker.userData.halo.scale.setScalar(sc);
