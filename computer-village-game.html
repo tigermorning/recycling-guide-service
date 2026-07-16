@@ -446,10 +446,11 @@ mbCtx.fillText('모든 부품이 연결되는 골조', 256, 110);
 const mbLabelTexture = new THREE.CanvasTexture(mbLabelCanvas);
 const mbLabel = new THREE.Mesh(
   new THREE.PlaneGeometry(3, 0.75),
-  new THREE.MeshBasicMaterial({map:mbLabelTexture, transparent:true, side:THREE.DoubleSide})
+  new THREE.MeshBasicMaterial({map:mbLabelTexture, transparent:true, side:THREE.DoubleSide, depthTest:false})
 );
-mbLabel.position.set(-12, 4.5, 7);
+mbLabel.position.set(-10, 0.8, 6);
 mbLabel.rotation.x = -0.15;
+mbLabel.renderOrder = 999;
 motherboardFence.add(mbLabel);
 
 scene.add(motherboardFence);
@@ -722,7 +723,7 @@ doorHandle.position.set(0.2, 0.65, 1.56);
 cpuRamHouse.add(doorHandle);
 
 // Main label
-cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 2.5, 2.5));
+cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 5.0, 2.5));
 
 // CPU sub-label (left)
 const cpuSub = miniLabel('CPU (큰 방)', 'rgba(139,115,85,0.9)');
@@ -2015,9 +2016,24 @@ cacheAlarm.rotation.y = Math.PI/2;
 cpuRamHouse.add(cacheAlarm);
 
 // Cache label
-const cacheLabel = miniLabel('캐시 (Cache)', 'rgba(255,235,59,0.9)');
-cacheLabel.position.set(2.4, 2.5, 0);
+const cacheLabelCanvas = document.createElement('canvas');
+cacheLabelCanvas.width = 512; cacheLabelCanvas.height = 160;
+const cacheLabelCtx = cacheLabelCanvas.getContext('2d');
+cacheLabelCtx.fillStyle = 'rgba(183,28,28,0.95)';
+cacheLabelCtx.beginPath(); cacheLabelCtx.roundRect(5,5,502,150,12); cacheLabelCtx.fill();
+cacheLabelCtx.strokeStyle = '#ff1744'; cacheLabelCtx.lineWidth = 4;
+cacheLabelCtx.beginPath(); cacheLabelCtx.roundRect(5,5,502,150,12); cacheLabelCtx.stroke();
+cacheLabelCtx.fillStyle = '#ffeb3b'; cacheLabelCtx.font = 'bold 48px Arial'; cacheLabelCtx.textAlign = 'center';
+cacheLabelCtx.fillText('⚡ 캐시 (Cache)', 256, 70);
+cacheLabelCtx.fillStyle = '#ffccbc'; cacheLabelCtx.font = '24px Arial';
+cacheLabelCtx.fillText('자주 쓰는 데이터를 빠르게 보관', 256, 120);
+const cacheLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.5, 0.8),
+  new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(cacheLabelCanvas), transparent: true, side: THREE.DoubleSide, depthTest: false})
+);
+cacheLabel.position.set(2.6, 2.5, 0);
 cacheLabel.rotation.y = Math.PI/2;
+cacheLabel.renderOrder = 999;
 cpuRamHouse.add(cacheLabel);
 
 /* ---- 16. React/Vue / Framework Plaza ---- */
@@ -2828,6 +2844,19 @@ routingBuilding.add(signalBase);
 routingBuilding.add(makeLabel('신호등 (라우팅)', 'URL → 페이지 연결', 2.5, 2.0));
 routingBuilding.position.set(3, 0, -8);
 scene.add(routingBuilding);
+
+/* ---- Store original colors for level-based visibility ---- */
+const allBuildings = [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding];
+
+allBuildings.forEach(building => {
+  building.traverse(child => {
+    if(child.isMesh && child.material && child.material.color) {
+      if(!child.userData.origColor) {
+        child.userData.origColor = child.material.color.clone();
+      }
+    }
+  });
+});
 
 /* ---- Characters ---- */
 const people = [];
@@ -3779,8 +3808,61 @@ function animate(){
   }
 
   // Buildings float
-  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
+  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding].forEach((b, i) => {
     b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
+  });
+
+  // Level-based building visibility
+  const buildingStationMap = [
+    {building: cpuRamHouse, id: 'cpu'},
+    {building: postOffice, id: 'dns'},
+    {building: routerTower, id: 'router'},
+    {building: serverFactory, id: 'server'},
+    {building: databaseWarehouse, id: 'database'},
+    {building: firewallGate, id: 'firewall'},
+    {building: gpuBuilding, id: 'gpu'},
+    {building: monitorBuilding, id: 'monitor'},
+    {building: htmlCssBuilding, id: 'html_css'},
+    {building: javascriptBuilding, id: 'javascript'},
+    {building: nodejsBuilding, id: 'nodejs'},
+    {building: cloudBuilding, id: 'cloud'},
+    {building: loadbalancerBuilding, id: 'loadbalancer'},
+    {building: gitBuilding, id: 'git'},
+    {building: reactBuilding, id: 'react'},
+    {building: httpBuilding, id: 'http'},
+    {building: httpsBuilding, id: 'https'},
+    {building: dockerBuilding, id: 'docker'},
+    {building: cicdBuilding, id: 'cicd'},
+    {building: securityBuilding, id: 'security'},
+    {building: bankBuilding, id: 'process_thread'},
+    {building: eggBuilding, id: 'kernel_shell'},
+    {building: deskBuilding, id: 'browser_cache'},
+    {building: tokenBuilding, id: 'ai_token'},
+    {building: sshBuilding, id: 'ssh'},
+    {building: syncAsyncBuilding, id: 'sync_async'},
+    {building: routingBuilding, id: 'routing'}
+  ];
+
+  buildingStationMap.forEach(({building, id}) => {
+    const station = STATIONS.find(s => s.id === id);
+    if(!station) return;
+    const unlocked = station.minLevel <= currentLevel;
+    building.traverse(child => {
+      if(child.isMesh && child.material && child.material.color) {
+        if(!child.userData.origColor) return;
+        if(unlocked) {
+          child.material.color.copy(child.userData.origColor);
+          child.material.opacity = 1.0;
+        } else {
+          // Grayscale + dark for locked buildings
+          const orig = child.userData.origColor;
+          const lum = orig.r * 0.3 + orig.g * 0.59 + orig.b * 0.11;
+          child.material.color.setRGB(lum * 0.35, lum * 0.35, lum * 0.4);
+          child.material.opacity = 0.35;
+          child.material.transparent = true;
+        }
+      }
+    });
   });
 
   // CPU indicator rotates
