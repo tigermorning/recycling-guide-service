@@ -1029,14 +1029,19 @@ addEventListener('pointermove', e => {
   const dy = e.clientY - lastMouse.y;
   moved += Math.abs(dx) + Math.abs(dy);
   
-  const panSpeed = camGoal.radius * 0.002;
-  const worldUp = new THREE.Vector3(0, 1, 0);
-  const camDir = new THREE.Vector3();
-  camera.getWorldDirection(camDir);
-  const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
-  
-  camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
-  camGoal.target.y += dy * panSpeed;
+  if (e.buttons === 2 || (e.buttons === 1 && e.ctrlKey)) {
+    camGoal.theta -= dx * 0.005;
+    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.2, Math.PI - 0.2);
+  } else {
+    const panSpeed = camGoal.radius * 0.002;
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
+    
+    camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
+    camGoal.target.y += dy * panSpeed;
+  }
   
   lastMouse.x = e.clientX;
   lastMouse.y = e.clientY;
@@ -1058,21 +1063,6 @@ canvas.addEventListener('pointerdown', e => {
     lastMouse.x = e.clientX;
     lastMouse.y = e.clientY;
     canvas.style.cursor = 'crosshair';
-  }
-});
-
-addEventListener('pointermove', e => {
-  if (!isDragging || isFlying) return;
-  
-  if (e.buttons === 2 || (e.buttons === 1 && e.ctrlKey)) {
-    const dx = e.clientX - lastMouse.x;
-    const dy = e.clientY - lastMouse.y;
-    
-    camGoal.theta -= dx * 0.005;
-    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.2, Math.PI - 0.2);
-    
-    lastMouse.x = e.clientX;
-    lastMouse.y = e.clientY;
   }
 });
 
