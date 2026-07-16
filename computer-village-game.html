@@ -1066,10 +1066,8 @@ addEventListener('pointermove', e => {
   
   if (e.buttons === 2 || (e.buttons === 1 && e.ctrlKey)) {
     const dx = e.clientX - lastMouse.x;
-    const dy = e.clientY - lastMouse.y;
     
     camGoal.theta -= dx * 0.005;
-    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.2, Math.PI - 0.2);
     
     lastMouse.x = e.clientX;
     lastMouse.y = e.clientY;
