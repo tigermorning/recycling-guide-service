@@ -427,7 +427,7 @@ const mbLabel = new THREE.Mesh(
   new THREE.PlaneGeometry(3, 0.75),
   new THREE.MeshBasicMaterial({map:mbLabelTexture, transparent:true, side:THREE.DoubleSide})
 );
-mbLabel.position.set(-12, 6.0, 7);
+mbLabel.position.set(-12, 4.5, 7);
 mbLabel.rotation.x = -0.15;
 motherboardFence.add(mbLabel);
 
@@ -2434,8 +2434,8 @@ const camGoal = {
 
 const MIN_RADIUS = 8;
 const MAX_RADIUS = 55;
-const MIN_PHI = 0.5;
-const MAX_PHI = 1.8;
+const MIN_PHI = 0.2;
+const MAX_PHI = 2.5;
 
 function applyCamera() {
   camera.position.set(
