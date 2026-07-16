@@ -356,10 +356,10 @@ scene.add(createRoad([
 // CPU+RAM과 저장장치를 감싸는 울타리
 const motherboardFence = new THREE.Group();
 
-// 울타리 바닥 (메인보드 표면)
+// 울타리 바닥 (메인보드 표면) - 반투명으로 지하가 보이도록
 const mbFloor = new THREE.Mesh(
   new THREE.BoxGeometry(12, 0.1, 10),
-  new THREE.MeshStandardMaterial({color:0x1a5c1a, roughness:0.8})
+  new THREE.MeshStandardMaterial({color:0x1a5c1a, roughness:0.8, transparent:true, opacity:0.6})
 );
 mbFloor.position.set(-12, -0.05, 7);
 mbFloor.receiveShadow = true;
@@ -786,67 +786,75 @@ scene.add(basementGroup);
 /* ============================================================
    Buildings - Phase 2: 인터넷
    ============================================================ */
-/* ---- 2. Post Office / DNS ---- */
+/* ---- 2. DNS / Address Signpost ---- */
 const postOffice = new THREE.Group();
-postOffice.userData = {name:'우체국 (DNS)', tag:'이름 → 주소 변환', icon:'📮', phase:2, description:'전화번호부 = 이름을 번호로 바꿔주는 곳'};
+postOffice.userData = {name:'DNS (주소 안내판)', tag:'이름 → 주소 변환', icon:'📍', phase:2, description:'이름을 주소로 바꿔주는 이정표'};
 
-const poBody = new THREE.Mesh(
-  new THREE.BoxGeometry(2.5, 2.5, 2.5),
-  new THREE.MeshStandardMaterial({color:0x1565c0, roughness:0.7})
+// Main post (tall wooden post)
+const dnsPost = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.12, 0.15, 3.5, 8),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
 );
-poBody.position.y = 1.25;
-poBody.castShadow = true; poBody.receiveShadow = true;
-postOffice.add(poBody);
+dnsPost.position.y = 1.75;
+dnsPost.castShadow = true;
+postOffice.add(dnsPost);
 
-const poRoof = new THREE.Mesh(
-  new THREE.BoxGeometry(2.8, 0.15, 2.8),
-  new THREE.MeshStandardMaterial({color:0x0d47a1, roughness:0.6})
+// Cross bar
+const dnsCrossBar = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 0.12, 0.12),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
 );
-poRoof.position.y = 2.58;
-poRoof.castShadow = true;
-postOffice.add(poRoof);
+dnsCrossBar.position.y = 2.8;
+dnsCrossBar.castShadow = true;
+postOffice.add(dnsCrossBar);
 
-// Flag pole
-const flagPole = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.04, 0.04, 2.0, 8),
-  new THREE.MeshStandardMaterial({color:0xcccccc})
-);
-flagPole.position.set(0.8, 3.5, 0);
-postOffice.add(flagPole);
+// Sign boards pointing different directions
+const signColors = [0x1565c0, 0x43a047, 0xf57c00, 0xe53935];
+const signTexts = ['naver.com', 'google.com', 'github.com', 'daum.net'];
+const signAngles = [0, Math.PI/2, Math.PI, -Math.PI/2];
+const signOffsets = [1.1, 1.1, 1.1, 1.1];
 
-// Flag
-const flag = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.6, 0.35),
-  new THREE.MeshStandardMaterial({color:0x42a5f5, side:THREE.DoubleSide})
-);
-flag.position.set(1.1, 4.2, 0);
-postOffice.add(flag);
-
-// Mail slots on front
-[0x42a5f5, 0xef5350, 0xffa726, 0x66bb6a].forEach((col, i) => {
-  const slot = new THREE.Mesh(
-    new THREE.BoxGeometry(0.35, 0.2, 0.1),
-    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.3})
+signAngles.forEach((angle, i) => {
+  const signBoard = new THREE.Mesh(
+    new THREE.BoxGeometry(0.9, 0.35, 0.06),
+    new THREE.MeshStandardMaterial({color:signColors[i], roughness:0.5})
   );
-  slot.position.set(-0.6 + i * 0.42, 0.6, 1.31);
-  postOffice.add(slot);
+  signBoard.position.set(
+    Math.sin(angle) * signOffsets[i],
+    2.8 + (i % 2 === 0 ? 0.25 : -0.25),
+    Math.cos(angle) * signOffsets[i]
+  );
+  signBoard.rotation.y = angle;
+  postOffice.add(signBoard);
 });
 
-const poDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5, 1.0, 0.15),
-  new THREE.MeshStandardMaterial({color:0x0d47a1})
+// Top sign (DNS label)
+const dnsTopSign = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.4, 0.08),
+  new THREE.MeshStandardMaterial({color:0x0d47a1, roughness:0.5})
 );
-poDoor.position.set(0, 0.5, 1.33);
-postOffice.add(poDoor);
+dnsTopSign.position.y = 3.4;
+dnsTopSign.castShadow = true;
+postOffice.add(dnsTopSign);
 
-const poWin = new THREE.MeshStandardMaterial({color:0x64b5f6, emissive:0x64b5f6, emissiveIntensity:0.4});
-[{x:-0.7,z:1.31},{x:0.7,z:1.31}].forEach(p => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.12), poWin);
-  w.position.set(p.x, 1.8, p.z);
-  postOffice.add(w);
-});
+// Glowing address indicator
+const dnsGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(0.15, 12, 12),
+  new THREE.MeshStandardMaterial({color:0x42a5f5, emissive:0x42a5f5, emissiveIntensity:0.8})
+);
+dnsGlow.position.y = 3.7;
+postOffice.add(dnsGlow);
 
-postOffice.add(makeLabel('우체국 (DNS)', '이름 → 주소 변환', 5.0));
+// Small base
+const dnsBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8})
+);
+dnsBase.position.y = 0.15;
+dnsBase.castShadow = true; dnsBase.receiveShadow = true;
+postOffice.add(dnsBase);
+
+postOffice.add(makeLabel('DNS (주소 안내판)', '이름 → 주소 변환', 5.0));
 postOffice.position.set(-2, 0, 8);
 scene.add(postOffice);
 
@@ -1813,85 +1821,73 @@ reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가
 reactBuilding.position.set(0, 0, -9);
 scene.add(reactBuilding);
 
-/* ---- 17. HTTP Rules ---- */
+/* ---- 17. HTTP / Data Transmission Envelope ---- */
 const httpBuilding = new THREE.Group();
-httpBuilding.userData = {name:'우편 규칙 (HTTP)', tag:'데이터 전송 규칙', icon:'📬', phase:2, description:'인터넷에서 데이터가 오가는 규칙'};
+httpBuilding.userData = {name:'HTTP (데이터 전송)', tag:'데이터 전송 규칙', icon:'📨', phase:2, description:'데이터가 오가는 규칙을 보여주는 편지 봉투'};
 
-// Small mail sorting room
-const httpBody = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2.2, 2),
-  new THREE.MeshStandardMaterial({color:0x8bc34a, roughness:0.7})
+// Large envelope body
+const envBody = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 1.2, 0.15),
+  new THREE.MeshStandardMaterial({color:0xf5f5dc, roughness:0.6})
 );
-httpBody.position.y = 1.1;
-httpBody.castShadow = true; httpBody.receiveShadow = true;
-httpBuilding.add(httpBody);
+envBody.position.y = 0.8;
+envBody.castShadow = true; envBody.receiveShadow = true;
+httpBuilding.add(envBody);
 
-// Flat roof
-const httpRoof = new THREE.Mesh(
-  new THREE.BoxGeometry(2.3, 0.12, 2.3),
-  new THREE.MeshStandardMaterial({color:0x558b2f, roughness:0.6})
+// Envelope flap (V-shape top)
+const envFlap = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 0.6, 0.08),
+  new THREE.MeshStandardMaterial({color:0xe6ee9c, roughness:0.5})
 );
-httpRoof.position.y = 2.26;
-httpRoof.castShadow = true;
-httpBuilding.add(httpRoof);
+envFlap.position.set(0, 1.5, 0.04);
+envFlap.rotation.x = -0.3;
+httpBuilding.add(envFlap);
 
-// Mail slots numbered 200, 301, 404, 500
-const statusCodes = ['200', '301', '404', '500'];
-const statusColors = [0x66bb6a, 0x42a5f5, 0xffa726, 0xef5350];
-statusCodes.forEach((code, i) => {
-  const slotBg = new THREE.Mesh(
-    new THREE.BoxGeometry(0.35, 0.25, 0.08),
-    new THREE.MeshStandardMaterial({color:statusColors[i]})
+// Address lines on envelope
+const addrMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.4});
+[{y:0.9},{y:0.7},{y:0.5}].forEach(p => {
+  const line = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 0.04, 0.02),
+    addrMat
   );
-  slotBg.position.set(-0.55 + i*0.38, 0.8, 1.04);
-  httpBuilding.add(slotBg);
-
-  // Create number label
-  const nc = document.createElement('canvas');
-  nc.width = 64; nc.height = 32;
-  const nx = nc.getContext('2d');
-  nx.fillStyle = '#fff'; nx.font = 'bold 20px Arial'; nx.textAlign = 'center';
-  nx.fillText(code, 32, 24);
-  const numLabel = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.3, 0.15),
-    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(nc), transparent: true, side: THREE.DoubleSide})
-  );
-  numLabel.position.set(-0.55 + i*0.38, 0.8, 1.09);
-  httpBuilding.add(numLabel);
+  line.position.set(0, p.y, 0.09);
+  httpBuilding.add(line);
 });
 
-// Envelope decorations
-const envMat = new THREE.MeshStandardMaterial({color:0xf0f4c3, roughness:0.5});
-[{x:-0.6,y:1.5},{x:0.5,y:1.4}].forEach(p => {
-  const env = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), envMat);
-  env.position.set(p.x, p.y, 1.02);
-  httpBuilding.add(env);
-  // Envelope flap (triangle shape using thin box)
-  const flap = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 0.1, 0.01),
-    new THREE.MeshStandardMaterial({color:0xe6ee9c})
-  );
-  flap.position.set(p.x, p.y + 0.1, 1.03);
-  httpBuilding.add(flap);
-});
-
-// Door
-const httpDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.45, 0.9, 0.15),
-  new THREE.MeshStandardMaterial({color:0x33691e})
+// Stamp (top right)
+const stamp = new THREE.Mesh(
+  new THREE.BoxGeometry(0.25, 0.3, 0.03),
+  new THREE.MeshStandardMaterial({color:0xef5350, roughness:0.5})
 );
-httpDoor.position.set(0, 0.45, 1.08);
-httpBuilding.add(httpDoor);
+stamp.position.set(0.65, 1.2, 0.09);
+httpBuilding.add(stamp);
 
-// Window
-const httpWin = new THREE.Mesh(
-  new THREE.BoxGeometry(0.35, 0.3, 0.12),
-  new THREE.MeshStandardMaterial({color:0xc5e1a5, emissive:0xc5e1a5, emissiveIntensity:0.4})
+// Status code indicator (glowing)
+const httpStatus = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 0.2, 0.1),
+  new THREE.MeshStandardMaterial({color:0x66bb6a, emissive:0x66bb6a, emissiveIntensity:0.6})
 );
-httpWin.position.set(0, 1.6, 1.03);
-httpBuilding.add(httpWin);
+httpStatus.position.set(0, 0.3, 0.1);
+httpBuilding.add(httpStatus);
 
-httpBuilding.add(makeLabel('우편 규칙 (HTTP)', '데이터 전송 규칙', 3.8));
+// Small post for envelope to stand on
+const envPost = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.06, 0.08, 0.6, 8),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8})
+);
+envPost.position.y = 0.2;
+httpBuilding.add(envPost);
+
+// Base
+const httpBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.3, 0.35, 0.15, 8),
+  new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.8})
+);
+httpBase.position.y = 0.08;
+httpBase.receiveShadow = true;
+httpBuilding.add(httpBase);
+
+httpBuilding.add(makeLabel('HTTP (데이터 전송)', '데이터 전송 규칙', 3.8));
 httpBuilding.position.set(2, 0, 8);
 scene.add(httpBuilding);
 
