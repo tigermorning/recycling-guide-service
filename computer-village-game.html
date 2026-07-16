@@ -338,18 +338,18 @@ function createRoad(points, width=1.2){
 
 // 메인 도로 (좌우)
 scene.add(createRoad([
-  new THREE.Vector3(-26, 0, 0),
-  new THREE.Vector3(-8, 0, 0),
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(8, 0, 0),
-  new THREE.Vector3(28, 0, 0)
+  new THREE.Vector3(-26, 0, -7),
+  new THREE.Vector3(-8, 0, -7),
+  new THREE.Vector3(0, 0, -7),
+  new THREE.Vector3(8, 0, -7),
+  new THREE.Vector3(28, 0, -7)
 ]));
 
 // 횡단도로 (상하)
 scene.add(createRoad([
-  new THREE.Vector3(0, 0, -12),
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, 12)
+  new THREE.Vector3(0, 0, -18),
+  new THREE.Vector3(0, 0, -7),
+  new THREE.Vector3(0, 0, 4)
 ]));
 
 /* ---- 메인보드 (울타리) ---- */
@@ -436,18 +436,18 @@ scene.add(motherboardFence);
 /* ---- Building Label Helpers ---- */
 function makeLabel(name, tag, y) {
   const c = document.createElement('canvas');
-  c.width = 512; c.height = 128;
+  c.width = 768; c.height = 192;
   const x = c.getContext('2d');
   x.fillStyle = 'rgba(0,0,0,0.85)';
-  x.beginPath(); x.roundRect(10,10,492,108,16); x.fill();
+  x.beginPath(); x.roundRect(10,10,748,172,16); x.fill();
   x.strokeStyle = '#ffffff'; x.lineWidth = 3;
-  x.beginPath(); x.roundRect(10,10,492,108,16); x.stroke();
-  x.fillStyle = '#fff'; x.font = 'bold 48px Arial'; x.textAlign = 'center';
-  x.fillText(name, 256, 70);
-  x.font = '28px Arial'; x.fillStyle = '#a0a0c0';
-  x.fillText(tag, 256, 110);
+  x.beginPath(); x.roundRect(10,10,748,172,16); x.stroke();
+  x.fillStyle = '#fff'; x.font = 'bold 56px Arial'; x.textAlign = 'center';
+  x.fillText(name, 384, 85);
+  x.font = '32px Arial'; x.fillStyle = '#a0a0c0';
+  x.fillText(tag, 384, 140);
   const m = new THREE.Mesh(
-    new THREE.PlaneGeometry(3, 0.75),
+    new THREE.PlaneGeometry(4, 1.0),
     new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide})
   );
   m.position.set(0, y, 0);
@@ -1718,9 +1718,9 @@ cpuRamHouse.add(cacheLabel);
 const reactBuilding = new THREE.Group();
 reactBuilding.userData = {name:'프레임워크 광장 (React/Vue)', tag:'재사용 가능한 블록', icon:'⚛️', phase:2, description:'미리 만든 블록으로 빠르게 웹페이지를 조립하는 곳'};
 
-// Open plaza platform
+// Open plaza platform (larger, more square-like)
 const plazaPlatform = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.0, 2.0, 0.15, 24),
+  new THREE.BoxGeometry(4.0, 0.15, 4.0),
   new THREE.MeshStandardMaterial({color:0x2196f3, roughness:0.6})
 );
 plazaPlatform.position.y = 0.08;
@@ -1780,77 +1780,69 @@ const center = new THREE.Mesh(
 center.position.set(0.05, 1.8, 0);
 reactBuilding.add(center);
 
-reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 3.5));
+reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 5.0));
 reactBuilding.position.set(0, 0, -9);
 scene.add(reactBuilding);
 
-/* ---- 17. HTTP / Data Transmission Envelope ---- */
+/* ---- 17. HTTPS / Secure Document ---- */
 const httpBuilding = new THREE.Group();
-httpBuilding.userData = {name:'HTTP (데이터 전송)', tag:'데이터 전송 규칙', icon:'📨', phase:2, description:'데이터가 오가는 규칙을 보여주는 편지 봉투'};
+httpBuilding.userData = {name:'HTTPS (보안 규칙)', tag:'암호화된 데이터 전송', icon:'🔐', phase:2, description:'암호화된 데이터 전송 규칙을 보여주는 문서'};
 
-// Large envelope body
-const envBody = new THREE.Mesh(
-  new THREE.BoxGeometry(1.8, 1.2, 0.15),
-  new THREE.MeshStandardMaterial({color:0xf5f5dc, roughness:0.6})
+// Document (scroll/paper)
+const docBody = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 2.0, 0.1),
+  new THREE.MeshStandardMaterial({color:0xfafafa, roughness:0.5})
 );
-envBody.position.y = 0.8;
-envBody.castShadow = true; envBody.receiveShadow = true;
-httpBuilding.add(envBody);
+docBody.position.y = 1.2;
+docBody.castShadow = true; docBody.receiveShadow = true;
+httpBuilding.add(docBody);
 
-// Envelope flap (V-shape top)
-const envFlap = new THREE.Mesh(
-  new THREE.BoxGeometry(1.8, 0.6, 0.08),
-  new THREE.MeshStandardMaterial({color:0xe6ee9c, roughness:0.5})
-);
-envFlap.position.set(0, 1.5, 0.04);
-envFlap.rotation.x = -0.3;
-httpBuilding.add(envFlap);
-
-// Address lines on envelope
-const addrMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.4});
-[{y:0.9},{y:0.7},{y:0.5}].forEach(p => {
+// Document lines (text representation)
+const textMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.4});
+[{y:1.8},{y:1.6},{y:1.4},{y:1.2},{y:1.0}].forEach(p => {
   const line = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 0.04, 0.02),
-    addrMat
+    new THREE.BoxGeometry(1.1, 0.04, 0.02),
+    textMat
   );
-  line.position.set(0, p.y, 0.09);
+  line.position.set(0, p.y, 0.07);
   httpBuilding.add(line);
 });
 
-// Stamp (top right)
-const stamp = new THREE.Mesh(
-  new THREE.BoxGeometry(0.25, 0.3, 0.03),
-  new THREE.MeshStandardMaterial({color:0xef5350, roughness:0.5})
+// Lock symbol (HTTPS)
+const lockBody = new THREE.Mesh(
+  new THREE.BoxGeometry(0.35, 0.3, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4caf50, roughness:0.5})
 );
-stamp.position.set(0.65, 1.2, 0.09);
-httpBuilding.add(stamp);
+lockBody.position.set(0, 0.5, 0.1);
+httpBuilding.add(lockBody);
 
-// Status code indicator (glowing)
-const httpStatus = new THREE.Mesh(
-  new THREE.BoxGeometry(0.4, 0.2, 0.1),
-  new THREE.MeshStandardMaterial({color:0x66bb6a, emissive:0x66bb6a, emissiveIntensity:0.6})
+// Lock shackle
+const lockShackle = new THREE.Mesh(
+  new THREE.TorusGeometry(0.12, 0.03, 8, 16, Math.PI),
+  new THREE.MeshStandardMaterial({color:0x388e3c, roughness:0.5})
 );
-httpStatus.position.set(0, 0.3, 0.1);
-httpBuilding.add(httpStatus);
+lockShackle.position.set(0, 0.7, 0.1);
+lockShackle.rotation.z = Math.PI;
+httpBuilding.add(lockShackle);
 
-// Small post for envelope to stand on
-const envPost = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.06, 0.08, 0.6, 8),
+// HTTPS glow
+const httpsGlow = new THREE.Mesh(
+  new THREE.BoxGeometry(1.6, 0.2, 0.05),
+  new THREE.MeshStandardMaterial({color:0x4caf50, emissive:0x4caf50, emissiveIntensity:0.6})
+);
+httpsGlow.position.set(0, 2.3, 0.07);
+httpBuilding.add(httpsGlow);
+
+// Document stand
+const docStand = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.1, 0.4),
   new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8})
 );
-envPost.position.y = 0.2;
-httpBuilding.add(envPost);
+docStand.position.y = 0.05;
+docStand.receiveShadow = true;
+httpBuilding.add(docStand);
 
-// Base
-const httpBase = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.3, 0.35, 0.15, 8),
-  new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.8})
-);
-httpBase.position.y = 0.08;
-httpBase.receiveShadow = true;
-httpBuilding.add(httpBase);
-
-httpBuilding.add(makeLabel('HTTP (데이터 전송)', '데이터 전송 규칙', 3.8));
+httpBuilding.add(makeLabel('HTTPS (보안 규칙)', '암호화된 데이터 전송', 4.0));
 httpBuilding.position.set(2, 0, 8);
 scene.add(httpBuilding);
 
@@ -2530,7 +2522,7 @@ canvas.addEventListener('dblclick', e => {
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
   if (!isFlying) {
-    const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
+    const zoomFactor = e.deltaY > 0 ? 1.08 : 0.92;
     camGoal.radius = clamp(camGoal.radius * zoomFactor, MIN_RADIUS, MAX_RADIUS);
   }
 }, { passive: false });
