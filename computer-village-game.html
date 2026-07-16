@@ -433,6 +433,42 @@ motherboardFence.add(mbLabel);
 
 scene.add(motherboardFence);
 
+/* ---- Building Label Helpers ---- */
+function makeLabel(name, tag, y) {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = 'rgba(0,0,0,0.85)';
+  x.beginPath(); x.roundRect(10,10,492,108,16); x.fill();
+  x.strokeStyle = '#ffffff'; x.lineWidth = 3;
+  x.beginPath(); x.roundRect(10,10,492,108,16); x.stroke();
+  x.fillStyle = '#fff'; x.font = 'bold 48px Arial'; x.textAlign = 'center';
+  x.fillText(name, 256, 70);
+  x.font = '28px Arial'; x.fillStyle = '#a0a0c0';
+  x.fillText(tag, 256, 110);
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(3, 0.75),
+    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide})
+  );
+  m.position.set(0, y, 0);
+  m.rotation.x = -0.2;
+  return m;
+}
+function miniLabel(text, bg, w, h) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const x2 = c.getContext('2d');
+  x2.fillStyle = bg;
+  x2.beginPath(); x2.roundRect(5,5,246,54,8); x2.fill();
+  x2.fillStyle = '#fff'; x2.font = 'bold 24px Arial'; x2.textAlign = 'center';
+  x2.fillText(text, 128, 40);
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(w||1.5, h||0.4),
+    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide})
+  );
+  return m;
+}
+
 /* ---- Building Factory ---- */
 function createBuilding(options){
   const {position, size, color, roofColor, windowColor=0x87ceeb, name, tag, icon, phase=1, description} = options;
@@ -584,17 +620,129 @@ function createMailman(){
 /* ============================================================
    Buildings - Phase 1: 컴퓨터 구조 (왜 주택인가?)
    ============================================================ */
-// CPU + RAM: 같은 건물 안에 배치 (1층 구조에서 방을 나누기)
-const cpuRamHouse = createBuilding({
-  position: new THREE.Vector3(-14, 0, 7),
-  size: new THREE.Vector3(4.5, 2.4, 2.8),  // 더 넓은 건물
-  color: 0x8b7355,
-  roofColor: 0xcd853f,
-  name: '주택 (CPU + RAM)',
-  tag: '중앙처리장치 + 단기기억',
-  phase: 1,
-  description: '같은 건물 안에 CPU 방(큰 방)과 RAM 방(작은 방)이 있는 구조'
+
+/* ---- 1. CPU+RAM House: Two connected rooms ---- */
+const cpuRamHouse = new THREE.Group();
+cpuRamHouse.userData = {name:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', icon:'🏠', phase:1, description:'같은 건물 안에 CPU 방(큰 방)과 RAM 방(작은 방)이 있는 구조'};
+
+// CPU room (larger, taller)
+const cpuBody = new THREE.Mesh(
+  new THREE.BoxGeometry(3, 3, 2.8),
+  new THREE.MeshStandardMaterial({color:0x8b7355, roughness:0.7})
+);
+cpuBody.position.set(-0.8, 1.5, 0);
+cpuBody.castShadow = true; cpuBody.receiveShadow = true;
+cpuRamHouse.add(cpuBody);
+
+const cpuRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(2.2, 1.0, 4),
+  new THREE.MeshStandardMaterial({color:0xcd853f, roughness:0.6})
+);
+cpuRoof.position.set(-0.8, 3.5, 0);
+cpuRoof.rotation.y = Math.PI/4;
+cpuRoof.castShadow = true;
+cpuRamHouse.add(cpuRoof);
+
+// Rotating processing indicator on CPU roof
+const cpuIndicator = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 0.12, 0.6),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.8})
+);
+cpuIndicator.position.set(-0.8, 4.1, 0);
+cpuRamHouse.add(cpuIndicator);
+
+const cpuIndicator2 = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.08, 0.3, 8),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.6})
+);
+cpuIndicator2.position.set(-0.8, 4.3, 0);
+cpuRamHouse.add(cpuIndicator2);
+
+// RAM room (shorter, smaller)
+const ramBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.2, 2.8),
+  new THREE.MeshStandardMaterial({color:0x607d8b, roughness:0.7})
+);
+ramBody.position.set(1.5, 1.1, 0);
+ramBody.castShadow = true; ramBody.receiveShadow = true;
+cpuRamHouse.add(ramBody);
+
+const ramRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.5, 0.7, 4),
+  new THREE.MeshStandardMaterial({color:0x546e7a, roughness:0.6})
+);
+ramRoof.position.set(1.5, 2.45, 0);
+ramRoof.rotation.y = Math.PI/4;
+ramRoof.castShadow = true;
+cpuRamHouse.add(ramRoof);
+
+// Glowing RAM windows (active memory)
+const ramGlow = new THREE.MeshStandardMaterial({color:0x80cbc4, emissive:0x80cbc4, emissiveIntensity:0.8});
+[{x:1.2,z:1.46},{x:1.8,z:1.46}].forEach(p => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.12), ramGlow);
+  w.position.set(p.x, 1.3, p.z);
+  cpuRamHouse.add(w);
 });
+
+// CPU windows
+const cpuWin = new THREE.MeshStandardMaterial({color:0x87ceeb, emissive:0x87ceeb, emissiveIntensity:0.4});
+[{x:-1.3,z:1.46},{x:-0.3,z:1.46}].forEach(p => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.12), cpuWin);
+  w.position.set(p.x, 1.8, p.z);
+  cpuRamHouse.add(w);
+});
+
+// Connection between rooms
+const conn = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.8, 0.4),
+  new THREE.MeshStandardMaterial({color:0x7a6245, roughness:0.7})
+);
+conn.position.set(0.35, 0.9, 0);
+cpuRamHouse.add(conn);
+
+// CPU door
+const cpuDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 1.2, 0.15),
+  new THREE.MeshStandardMaterial({color:0x5d4037})
+);
+cpuDoor.position.set(-0.8, 0.6, 1.48);
+cpuRamHouse.add(cpuDoor);
+
+// RAM door
+const ramDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4a3728})
+);
+ramDoor.position.set(1.5, 0.5, 1.48);
+cpuRamHouse.add(ramDoor);
+
+// Main label
+cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 5.2));
+
+// CPU room sub-label
+const cpuSub = miniLabel('CPU 방 (큰 방)', 'rgba(139,115,85,0.9)');
+cpuSub.position.set(-0.8, 2.2, 1.56);
+cpuRamHouse.add(cpuSub);
+
+// RAM room sub-label
+const ramSub = miniLabel('RAM 방 (작은 방)', 'rgba(112,128,144,0.9)');
+ramSub.position.set(1.5, 1.6, 1.56);
+cpuRamHouse.add(ramSub);
+
+// Basement door
+const basementDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.6, 0.1),
+  new THREE.MeshStandardMaterial({color:0x8b6914})
+);
+basementDoor.position.set(0.35, 0.3, 1.48);
+cpuRamHouse.add(basementDoor);
+
+// Basement label
+const bsLabel = miniLabel('지하실 (저장장치)', 'rgba(218,165,32,0.9)', 2.0, 0.5);
+bsLabel.position.set(0.35, -0.5, 1.6);
+cpuRamHouse.add(bsLabel);
+
+cpuRamHouse.position.set(-14, 0, 7);
 scene.add(cpuRamHouse);
 
 // 지하 공간 (저장장치) - 측면에서 볼 수 있도록 땅 아래에 표시
@@ -633,179 +781,358 @@ boxPositions.forEach(pos => {
 
 scene.add(basementGroup);
 
-// CPU+RAM 건물 안에 방 구분 표시 (문 두 개)
-const cpuRoomDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.6, 1.2, 0.15),
-  new THREE.MeshStandardMaterial({color:0x5d4037})
-);
-cpuRoomDoor.position.set(-0.8, 0.6, 2.8/2 + 0.08);
-cpuRamHouse.add(cpuRoomDoor);
-
-const ramRoomDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5, 1.0, 0.15),
-  new THREE.MeshStandardMaterial({color:0x4a3728})
-);
-ramRoomDoor.position.set(0.8, 0.5, 2.8/2 + 0.08);
-cpuRamHouse.add(ramRoomDoor);
-
-// CPU 방 라벨
-const cpuLabelCanvas = document.createElement('canvas');
-cpuLabelCanvas.width = 256;
-cpuLabelCanvas.height = 64;
-const cpuCtx = cpuLabelCanvas.getContext('2d');
-cpuCtx.fillStyle = 'rgba(139,115,85,0.9)';
-cpuCtx.beginPath();
-cpuCtx.roundRect(5, 5, 246, 54, 8);
-cpuCtx.fill();
-cpuCtx.fillStyle = '#ffffff';
-cpuCtx.font = 'bold 24px Arial';
-cpuCtx.textAlign = 'center';
-cpuCtx.fillText('CPU 방 (큰 방)', 128, 40);
-const cpuLabelTexture = new THREE.CanvasTexture(cpuLabelCanvas);
-const cpuRoomLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(1.5, 0.4),
-  new THREE.MeshBasicMaterial({map:cpuLabelTexture, transparent:true, side:THREE.DoubleSide})
-);
-cpuRoomLabel.position.set(-0.8, 1.8, 2.8/2 + 0.1);
-cpuRamHouse.add(cpuRoomLabel);
-
-// RAM 방 라벨
-const ramLabelCanvas = document.createElement('canvas');
-ramLabelCanvas.width = 256;
-ramLabelCanvas.height = 64;
-const ramCtx = ramLabelCanvas.getContext('2d');
-ramCtx.fillStyle = 'rgba(112,128,144,0.9)';
-ramCtx.beginPath();
-ramCtx.roundRect(5, 5, 246, 54, 8);
-ramCtx.fill();
-ramCtx.fillStyle = '#ffffff';
-ramCtx.font = 'bold 24px Arial';
-ramCtx.textAlign = 'center';
-ramCtx.fillText('RAM 방 (작은 방)', 128, 40);
-const ramLabelTexture = new THREE.CanvasTexture(ramLabelCanvas);
-const ramRoomLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(1.5, 0.4),
-  new THREE.MeshBasicMaterial({map:ramLabelTexture, transparent:true, side:THREE.DoubleSide})
-);
-ramRoomLabel.position.set(0.8, 1.8, 2.8/2 + 0.1);
-cpuRamHouse.add(ramRoomLabel);
-
-// 저장장치: CPU+RAM 건물 안의 지하실
-// (별도 건물 없이, CPU+RAM 건물 안에 지하실 표시)
-
-// 지하실 입구 (건물 앞면 아래쪽)
-const basementDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.8, 0.6, 0.1),
-  new THREE.MeshStandardMaterial({color:0x8b6914})
-);
-basementDoor.position.set(0, 0.3, 2.8/2 + 0.08);
-cpuRamHouse.add(basementDoor);
-
-// 지하실 라벨
-const basementLabelCanvas = document.createElement('canvas');
-basementLabelCanvas.width = 256;
-basementLabelCanvas.height = 64;
-const basementCtx = basementLabelCanvas.getContext('2d');
-basementCtx.fillStyle = 'rgba(218,165,32,0.9)';
-basementCtx.beginPath();
-basementCtx.roundRect(5, 5, 246, 54, 8);
-basementCtx.fill();
-basementCtx.fillStyle = '#ffffff';
-basementCtx.font = 'bold 24px Arial';
-basementCtx.textAlign = 'center';
-basementCtx.fillText('지하실 (저장장치)', 128, 40);
-const basementLabelTexture = new THREE.CanvasTexture(basementLabelCanvas);
-const basementLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(2.0, 0.5),
-  new THREE.MeshBasicMaterial({map:basementLabelTexture, transparent:true, side:THREE.DoubleSide})
-);
-basementLabel.position.set(0, -0.8, 2.8/2 + 0.4);
-cpuRamHouse.add(basementLabel);
+// (cpuRamHouse sub-labels and doors are built into the custom geometry above)
 
 /* ============================================================
    Buildings - Phase 2: 인터넷
    ============================================================ */
-const postOffice = createBuilding({
-  position: new THREE.Vector3(-2, 0, 8),
-  size: new THREE.Vector3(2.5, 2.5, 2.5),
-  color: 0x1565c0,
-  roofColor: 0x0d47a1,
-  windowColor: 0x64b5f6,
-  name: '우체국 (DNS)',
-  tag: '이름 → 주소 변환',
-  phase: 2,
-  description: '전화번호부 = 이름을 번호로 바꿔주는 곳'
+/* ---- 2. Post Office / DNS ---- */
+const postOffice = new THREE.Group();
+postOffice.userData = {name:'우체국 (DNS)', tag:'이름 → 주소 변환', icon:'📮', phase:2, description:'전화번호부 = 이름을 번호로 바꿔주는 곳'};
+
+const poBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 2.5, 2.5),
+  new THREE.MeshStandardMaterial({color:0x1565c0, roughness:0.7})
+);
+poBody.position.y = 1.25;
+poBody.castShadow = true; poBody.receiveShadow = true;
+postOffice.add(poBody);
+
+const poRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.8, 0.15, 2.8),
+  new THREE.MeshStandardMaterial({color:0x0d47a1, roughness:0.6})
+);
+poRoof.position.y = 2.58;
+poRoof.castShadow = true;
+postOffice.add(poRoof);
+
+// Flag pole
+const flagPole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 2.0, 8),
+  new THREE.MeshStandardMaterial({color:0xcccccc})
+);
+flagPole.position.set(0.8, 3.5, 0);
+postOffice.add(flagPole);
+
+// Flag
+const flag = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.6, 0.35),
+  new THREE.MeshStandardMaterial({color:0x42a5f5, side:THREE.DoubleSide})
+);
+flag.position.set(1.1, 4.2, 0);
+postOffice.add(flag);
+
+// Mail slots on front
+[0x42a5f5, 0xef5350, 0xffa726, 0x66bb6a].forEach((col, i) => {
+  const slot = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 0.2, 0.1),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.3})
+  );
+  slot.position.set(-0.6 + i * 0.42, 0.6, 1.31);
+  postOffice.add(slot);
 });
+
+const poDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x0d47a1})
+);
+poDoor.position.set(0, 0.5, 1.33);
+postOffice.add(poDoor);
+
+const poWin = new THREE.MeshStandardMaterial({color:0x64b5f6, emissive:0x64b5f6, emissiveIntensity:0.4});
+[{x:-0.7,z:1.31},{x:0.7,z:1.31}].forEach(p => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.12), poWin);
+  w.position.set(p.x, 1.8, p.z);
+  postOffice.add(w);
+});
+
+postOffice.add(makeLabel('우체국 (DNS)', '이름 → 주소 변환', 5.0));
+postOffice.position.set(-2, 0, 8);
 scene.add(postOffice);
 
-const routerTower = createBuilding({
-  position: new THREE.Vector3(0, 0, -7),
-  size: new THREE.Vector3(1.5, 3, 1.5),
-  color: 0x00897b,
-  roofColor: 0x004d40,
-  windowColor: 0x80cbc4,
-  name: '교차로 (라우터)',
-  tag: '데이터 경로 결정',
-  phase: 2,
-  description: '교차로 = 데이터가 갈 길을 정해주는 곳'
+/* ---- 3. Router Tower / Intersection ---- */
+const routerTower = new THREE.Group();
+routerTower.userData = {name:'교차로 (라우터)', tag:'데이터 경로 결정', icon:'🚦', phase:2, description:'교차로 = 데이터가 갈 길을 정해주는 곳'};
+
+// Flat roundabout disc
+const roundaboutDisc = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.0, 2.0, 0.2, 24),
+  new THREE.MeshStandardMaterial({color:0x607d8b, roughness:0.8})
+);
+roundaboutDisc.position.y = 0.1;
+roundaboutDisc.castShadow = true; roundaboutDisc.receiveShadow = true;
+routerTower.add(roundaboutDisc);
+
+const innerRing = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.8, 0.8, 0.22, 24),
+  new THREE.MeshStandardMaterial({color:0x455a64, roughness:0.7})
+);
+innerRing.position.y = 0.11;
+routerTower.add(innerRing);
+
+// Road lines radiating out
+const roadLineGeo = new THREE.BoxGeometry(0.15, 0.05, 2.0);
+const roadLineMat = new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.3});
+[0, Math.PI/2, Math.PI, Math.PI*1.5].forEach(angle => {
+  const line = new THREE.Mesh(roadLineGeo, roadLineMat);
+  line.position.set(Math.sin(angle)*1.5, 0.22, Math.cos(angle)*1.5);
+  line.rotation.y = angle;
+  routerTower.add(line);
 });
+
+// Traffic light pole
+const tlPole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.06, 0.06, 1.8, 8),
+  new THREE.MeshStandardMaterial({color:0x333333})
+);
+tlPole.position.set(0, 1.1, 0);
+routerTower.add(tlPole);
+
+const tlHouse = new THREE.Mesh(
+  new THREE.BoxGeometry(0.25, 0.6, 0.2),
+  new THREE.MeshStandardMaterial({color:0x222222})
+);
+tlHouse.position.set(0, 2.1, 0);
+routerTower.add(tlHouse);
+
+[0xff1744, 0xffd600, 0x00e676].forEach((col, i) => {
+  const led = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 8, 8),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.9})
+  );
+  led.position.set(0, 2.3 - i * 0.18, 0.11);
+  routerTower.add(led);
+});
+
+routerTower.add(makeLabel('교차로 (라우터)', '데이터 경로 결정', 4.0));
+routerTower.position.set(0, 0, -7);
 scene.add(routerTower);
 
 /* ============================================================
    Buildings - Phase 3: 서버
    ============================================================ */
-const serverFactory = createBuilding({
-  position: new THREE.Vector3(10, 0, 7),
-  size: new THREE.Vector3(3.5, 3.5, 3.5),
-  color: 0x4a4a6a,
-  roofColor: 0x2d2d44,
-  windowColor: 0x90caf9,
-  name: '공장 (서버)',
-  tag: '백엔드 · 24시간 가동',
-  phase: 3,
-  description: '공장 = 24시간 쉬지 않고 돌아가는 곳'
+/* ---- 4. Server Factory ---- */
+const serverFactory = new THREE.Group();
+serverFactory.userData = {name:'공장 (서버)', tag:'백엔드 · 24시간 가동', icon:'🏭', phase:3, description:'공장 = 24시간 쉬지 않고 돌아가는 곳'};
+
+const sfBody = new THREE.Mesh(
+  new THREE.BoxGeometry(3.5, 3.0, 3.5),
+  new THREE.MeshStandardMaterial({color:0x455a64, roughness:0.7})
+);
+sfBody.position.y = 1.5;
+sfBody.castShadow = true; sfBody.receiveShadow = true;
+serverFactory.add(sfBody);
+
+const sfRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(3.8, 0.2, 3.8),
+  new THREE.MeshStandardMaterial({color:0x37474f, roughness:0.6})
+);
+sfRoof.position.y = 3.1;
+sfRoof.castShadow = true;
+serverFactory.add(sfRoof);
+
+// Smokestacks
+const stack1 = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.2, 0.25, 1.5, 12),
+  new THREE.MeshStandardMaterial({color:0x546e7a, roughness:0.6})
+);
+stack1.position.set(-0.8, 3.85, -0.8);
+stack1.castShadow = true;
+serverFactory.add(stack1);
+
+const stack2 = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.18, 0.22, 1.2, 12),
+  new THREE.MeshStandardMaterial({color:0x546e7a, roughness:0.6})
+);
+stack2.position.set(0.8, 3.7, -0.8);
+stack2.castShadow = true;
+serverFactory.add(stack2);
+
+// Conveyor belt entrance
+const conveyor = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.15, 2.0),
+  new THREE.MeshStandardMaterial({color:0x37474f, roughness:0.5})
+);
+conveyor.position.set(0, 0.3, 2.5);
+conveyor.rotation.x = -0.15;
+serverFactory.add(conveyor);
+
+const convRailMat = new THREE.MeshStandardMaterial({color:0x78909c});
+[-0.6, 0.6].forEach(x => {
+  const r = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 2.0), convRailMat);
+  r.position.set(x, 0.35, 2.5);
+  r.rotation.x = -0.15;
+  serverFactory.add(r);
 });
+
+// LED status lights
+const sfLeds = [];
+[{x:-1.2,y:2.5,z:1.76},{x:-0.8,y:2.5,z:1.76},{x:-0.4,y:2.5,z:1.76}].forEach(p => {
+  const l = new THREE.Mesh(
+    new THREE.SphereGeometry(0.06, 8, 8),
+    new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:1.0})
+  );
+  l.position.set(p.x, p.y, p.z);
+  serverFactory.add(l);
+  sfLeds.push(l);
+});
+
+const sfDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 1.5, 0.15),
+  new THREE.MeshStandardMaterial({color:0x37474f})
+);
+sfDoor.position.set(0, 0.75, 1.76);
+serverFactory.add(sfDoor);
+
+const sfWin = new THREE.MeshStandardMaterial({color:0x90caf9, emissive:0x90caf9, emissiveIntensity:0.4});
+[-1.2, 1.2].forEach(x => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.12), sfWin);
+  w.position.set(x, 2.2, 1.76);
+  serverFactory.add(w);
+});
+
+serverFactory.add(makeLabel('공장 (서버)', '백엔드 · 24시간 가동', 5.5));
+serverFactory.position.set(10, 0, 7);
 scene.add(serverFactory);
 
-/* ---- 포탈 (카테고리 이동) ---- */
-// 다음 카테고리로 이동하는 포탈
-const portalDoor = createBuilding({
-  position: new THREE.Vector3(24, 0, 0),
-  size: new THREE.Vector3(1.5, 2.5, 0.5),
-  color: 0x9c27b0,
-  roofColor: 0x7b1fa2,
-  windowColor: 0xce93d8,
-  name: '🚪 포탈',
-  tag: '다음 카테고리로 이동',
-  phase: 4,
-  description: '클릭하면 다음 카테고리로 이동합니다'
-});
-scene.add(portalDoor);
+/* ---- 5. Database Warehouse ---- */
+const databaseWarehouse = new THREE.Group();
+databaseWarehouse.userData = {name:'창고 (데이터베이스)', tag:'데이터 저장소', icon:'📦', phase:3, description:'창고 = 수많은 기록을 정리해 보관하는 곳'};
 
-const databaseWarehouse = createBuilding({
-  position: new THREE.Vector3(14, 0, 5),
-  size: new THREE.Vector3(3, 2.5, 3),
-  color: 0x5d4037,
-  roofColor: 0x3e2723,
-  windowColor: 0xffcc80,
-  name: '창고 (데이터베이스)',
-  tag: '데이터 저장소',
-  phase: 3,
-  description: '창고 = 수많은 기록을 정리해 보관하는 곳'
+const dwBody = new THREE.Mesh(
+  new THREE.BoxGeometry(3, 2.5, 3),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
+);
+dwBody.position.y = 1.25;
+dwBody.castShadow = true; dwBody.receiveShadow = true;
+databaseWarehouse.add(dwBody);
+
+const dwRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(2.3, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.6})
+);
+dwRoof.position.y = 2.9;
+dwRoof.rotation.y = Math.PI/4;
+dwRoof.castShadow = true;
+databaseWarehouse.add(dwRoof);
+
+// Transparent front wall (shelving visible)
+const dwGlass = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.2, 1.8),
+  new THREE.MeshStandardMaterial({color:0xffcc80, transparent:true, opacity:0.25, side:THREE.DoubleSide})
+);
+dwGlass.position.set(0, 1.2, 1.51);
+databaseWarehouse.add(dwGlass);
+
+// Internal shelves
+const shelfMat = new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.8});
+for(let row = 0; row < 3; row++){
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 1.5), shelfMat);
+  shelf.position.set(0, 0.4 + row * 0.55, 0);
+  databaseWarehouse.add(shelf);
+}
+
+// Crates on shelves
+const crateMat = new THREE.MeshStandardMaterial({color:0xffab00, roughness:0.7});
+[{x:-0.5,y:0.55,z:0},{x:0,y:0.55,z:0.2},{x:0.5,y:0.55,z:-0.1},
+ {x:-0.3,y:1.1,z:0.1},{x:0.4,y:1.1,z:-0.2},{x:-0.5,y:1.65,z:0}].forEach(p => {
+  const crate = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), crateMat);
+  crate.position.set(p.x, p.y, p.z);
+  databaseWarehouse.add(crate);
 });
+
+// Loading dock entrance
+const dock = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 1.5, 0.3),
+  new THREE.MeshStandardMaterial({color:0x4e342e, roughness:0.9})
+);
+dock.position.set(0, 0.75, 1.35);
+databaseWarehouse.add(dock);
+
+const dockDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 1.3, 0.1),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+dockDoor.position.set(0, 0.65, 1.51);
+databaseWarehouse.add(dockDoor);
+
+databaseWarehouse.add(makeLabel('창고 (데이터베이스)', '데이터 저장소', 5.0));
+databaseWarehouse.position.set(14, 0, 5);
 scene.add(databaseWarehouse);
 
-const firewallGate = createBuilding({
-  position: new THREE.Vector3(18, 0, -5),
-  size: new THREE.Vector3(1.8, 2.2, 1.8),
-  color: 0xc62828,
-  roofColor: 0xb71c1c,
-  windowColor: 0xef9a9a,
-  name: '문 (방화벽)',
-  tag: '보안 · 출입 통제',
-  phase: 3,
-  description: '문 = 출입을 통제하는 보안 장치'
-});
+/* ---- 6. Firewall Gate ---- */
+const firewallGate = new THREE.Group();
+firewallGate.userData = {name:'문 (방화벽)', tag:'보안 · 출입 통제', icon:'🛡️', phase:3, description:'문 = 출입을 통제하는 보안 장치'};
+
+// Left pillar
+const fwPillar1 = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 2.8, 0.4),
+  new THREE.MeshStandardMaterial({color:0xf44336, roughness:0.6})
+);
+fwPillar1.position.set(-0.8, 1.4, 0);
+fwPillar1.castShadow = true;
+firewallGate.add(fwPillar1);
+
+// Right pillar
+const fwPillar2 = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 2.8, 0.4),
+  new THREE.MeshStandardMaterial({color:0xf44336, roughness:0.6})
+);
+fwPillar2.position.set(0.8, 1.4, 0);
+fwPillar2.castShadow = true;
+firewallGate.add(fwPillar2);
+
+// Archway beam
+const fwBeam = new THREE.Mesh(
+  new THREE.BoxGeometry(2.0, 0.35, 0.4),
+  new THREE.MeshStandardMaterial({color:0xb71c1c, roughness:0.5})
+);
+fwBeam.position.set(0, 2.95, 0);
+fwBeam.castShadow = true;
+firewallGate.add(fwBeam);
+
+// Shield emblem on top
+const shield = new THREE.Mesh(
+  new THREE.OctahedronGeometry(0.35, 0),
+  new THREE.MeshStandardMaterial({color:0xffcdd2, emissive:0xf44336, emissiveIntensity:0.5})
+);
+shield.position.set(0, 3.5, 0);
+shield.castShadow = true;
+firewallGate.add(shield);
+
+// Guard booth
+const booth = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 1.0, 0.7),
+  new THREE.MeshStandardMaterial({color:0xd32f2f, roughness:0.7})
+);
+booth.position.set(1.5, 0.5, 0);
+booth.castShadow = true;
+firewallGate.add(booth);
+
+const boothRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(0.9, 0.1, 0.9),
+  new THREE.MeshStandardMaterial({color:0xb71c1c})
+);
+boothRoof.position.set(1.5, 1.05, 0);
+firewallGate.add(boothRoof);
+
+const boothWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.3, 0.25, 0.1),
+  new THREE.MeshStandardMaterial({color:0xef9a9a, emissive:0xef9a9a, emissiveIntensity:0.4})
+);
+boothWin.position.set(1.5, 0.6, 0.36);
+firewallGate.add(boothWin);
+
+// Gate light
+const fwLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.1, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:1.0})
+);
+fwLight.position.set(0, 2.7, 0.25);
+firewallGate.add(fwLight);
+
+firewallGate.add(makeLabel('문 (방화벽)', '보안 · 출입 통제', 4.5));
+firewallGate.position.set(18, 0, -5);
 scene.add(firewallGate);
 
 const hostingCloud = createBuilding({
@@ -824,186 +1151,993 @@ scene.add(hostingCloud);
 /* ============================================================
    Additional Buildings - Level 2 & 3 Stations
    ============================================================ */
-const gpuBuilding = createBuilding({
-  position: new THREE.Vector3(-16, 0, 5),
-  size: new THREE.Vector3(2, 2.5, 2),
-  color: 0x7c4dff,
-  roofColor: 0x651fff,
-  windowColor: 0xb388ff,
-  name: '그래픽 공방 (GPU)',
-  tag: '화면을 그리는 전문가',
-  phase: 1,
-  description: '그래픽을 전문적으로 처리하는 방'
+/* ---- 7. GPU / Graphics Workshop ---- */
+const gpuBuilding = new THREE.Group();
+gpuBuilding.userData = {name:'그래픽 공방 (GPU)', tag:'화면을 그리는 전문가', icon:'🎮', phase:1, description:'그래픽을 전문적으로 처리하는 방'};
+
+const gpuBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.5, 2),
+  new THREE.MeshStandardMaterial({color:0x7c4dff, roughness:0.6})
+);
+gpuBody.position.y = 1.25;
+gpuBody.castShadow = true; gpuBody.receiveShadow = true;
+gpuBuilding.add(gpuBody);
+
+const gpuRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.5, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0x651fff, roughness:0.5})
+);
+gpuRoof.position.y = 2.9;
+gpuRoof.rotation.y = Math.PI/4;
+gpuRoof.castShadow = true;
+gpuBuilding.add(gpuRoof);
+
+// Large display window showing colorful graphics
+const gpuScreen = new THREE.Mesh(
+  new THREE.BoxGeometry(1.4, 1.0, 0.08),
+  new THREE.MeshStandardMaterial({color:0xb388ff, emissive:0xb388ff, emissiveIntensity:0.7})
+);
+gpuScreen.position.set(0, 1.5, 1.04);
+gpuBuilding.add(gpuScreen);
+
+// Colorful graphics on screen
+[0xff1744, 0x00e676, 0x2979ff, 0xffea00, 0xff6d00, 0xd500f9].forEach((col, i) => {
+  const px = new THREE.Mesh(
+    new THREE.BoxGeometry(0.15, 0.15, 0.01),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.8})
+  );
+  px.position.set(-0.4 + (i%3)*0.4, 1.2 + Math.floor(i/3)*0.35, 1.1);
+  gpuBuilding.add(px);
 });
+
+// Paint palette decoration (side)
+const palette = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.25, 0.25, 0.05, 16),
+  new THREE.MeshStandardMaterial({color:0xffcc80})
+);
+palette.position.set(1.04, 0.8, 0);
+palette.rotation.z = Math.PI/2;
+gpuBuilding.add(palette);
+
+[0xff1744, 0x2979ff, 0x00e676, 0xffea00, 0xff6d00].forEach((col, i) => {
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.04, 8, 8),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.6})
+  );
+  dot.position.set(1.05, 0.8 + Math.sin(i*1.2)*0.15, -0.1 + Math.cos(i*1.2)*0.15);
+  gpuBuilding.add(dot);
+});
+
+const gpuDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4a148c})
+);
+gpuDoor.position.set(-0.5, 0.5, 1.08);
+gpuBuilding.add(gpuDoor);
+
+gpuBuilding.add(makeLabel('그래픽 공방 (GPU)', '화면을 그리는 전문가', 4.2));
+gpuBuilding.position.set(-16, 0, 5);
 scene.add(gpuBuilding);
 
-const monitorBuilding = createBuilding({
-  position: new THREE.Vector3(-8, 0, 9),
-  size: new THREE.Vector3(2.2, 2, 1.8),
-  color: 0x00838f,
-  roofColor: 0x006064,
-  windowColor: 0x00e5ff,
-  name: '전시장 (모니터)',
-  tag: '결과물을 눈에 보이게',
-  phase: 1,
-  description: '컴퓨터의 결과물을 전시하는 공간'
+/* ---- 8. Monitor / Exhibition Hall ---- */
+const monitorBuilding = new THREE.Group();
+monitorBuilding.userData = {name:'전시장 (모니터)', tag:'결과물을 눈에 보이게', icon:'🖥️', phase:1, description:'컴퓨터의 결과물을 전시하는 공간'};
+
+// Monitor screen (flat wide rectangle, tilted back)
+const monScreen = new THREE.Mesh(
+  new THREE.BoxGeometry(3.0, 2.0, 0.12),
+  new THREE.MeshStandardMaterial({color:0x00bcd4, emissive:0x00bcd4, emissiveIntensity:0.3})
+);
+monScreen.position.set(0, 2.2, -0.2);
+monScreen.rotation.x = -0.1;
+monScreen.castShadow = true;
+monitorBuilding.add(monScreen);
+
+const monBorder = new THREE.Mesh(
+  new THREE.BoxGeometry(3.2, 2.2, 0.08),
+  new THREE.MeshStandardMaterial({color:0x00838f, roughness:0.5})
+);
+monBorder.position.set(0, 2.2, -0.25);
+monBorder.rotation.x = -0.1;
+monitorBuilding.add(monBorder);
+
+// Display content (colored bars)
+[0xff1744, 0x00e676, 0x2979ff, 0xffea00].forEach((col, i) => {
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 1.2, 0.02),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.6})
+  );
+  bar.position.set(-0.9 + i * 0.6, 2.2, 0.34);
+  monitorBuilding.add(bar);
 });
+
+// Monitor stand/neck
+const monNeck = new THREE.Mesh(
+  new THREE.BoxGeometry(0.3, 0.8, 0.3),
+  new THREE.MeshStandardMaterial({color:0x006064, roughness:0.7})
+);
+monNeck.position.set(0, 0.8, -0.2);
+monitorBuilding.add(monNeck);
+
+// Monitor base
+const monBase = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 0.15, 0.8),
+  new THREE.MeshStandardMaterial({color:0x006064, roughness:0.6})
+);
+monBase.position.set(0, 0.08, 0);
+monBase.castShadow = true;
+monitorBuilding.add(monBase);
+
+// Power LED
+const monLed = new THREE.Mesh(
+  new THREE.SphereGeometry(0.04, 8, 8),
+  new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:1.0})
+);
+monLed.position.set(0, 0.18, 0.42);
+monitorBuilding.add(monLed);
+
+monitorBuilding.add(makeLabel('전시장 (모니터)', '결과물을 눈에 보이게', 5.0));
+monitorBuilding.position.set(-8, 0, 9);
 scene.add(monitorBuilding);
 
-const htmlCssBuilding = createBuilding({
-  position: new THREE.Vector3(-3, 0, -5),
-  size: new THREE.Vector3(2.2, 2.2, 2.2),
-  color: 0xff7043,
-  roofColor: 0xe64a19,
-  windowColor: 0xffab91,
-  name: '도안실 (HTML/CSS)',
-  tag: '웹페이지의 골조와 옷',
-  phase: 2,
-  description: '웹페이지의 구조와 디자인을 만드는 곳'
+/* ---- 9. HTML/CSS / Design Room ---- */
+const htmlCssBuilding = new THREE.Group();
+htmlCssBuilding.userData = {name:'도안실 (HTML/CSS)', tag:'웹페이지의 골조와 옷', icon:'🎨', phase:2, description:'웹페이지의 구조와 디자인을 만드는 곳'};
+
+const htmlBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.2, 2.2, 2.2),
+  new THREE.MeshStandardMaterial({color:0xff7043, roughness:0.7})
+);
+htmlBody.position.y = 1.1;
+htmlBody.castShadow = true; htmlBody.receiveShadow = true;
+htmlCssBuilding.add(htmlBody);
+
+const htmlRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.7, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0xe64a19, roughness:0.6})
+);
+htmlRoof.position.y = 2.6;
+htmlRoof.rotation.y = Math.PI/4;
+htmlRoof.castShadow = true;
+htmlCssBuilding.add(htmlRoof);
+
+// Color swatches on wall
+[0xff1744, 0x2979ff, 0x00e676, 0xffea00, 0x9c27b0, 0xff6d00].forEach((col, i) => {
+  const swatch = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.2, 0.05),
+    new THREE.MeshStandardMaterial({color:col})
+  );
+  swatch.position.set(-0.6 + (i%3)*0.3, 0.6 + Math.floor(i/3)*0.3, 1.13);
+  htmlCssBuilding.add(swatch);
 });
+
+// Ruler decoration
+const ruler = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 0.08, 0.05),
+  new THREE.MeshStandardMaterial({color:0xffab91})
+);
+ruler.position.set(0, 1.8, 1.13);
+htmlCssBuilding.add(ruler);
+
+for(let i = 0; i < 6; i++){
+  const mark = new THREE.Mesh(
+    new THREE.BoxGeometry(0.02, 0.06, 0.02),
+    new THREE.MeshStandardMaterial({color:0xbf360c})
+  );
+  mark.position.set(-0.6 + i*0.24, 1.8, 1.14);
+  htmlCssBuilding.add(mark);
+}
+
+const htmlDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0xbf360c})
+);
+htmlDoor.position.set(0, 0.5, 1.18);
+htmlCssBuilding.add(htmlDoor);
+
+const htmlWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 0.35, 0.12),
+  new THREE.MeshStandardMaterial({color:0xffab91, emissive:0xffab91, emissiveIntensity:0.4})
+);
+htmlWin.position.set(0, 1.5, 1.13);
+htmlCssBuilding.add(htmlWin);
+
+htmlCssBuilding.add(makeLabel('도안실 (HTML/CSS)', '웹페이지의 골조와 옷', 3.8));
+htmlCssBuilding.position.set(-3, 0, -5);
 scene.add(htmlCssBuilding);
 
-const javascriptBuilding = createBuilding({
-  position: new THREE.Vector3(3, 0, -5),
-  size: new THREE.Vector3(2, 2.8, 2),
-  color: 0xf9a825,
-  roofColor: 0xf57f17,
-  windowColor: 0xffee58,
-  name: '제어소 (JavaScript)',
-  tag: '웹페이지의 두뇌',
-  phase: 2,
-  description: '웹페이지에 동작을 부여하는 제어 센터'
+/* ---- 10. JavaScript / Control Room ---- */
+const javascriptBuilding = new THREE.Group();
+javascriptBuilding.userData = {name:'제어소 (JavaScript)', tag:'웹페이지의 두뇌', icon:'⚡', phase:2, description:'웹페이지에 동작을 부여하는 제어 센터'};
+
+const jsBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.8, 2),
+  new THREE.MeshStandardMaterial({color:0xf9a825, roughness:0.6})
+);
+jsBody.position.y = 1.4;
+jsBody.castShadow = true; jsBody.receiveShadow = true;
+javascriptBuilding.add(jsBody);
+
+const jsRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.5, 0.9, 4),
+  new THREE.MeshStandardMaterial({color:0xf57f17, roughness:0.5})
+);
+jsRoof.position.y = 3.25;
+jsRoof.rotation.y = Math.PI/4;
+jsRoof.castShadow = true;
+javascriptBuilding.add(jsRoof);
+
+// Dashboard panels
+const panelMat = new THREE.MeshStandardMaterial({color:0x222222});
+[{x:-0.4,y:1.8},{x:0.4,y:1.8},{x:-0.4,y:1.2},{x:0.4,y:1.2}].forEach(p => {
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.08), panelMat);
+  panel.position.set(p.x, p.y, 1.04);
+  javascriptBuilding.add(panel);
 });
+
+const jsScreen = new THREE.MeshStandardMaterial({color:0xffee58, emissive:0xffee58, emissiveIntensity:0.6});
+[{x:-0.4,y:1.8},{x:0.4,y:1.8},{x:-0.4,y:1.2},{x:0.4,y:1.2}].forEach(p => {
+  const s = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.02), jsScreen);
+  s.position.set(p.x, p.y, 1.09);
+  javascriptBuilding.add(s);
+});
+
+// Gears/cogs on side
+const gear = new THREE.Mesh(
+  new THREE.TorusGeometry(0.25, 0.06, 8, 12),
+  new THREE.MeshStandardMaterial({color:0xffd600, emissive:0xffd600, emissiveIntensity:0.3})
+);
+gear.position.set(1.04, 2.0, 0);
+gear.rotation.y = Math.PI/2;
+javascriptBuilding.add(gear);
+
+const gear2 = new THREE.Mesh(
+  new THREE.TorusGeometry(0.15, 0.04, 8, 12),
+  new THREE.MeshStandardMaterial({color:0xffd600, emissive:0xffd600, emissiveIntensity:0.3})
+);
+gear2.position.set(1.04, 1.6, 0.2);
+gear2.rotation.y = Math.PI/2;
+javascriptBuilding.add(gear2);
+
+const jsDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0xe65100})
+);
+jsDoor.position.set(0, 0.5, 1.08);
+javascriptBuilding.add(jsDoor);
+
+// Button lights
+[0xff1744, 0x00e676, 0x2979ff].forEach((col, i) => {
+  const btn = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 8, 8),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.8})
+  );
+  btn.position.set(-0.3 + i*0.3, 0.6, 1.08);
+  javascriptBuilding.add(btn);
+});
+
+javascriptBuilding.add(makeLabel('제어소 (JavaScript)', '웹페이지의 두뇌', 4.5));
+javascriptBuilding.position.set(3, 0, -5);
 scene.add(javascriptBuilding);
 
-const nodejsBuilding = createBuilding({
-  position: new THREE.Vector3(10, 0, 3),
-  size: new THREE.Vector3(2.5, 2.2, 2),
-  color: 0x43a047,
-  roofColor: 0x2e7d32,
-  windowColor: 0x69f0ae,
-  name: '작업장 (Node.js/Python)',
-  tag: '서버 측 처리',
-  phase: 2,
-  description: '서버에서 데이터를 처리하는 작업장'
+/* ---- 11. Node.js/Python / Workshop ---- */
+const nodejsBuilding = new THREE.Group();
+nodejsBuilding.userData = {name:'작업장 (Node.js/Python)', tag:'서버 측 처리', icon:'🔧', phase:2, description:'서버에서 데이터를 처리하는 작업장'};
+
+const njBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 2.2, 2),
+  new THREE.MeshStandardMaterial({color:0x43a047, roughness:0.7})
+);
+njBody.position.y = 1.1;
+njBody.castShadow = true; njBody.receiveShadow = true;
+nodejsBuilding.add(njBody);
+
+const njRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.8, 0.15, 2.3),
+  new THREE.MeshStandardMaterial({color:0x2e7d32, roughness:0.6})
+);
+njRoof.position.y = 2.28;
+njRoof.castShadow = true;
+nodejsBuilding.add(njRoof);
+
+// Workbench
+const workbench = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.5, 0.4),
+  new THREE.MeshStandardMaterial({color:0x6d4c41, roughness:0.8})
+);
+workbench.position.set(0, 0.25, 1.4);
+nodejsBuilding.add(workbench);
+
+// Tools on wall
+const toolMat = new THREE.MeshStandardMaterial({color:0x90a4ae});
+[{x:-0.6,y:1.6},{x:-0.3,y:1.7},{x:0,y:1.6},{x:0.3,y:1.7},{x:0.6,y:1.6}].forEach(p => {
+  const tool = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.05), toolMat);
+  tool.position.set(p.x, p.y, 1.03);
+  nodejsBuilding.add(tool);
 });
+
+// Furnace/stove (representing "runtime")
+const furnace = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.6, 0.5),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
+);
+furnace.position.set(0.8, 0.3, 0);
+nodejsBuilding.add(furnace);
+
+const fire = new THREE.Mesh(
+  new THREE.SphereGeometry(0.12, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xff6d00, emissive:0xff6d00, emissiveIntensity:1.0})
+);
+fire.position.set(0.8, 0.65, 0.26);
+nodejsBuilding.add(fire);
+
+const njDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x1b5e20})
+);
+njDoor.position.set(-0.5, 0.5, 1.08);
+nodejsBuilding.add(njDoor);
+
+const njWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 0.35, 0.12),
+  new THREE.MeshStandardMaterial({color:0x69f0ae, emissive:0x69f0ae, emissiveIntensity:0.4})
+);
+njWin.position.set(0.5, 1.5, 1.03);
+nodejsBuilding.add(njWin);
+
+nodejsBuilding.add(makeLabel('작업장 (Node.js/Python)', '서버 측 처리', 3.8));
+nodejsBuilding.position.set(10, 0, 3);
 scene.add(nodejsBuilding);
 
-const cloudBuilding = createBuilding({
-  position: new THREE.Vector3(20, 0, 7),
-  size: new THREE.Vector3(2.5, 3.5, 2.5),
-  color: 0x29b6f6,
-  roofColor: 0x0288d1,
-  windowColor: 0x81d4fa,
-  name: '구름 도시 (AWS/Azure)',
-  tag: '클라우드 서비스',
-  phase: 3,
-  description: '인터넷 위의 거대한 클라우드 도시'
+/* ---- 12. Cloud City / AWS ---- */
+const cloudBuilding = new THREE.Group();
+cloudBuilding.userData = {name:'구름 도시 (AWS/Azure)', tag:'클라우드 서비스', icon:'🏙️', phase:3, description:'인터넷 위의 거대한 클라우드 도시'};
+
+// Cloud shape from sphere clusters
+const cloudMat = new THREE.MeshStandardMaterial({color:0x03a9f4, roughness:0.5, transparent:true, opacity:0.85});
+const cloudPositions = [
+  [0, 2.5, 0, 1.2], [-0.9, 2.8, 0.3, 0.8], [0.9, 2.7, -0.2, 0.9],
+  [-0.5, 3.2, -0.3, 0.7], [0.5, 3.3, 0.2, 0.6], [0, 3.6, 0, 0.5],
+  [-1.2, 2.4, -0.5, 0.6], [1.2, 2.5, 0.4, 0.65]
+];
+cloudPositions.forEach(([x,y,z,r]) => {
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), cloudMat);
+  sphere.position.set(x, y, z);
+  sphere.castShadow = true;
+  cloudBuilding.add(sphere);
 });
+
+// Server rack icons on facade
+const rackMat = new THREE.MeshStandardMaterial({color:0x0277bd, roughness:0.6});
+[-0.4, 0.4].forEach(x => {
+  const rack = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.8, 0.15), rackMat);
+  rack.position.set(x, 1.0, 1.0);
+  cloudBuilding.add(rack);
+
+  // LED dots on rack
+  [0x00e676, 0xffd600, 0x00e676].forEach((col, i) => {
+    const led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.03, 6, 6),
+      new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.8})
+    );
+    led.position.set(x, 0.7 + i*0.2, 1.09);
+    cloudBuilding.add(led);
+  });
+});
+
+// Floating platform
+const platform = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.8, 1.8, 0.15, 24),
+  new THREE.MeshStandardMaterial({color:0x81d4fa, roughness:0.4, transparent:true, opacity:0.6})
+);
+platform.position.y = 0.08;
+platform.castShadow = true;
+cloudBuilding.add(platform);
+
+// Support pillars
+const pillarMat2 = new THREE.MeshStandardMaterial({color:0x4fc3f7, roughness:0.5});
+[[-0.8, 0.5, -0.8],[0.8, 0.5, 0.8],[-0.8, 0.5, 0.8],[0.8, 0.5, -0.8]].forEach(([x,y,z]) => {
+  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 8), pillarMat2);
+  p.position.set(x, y, z);
+  cloudBuilding.add(p);
+});
+
+cloudBuilding.add(makeLabel('구름 도시 (AWS/Azure)', '클라우드 서비스', 5.0));
+cloudBuilding.position.set(20, 0, 7);
 scene.add(cloudBuilding);
 
-const loadbalancerBuilding = createBuilding({
-  position: new THREE.Vector3(14, 0, 3),
-  size: new THREE.Vector3(2, 2, 2),
-  color: 0x00897b,
-  roofColor: 0x00695c,
-  windowColor: 0x80cbc4,
-  name: '교차로 배분기 (LB)',
-  tag: '요청 균등 배분',
-  phase: 3,
-  description: '사용자 요청을 서버에 골고루 나눠주는 장치'
+/* ---- 13. Load Balancer ---- */
+const loadbalancerBuilding = new THREE.Group();
+loadbalancerBuilding.userData = {name:'교차로 배분기 (LB)', tag:'요청 균등 배분', icon:'⚖️', phase:3, description:'사용자 요청을 서버에 골고루 나눠주는 장치'};
+
+// Smaller roundabout disc
+const lbDisc = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.5, 1.5, 0.18, 24),
+  new THREE.MeshStandardMaterial({color:0xff9800, roughness:0.7})
+);
+lbDisc.position.y = 0.09;
+lbDisc.castShadow = true; lbDisc.receiveShadow = true;
+loadbalancerBuilding.add(lbDisc);
+
+// Inner circle
+const lbInner = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.5, 0.5, 0.2, 24),
+  new THREE.MeshStandardMaterial({color:0xe65100, roughness:0.6})
+);
+lbInner.position.y = 0.1;
+loadbalancerBuilding.add(lbInner);
+
+// Multiple exit paths (5 directions)
+[0, Math.PI*2/5, Math.PI*4/5, Math.PI*6/5, Math.PI*8/5].forEach(angle => {
+  const path = new THREE.Mesh(
+    new THREE.BoxGeometry(0.12, 0.04, 1.5),
+    new THREE.MeshStandardMaterial({color:0xffe0b2, emissive:0xff9800, emissiveIntensity:0.2})
+  );
+  path.position.set(Math.sin(angle)*1.2, 0.2, Math.cos(angle)*1.2);
+  path.rotation.y = angle;
+  loadbalancerBuilding.add(path);
 });
+
+// Traffic director figure in center
+const director = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.06, 0.5, 8),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.5})
+);
+director.position.set(0, 0.45, 0);
+loadbalancerBuilding.add(director);
+
+const dirHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.1, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.5})
+);
+dirHead.position.set(0, 0.75, 0);
+loadbalancerBuilding.add(dirHead);
+
+loadbalancerBuilding.add(makeLabel('교차로 배분기 (LB)', '요청 균등 배분', 3.5));
+loadbalancerBuilding.position.set(14, 0, 3);
 scene.add(loadbalancerBuilding);
 
-const gitBuilding = createBuilding({
-  position: new THREE.Vector3(6, 0, -5),
-  size: new THREE.Vector3(2, 2.5, 2),
-  color: 0xe53935,
-  roofColor: 0xc62828,
-  windowColor: 0xef9a9a,
-  name: '기록실 (Git)',
-  tag: '코드 변경 기록',
-  phase: 4,
-  description: '코드의 모든 변경 기록을 보관하는 곳'
+/* ---- 14. Git Archive ---- */
+const gitBuilding = new THREE.Group();
+gitBuilding.userData = {name:'기록실 (Git)', tag:'코드 변경 기록', icon:'📖', phase:4, description:'코드의 모든 변경 기록을 보관하는 곳'};
+
+// Library/archive body
+const gitBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.5, 2),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.7})
+);
+gitBody.position.y = 1.25;
+gitBody.castShadow = true; gitBody.receiveShadow = true;
+gitBuilding.add(gitBody);
+
+// Flat roof with parapet
+const gitRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.3, 0.12, 2.3),
+  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.6})
+);
+gitRoof.position.y = 2.56;
+gitRoof.castShadow = true;
+gitBuilding.add(gitRoof);
+
+// Bookshelf visible through window
+const shelfMat2 = new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8});
+for(let row = 0; row < 3; row++){
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 0.8), shelfMat2);
+  shelf.position.set(0, 0.5 + row*0.5, 0);
+  gitBuilding.add(shelf);
+}
+
+// Books on shelves
+const bookColors = [0xc62828, 0x1565c0, 0x2e7d32, 0xf9a825, 0x6a1b9a];
+for(let row = 0; row < 3; row++){
+  for(let b = 0; b < 4; b++){
+    const book = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.35, 0.12),
+      new THREE.MeshStandardMaterial({color:bookColors[(row+b)%5]})
+    );
+    book.position.set(-0.45 + b*0.3, 0.7 + row*0.5, 0);
+    gitBuilding.add(book);
+  }
+}
+
+// Git branch diagram on facade (Y-shape lines)
+const branchMat = new THREE.MeshStandardMaterial({color:0xffcdd2, emissive:0xff5252, emissiveIntensity:0.5});
+// Main branch line
+const mainLine = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.0, 0.02), branchMat);
+mainLine.position.set(0, 1.5, 1.02);
+gitBuilding.add(mainLine);
+// Branch fork
+const forkLine = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.02), branchMat);
+forkLine.position.set(0.2, 1.8, 1.02);
+forkLine.rotation.z = -0.4;
+gitBuilding.add(forkLine);
+// Merge line
+const mergeLine = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.02), branchMat);
+mergeLine.position.set(0.2, 1.3, 1.02);
+mergeLine.rotation.z = 0.4;
+gitBuilding.add(mergeLine);
+// Commit dots
+[0xff5252, 0x69f0ae, 0x448aff].forEach((col, i) => {
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 8, 8),
+    new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.8})
+  );
+  dot.position.set(-0.2 + i*0.2, 1.1 + i*0.3, 1.03);
+  gitBuilding.add(dot);
 });
+
+const gitDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4e342e})
+);
+gitDoor.position.set(0, 0.5, 1.08);
+gitBuilding.add(gitDoor);
+
+gitBuilding.add(makeLabel('기록실 (Git)', '코드 변경 기록', 4.2));
+gitBuilding.position.set(6, 0, -5);
 scene.add(gitBuilding);
 
-const cacheBuilding = createBuilding({
-  position: new THREE.Vector3(-12, 0, 10),
-  size: new THREE.Vector3(1.8, 2, 1.8),
-  color: 0xffab00,
-  roofColor: 0xff8f00,
-  windowColor: 0xffd54f,
-  name: '속도 경보 (캐시)',
-  tag: '자주 쓰는 데이터 보관',
-  phase: 1,
-  description: '자주 쓰는 데이터를 빠르게 보관하는 곳'
-});
+/* ---- 15. Cache / Speed Boost ---- */
+const cacheBuilding = new THREE.Group();
+cacheBuilding.userData = {name:'속도 경보 (캐시)', tag:'자주 쓰는 데이터 보관', icon:'⚡', phase:1, description:'자주 쓰는 데이터를 빠르게 보관하는 곳'};
+
+// Sleek modern angular shape
+const cacheBody = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 2.0, 1.8),
+  new THREE.MeshStandardMaterial({color:0xffeb3b, roughness:0.4, metalness:0.2})
+);
+cacheBody.position.y = 1.0;
+cacheBody.castShadow = true; cacheBody.receiveShadow = true;
+cacheBuilding.add(cacheBody);
+
+// Angled roof (sleek/modern)
+const cacheRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.0, 0.1, 2.0),
+  new THREE.MeshStandardMaterial({color:0xffc107, roughness:0.4, metalness:0.3})
+);
+cacheRoof.position.y = 2.05;
+cacheRoof.rotation.z = 0.08;
+cacheRoof.castShadow = true;
+cacheBuilding.add(cacheRoof);
+
+// Lightning bolt decoration (on front)
+const boltMat = new THREE.MeshStandardMaterial({color:0xffd600, emissive:0xffd600, emissiveIntensity:0.8});
+// Bolt shape from boxes
+const bolt1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.35, 0.05), boltMat);
+bolt1.position.set(0, 1.6, 0.93);
+bolt1.rotation.z = 0.2;
+cacheBuilding.add(bolt1);
+const bolt2 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.25, 0.05), boltMat);
+bolt2.position.set(0.12, 1.25, 0.93);
+bolt2.rotation.z = -0.2;
+cacheBuilding.add(bolt2);
+const bolt3 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.05), boltMat);
+bolt3.position.set(-0.08, 1.0, 0.93);
+cacheBuilding.add(bolt3);
+
+// "Express" stripe
+const stripe = new THREE.Mesh(
+  new THREE.BoxGeometry(1.82, 0.15, 0.02),
+  new THREE.MeshStandardMaterial({color:0xffc107, emissive:0xffc107, emissiveIntensity:0.4})
+);
+stripe.position.set(0, 0.5, 0.92);
+cacheBuilding.add(stripe);
+
+// Door
+const cacheDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 0.8, 0.15),
+  new THREE.MeshStandardMaterial({color:0xf57f17})
+);
+cacheDoor.position.set(0, 0.4, 0.98);
+cacheBuilding.add(cacheDoor);
+
+// Window
+const cacheWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.35, 0.3, 0.12),
+  new THREE.MeshStandardMaterial({color:0xffd54f, emissive:0xffd54f, emissiveIntensity:0.5})
+);
+cacheWin.position.set(0, 1.3, 0.93);
+cacheBuilding.add(cacheWin);
+
+cacheBuilding.add(makeLabel('속도 경보 (캐시)', '자주 쓰는 데이터 보관', 3.5));
+cacheBuilding.position.set(-12, 0, 10);
 scene.add(cacheBuilding);
 
-const reactBuilding = createBuilding({
-  position: new THREE.Vector3(0, 0, -9),
-  size: new THREE.Vector3(2.5, 2.5, 2.5),
-  color: 0x1e88e5,
-  roofColor: 0x1565c0,
-  windowColor: 0x64b5f6,
-  name: '프레임워크 광장 (React/Vue)',
-  tag: '재사용 가능한 블록',
-  phase: 2,
-  description: '미리 만든 블록으로 빠르게 웹페이지를 조립하는 곳'
+/* ---- 16. React/Vue / Framework Plaza ---- */
+const reactBuilding = new THREE.Group();
+reactBuilding.userData = {name:'프레임워크 광장 (React/Vue)', tag:'재사용 가능한 블록', icon:'⚛️', phase:2, description:'미리 만든 블록으로 빠르게 웹페이지를 조립하는 곳'};
+
+// Open plaza platform
+const plazaPlatform = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.0, 2.0, 0.15, 24),
+  new THREE.MeshStandardMaterial({color:0x2196f3, roughness:0.6})
+);
+plazaPlatform.position.y = 0.08;
+plazaPlatform.castShadow = true; plazaPlatform.receiveShadow = true;
+reactBuilding.add(plazaPlatform);
+
+// Columns supporting canopy
+const colMat = new THREE.MeshStandardMaterial({color:0x1565c0, roughness:0.5});
+[[-0.7,-0.7],[0.7,-0.7],[-0.7,0.7],[0.7,0.7]].forEach(([x,z]) => {
+  const col = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.0, 10), colMat);
+  col.position.set(x, 1.1, z);
+  col.castShadow = true;
+  reactBuilding.add(col);
 });
+
+// Canopy
+const canopy = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.3, 1.3, 0.08, 24),
+  new THREE.MeshStandardMaterial({color:0x1565c0, roughness:0.4, transparent:true, opacity:0.8})
+);
+canopy.position.y = 2.15;
+canopy.castShadow = true;
+reactBuilding.add(canopy);
+
+// Framework logos (geometric shapes)
+// React atom (triangle)
+const atomGeo = new THREE.TorusGeometry(0.25, 0.02, 8, 24);
+const atomMat = new THREE.MeshStandardMaterial({color:0x61dafb, emissive:0x61dafb, emissiveIntensity:0.6});
+const atom1 = new THREE.Mesh(atomGeo, atomMat);
+atom1.position.set(-0.3, 1.5, 0);
+reactBuilding.add(atom1);
+const atom2 = new THREE.Mesh(atomGeo, atomMat);
+atom2.position.set(-0.3, 1.5, 0);
+atom2.rotation.x = Math.PI/3;
+reactBuilding.add(atom2);
+const atom3 = new THREE.Mesh(atomGeo, atomMat);
+atom3.position.set(-0.3, 1.5, 0);
+atom3.rotation.x = -Math.PI/3;
+reactBuilding.add(atom3);
+
+// Vue shape (V)
+const vueMat = new THREE.MeshStandardMaterial({color:0x42b883, emissive:0x42b883, emissiveIntensity:0.6});
+const vueV1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.04), vueMat);
+vueV1.position.set(0.4, 1.55, 0);
+vueV1.rotation.z = 0.3;
+reactBuilding.add(vueV1);
+const vueV2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.04), vueMat);
+vueV2.position.set(0.5, 1.55, 0);
+vueV2.rotation.z = -0.3;
+reactBuilding.add(vueV2);
+
+// Center piece
+const center = new THREE.Mesh(
+  new THREE.OctahedronGeometry(0.15, 0),
+  new THREE.MeshStandardMaterial({color:0x448aff, emissive:0x448aff, emissiveIntensity:0.6})
+);
+center.position.set(0.05, 1.8, 0);
+reactBuilding.add(center);
+
+reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 3.5));
+reactBuilding.position.set(0, 0, -9);
 scene.add(reactBuilding);
 
-const httpBuilding = createBuilding({
-  position: new THREE.Vector3(2, 0, 8),
-  size: new THREE.Vector3(2, 2.2, 2),
-  color: 0x3949ab,
-  roofColor: 0x283593,
-  windowColor: 0x7986cb,
-  name: '우편 규칙 (HTTP)',
-  tag: '데이터 전송 규칙',
-  phase: 2,
-  description: '인터넷에서 데이터가 오가는 규칙'
+/* ---- 17. HTTP Rules ---- */
+const httpBuilding = new THREE.Group();
+httpBuilding.userData = {name:'우편 규칙 (HTTP)', tag:'데이터 전송 규칙', icon:'📬', phase:2, description:'인터넷에서 데이터가 오가는 규칙'};
+
+// Small mail sorting room
+const httpBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.2, 2),
+  new THREE.MeshStandardMaterial({color:0x8bc34a, roughness:0.7})
+);
+httpBody.position.y = 1.1;
+httpBody.castShadow = true; httpBody.receiveShadow = true;
+httpBuilding.add(httpBody);
+
+// Flat roof
+const httpRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.3, 0.12, 2.3),
+  new THREE.MeshStandardMaterial({color:0x558b2f, roughness:0.6})
+);
+httpRoof.position.y = 2.26;
+httpRoof.castShadow = true;
+httpBuilding.add(httpRoof);
+
+// Mail slots numbered 200, 301, 404, 500
+const statusCodes = ['200', '301', '404', '500'];
+const statusColors = [0x66bb6a, 0x42a5f5, 0xffa726, 0xef5350];
+statusCodes.forEach((code, i) => {
+  const slotBg = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 0.25, 0.08),
+    new THREE.MeshStandardMaterial({color:statusColors[i]})
+  );
+  slotBg.position.set(-0.55 + i*0.38, 0.8, 1.04);
+  httpBuilding.add(slotBg);
+
+  // Create number label
+  const nc = document.createElement('canvas');
+  nc.width = 64; nc.height = 32;
+  const nx = nc.getContext('2d');
+  nx.fillStyle = '#fff'; nx.font = 'bold 20px Arial'; nx.textAlign = 'center';
+  nx.fillText(code, 32, 24);
+  const numLabel = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.3, 0.15),
+    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(nc), transparent: true, side: THREE.DoubleSide})
+  );
+  numLabel.position.set(-0.55 + i*0.38, 0.8, 1.09);
+  httpBuilding.add(numLabel);
 });
+
+// Envelope decorations
+const envMat = new THREE.MeshStandardMaterial({color:0xf0f4c3, roughness:0.5});
+[{x:-0.6,y:1.5},{x:0.5,y:1.4}].forEach(p => {
+  const env = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), envMat);
+  env.position.set(p.x, p.y, 1.02);
+  httpBuilding.add(env);
+  // Envelope flap (triangle shape using thin box)
+  const flap = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.1, 0.01),
+    new THREE.MeshStandardMaterial({color:0xe6ee9c})
+  );
+  flap.position.set(p.x, p.y + 0.1, 1.03);
+  httpBuilding.add(flap);
+});
+
+// Door
+const httpDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.45, 0.9, 0.15),
+  new THREE.MeshStandardMaterial({color:0x33691e})
+);
+httpDoor.position.set(0, 0.45, 1.08);
+httpBuilding.add(httpDoor);
+
+// Window
+const httpWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.35, 0.3, 0.12),
+  new THREE.MeshStandardMaterial({color:0xc5e1a5, emissive:0xc5e1a5, emissiveIntensity:0.4})
+);
+httpWin.position.set(0, 1.6, 1.03);
+httpBuilding.add(httpWin);
+
+httpBuilding.add(makeLabel('우편 규칙 (HTTP)', '데이터 전송 규칙', 3.8));
+httpBuilding.position.set(2, 0, 8);
 scene.add(httpBuilding);
 
-const dockerBuilding = createBuilding({
-  position: new THREE.Vector3(20, 0, 3),
-  size: new THREE.Vector3(2.5, 2, 2.5),
-  color: 0x00acc1,
-  roofColor: 0x00838f,
-  windowColor: 0x80deea,
-  name: '컨테이너 야적장 (Docker)',
-  tag: '이식 가능한 실행 환경',
-  phase: 3,
-  description: '프로그램을 컨테이너에 담아 어디서든 실행되게 하는 곳'
+/* ---- 18. Docker / Container Yard ---- */
+const dockerBuilding = new THREE.Group();
+dockerBuilding.userData = {name:'컨테이너 야적장 (Docker)', tag:'이식 가능한 실행 환경', icon:'🐳', phase:3, description:'프로그램을 컨테이너에 담아 어디서든 실행되게 하는 곳'};
+
+// Stacked shipping containers (2-3 high)
+const containerColors = [0x2196f3, 0xff9800, 0x4caf50, 0x2196f3, 0xff9800];
+const containerMat2 = containerColors.map(c => new THREE.MeshStandardMaterial({color:c, roughness:0.6, metalness:0.2}));
+
+// Bottom row (2 containers)
+const cont1 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), containerMat2[0]);
+cont1.position.set(-0.3, 0.4, 0);
+cont1.castShadow = true;
+dockerBuilding.add(cont1);
+
+const cont2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), containerMat2[1]);
+cont2.position.set(0.3, 0.4, 0.9);
+cont2.castShadow = true;
+dockerBuilding.add(cont2);
+
+// Middle row
+const cont3 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), containerMat2[2]);
+cont3.position.set(-0.3, 1.2, 0);
+cont3.castShadow = true;
+dockerBuilding.add(cont3);
+
+// Top container
+const cont4 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.7), containerMat2[3]);
+cont4.position.set(-0.3, 1.95, 0);
+cont4.castShadow = true;
+dockerBuilding.add(cont4);
+
+// Container ridges (lines on sides)
+const ridgeMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.5});
+[cont1, cont2, cont3].forEach(c => {
+  for(let i = 0; i < 4; i++){
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.7, 0.82), ridgeMat);
+    ridge.position.set(c.position.x - 0.4 + i*0.27, c.position.y, c.position.z);
+    dockerBuilding.add(ridge);
+  }
 });
+
+// Crane arm
+const cranePole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 2.5, 8),
+  new THREE.MeshStandardMaterial({color:0xffc107, roughness:0.5})
+);
+cranePole.position.set(1.0, 1.25, 0.4);
+cranePole.castShadow = true;
+dockerBuilding.add(cranePole);
+
+const craneArm = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 0.06, 0.06),
+  new THREE.MeshStandardMaterial({color:0xffc107, roughness:0.5})
+);
+craneArm.position.set(0.3, 2.5, 0.4);
+dockerBuilding.add(craneArm);
+
+// Crane cable
+const craneCable = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.01, 0.01, 0.6, 6),
+  new THREE.MeshStandardMaterial({color:0x666666})
+);
+craneCable.position.set(-0.3, 2.2, 0.4);
+dockerBuilding.add(craneCable);
+
+dockerBuilding.add(makeLabel('컨테이너 야적장 (Docker)', '이식 가능한 실행 환경', 4.0));
+dockerBuilding.position.set(20, 0, 3);
 scene.add(dockerBuilding);
 
-const cicdBuilding = createBuilding({
-  position: new THREE.Vector3(20, 0, -1),
-  size: new THREE.Vector3(2, 2.5, 1.8),
-  color: 0x009688,
-  roofColor: 0x00796b,
-  windowColor: 0x80cbc4,
-  name: '자동 공정 (CI/CD)',
-  tag: '자동 테스트 · 배포',
-  phase: 3,
-  description: '코드를 자동으로 테스트하고 배포하는 공정'
+/* ---- 19. CI/CD / Auto Pipeline ---- */
+const cicdBuilding = new THREE.Group();
+cicdBuilding.userData = {name:'자동 공정 (CI/CD)', tag:'자동 테스트 · 배포', icon:'🔄', phase:3, description:'코드를 자동으로 테스트하고 배포하는 공정'};
+
+// Factory body
+const cicdBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2.5, 1.8),
+  new THREE.MeshStandardMaterial({color:0x9c27b0, roughness:0.7})
+);
+cicdBody.position.y = 1.25;
+cicdBody.castShadow = true; cicdBody.receiveShadow = true;
+cicdBuilding.add(cicdBody);
+
+// Flat roof
+const cicdRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(2.3, 0.12, 2.1),
+  new THREE.MeshStandardMaterial({color:0x7b1fa2, roughness:0.6})
+);
+cicdRoof.position.y = 2.56;
+cicdRoof.castShadow = true;
+cicdBuilding.add(cicdRoof);
+
+// Conveyor belt (assembly line)
+const cicdConveyor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.08, 2.5),
+  new THREE.MeshStandardMaterial({color:0x424242, roughness:0.5})
+);
+cicdConveyor.position.set(0, 0.5, 0);
+cicdConveyor.rotation.y = Math.PI/2;
+cicdBuilding.add(cicdConveyor);
+
+// Conveyor side rails
+const ccRailMat = new THREE.MeshStandardMaterial({color:0x616161});
+[-0.42, 0.42].forEach(z => {
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.06, 0.04), ccRailMat);
+  rail.position.set(0, 0.54, z);
+  rail.rotation.y = Math.PI/2;
+  cicdBuilding.add(rail);
 });
+
+// Packages on conveyor
+const pkgMat = new THREE.MeshStandardMaterial({color:0xffc107, roughness:0.6});
+[-0.6, 0, 0.6].forEach(z => {
+  const pkg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.2), pkgMat);
+  pkg.position.set(0, 0.64, z);
+  cicdBuilding.add(pkg);
+});
+
+// Robot arms on sides
+const armMat = new THREE.MeshStandardMaterial({color:0xbdbdbd, metalness:0.4});
+[-0.8, 0.8].forEach(x => {
+  // Base
+  const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.15, 8), armMat);
+  armBase.position.set(x, 0.15, 0);
+  cicdBuilding.add(armBase);
+  // Arm segment
+  const armSeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8), armMat);
+  armSeg.position.set(x, 0.5, 0);
+  armSeg.rotation.z = x > 0 ? -0.5 : 0.5;
+  cicdBuilding.add(armSeg);
+  // Gripper
+  const gripper = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.12), armMat);
+  gripper.position.set(x * 0.7, 0.7, 0);
+  cicdBuilding.add(gripper);
+});
+
+// Status lights
+const cicdLedMat = new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:1.0});
+[-0.3, 0, 0.3].forEach(x => {
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), cicdLedMat);
+  led.position.set(x, 2.3, 0.91);
+  cicdBuilding.add(led);
+});
+
+const cicdDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 1.0, 0.15),
+  new THREE.MeshStandardMaterial({color:0x4a148c})
+);
+cicdDoor.position.set(0, 0.5, 0.92);
+cicdBuilding.add(cicdDoor);
+
+cicdBuilding.add(makeLabel('자동 공정 (CI/CD)', '자동 테스트 · 배포', 4.2));
+cicdBuilding.position.set(20, 0, -1);
 scene.add(cicdBuilding);
 
-const securityBuilding = createBuilding({
-  position: new THREE.Vector3(22, 0, -7),
-  size: new THREE.Vector3(2, 2.8, 2),
-  color: 0x7b1fa2,
-  roofColor: 0x6a1b9a,
-  windowColor: 0xce93d8,
-  name: '금고 (보안)',
-  tag: '데이터 보호',
-  phase: 3,
-  description: '소중한 데이터를 안전하게 지키는 금고'
-});
+/* ---- 20. Security / Guard Post ---- */
+const securityBuilding = new THREE.Group();
+securityBuilding.userData = {name:'금고 (보안)', tag:'데이터 보호', icon:'🔐', phase:3, description:'소중한 데이터를 안전하게 지키는 금고'};
+
+// Small guard booth
+const secBody = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 1.8, 1.5),
+  new THREE.MeshStandardMaterial({color:0x607d8b, roughness:0.7})
+);
+secBody.position.y = 0.9;
+secBody.castShadow = true; secBody.receiveShadow = true;
+securityBuilding.add(secBody);
+
+// Flat roof
+const secRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 0.12, 1.8),
+  new THREE.MeshStandardMaterial({color:0x455a64, roughness:0.6})
+);
+secRoof.position.y = 1.86;
+secRoof.castShadow = true;
+securityBuilding.add(secRoof);
+
+// CCTV camera on pole
+const cctvPole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.03, 0.03, 1.5, 8),
+  new THREE.MeshStandardMaterial({color:0x333333})
+);
+cctvPole.position.set(0.8, 2.6, 0);
+securityBuilding.add(cctvPole);
+
+// CCTV camera housing
+const cctvCam = new THREE.Mesh(
+  new THREE.BoxGeometry(0.15, 0.1, 0.25),
+  new THREE.MeshStandardMaterial({color:0x222222})
+);
+cctvCam.position.set(0.8, 3.4, 0.1);
+cctvCam.rotation.x = -0.3;
+securityBuilding.add(cctvCam);
+
+// Camera lens
+const cctvLens = new THREE.Mesh(
+  new THREE.SphereGeometry(0.04, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:1.0})
+);
+cctvLens.position.set(0.8, 3.4, 0.24);
+securityBuilding.add(cctvLens);
+
+// Barrier/gate arm
+const barrierPole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 0.4, 8),
+  new THREE.MeshStandardMaterial({color:0x333333})
+);
+barrierPole.position.set(-1.2, 0.7, 0);
+securityBuilding.add(barrierPole);
+
+const barrierArm = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 0.08, 0.06),
+  new THREE.MeshStandardMaterial({color:0xff9800})
+);
+barrierArm.position.set(-0.4, 0.92, 0);
+barrierArm.rotation.z = 0.1;
+securityBuilding.add(barrierArm);
+
+// Red warning light on barrier
+const warnLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.05, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:1.0})
+);
+warnLight.position.set(-1.2, 1.0, 0);
+securityBuilding.add(warnLight);
+
+// Door
+const secDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.45, 0.9, 0.15),
+  new THREE.MeshStandardMaterial({color:0x37474f})
+);
+secDoor.position.set(0, 0.45, 0.78);
+securityBuilding.add(secDoor);
+
+// Window
+const secWin = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.4, 0.12),
+  new THREE.MeshStandardMaterial({color:0xb0bec5, emissive:0xb0bec5, emissiveIntensity:0.3})
+);
+secWin.position.set(0, 1.3, 0.78);
+securityBuilding.add(secWin);
+
+securityBuilding.add(makeLabel('금고 (보안)', '데이터 보호', 4.5));
+securityBuilding.position.set(22, 0, -7);
 scene.add(securityBuilding);
 
 /* ---- Characters ---- */
@@ -1168,14 +2302,6 @@ const STATIONS = [
     `<b>데이터 흐름</b><br><br>사용자가 버튼을 누르면, 택배기사(API)가 공장으로 달려가고, 공장이 창고에서 정보를 찾아돌려보내고, 우체국이 주소를 확인해줍니다.<br><br>이 전체 흐름을 <b>풀스택(Full Stack)</b>이라고 합니다.`
    ]},
   
-  {id:'portal', minLevel:1, phase:4, icon:'🚪', label:'포탈', tag:'다음 카테고리로 이동', color:0x9c27b0,
-   pos:new THREE.Vector3(24, 1.5, 0), camPos:new THREE.Vector3(27, 3, 5),
-   levels:[
-    `<b>다음 카테고리로 이동합니다.</b><br><br>이 포탈을 클릭하면 <b>다음 카테고리</b>로 이동합니다.<br><br>각 카테고리는 컴퓨터의 다른 영역을 설명합니다.`,
-    `<b>카테고리 목록</b><br><br>1. 컴퓨터 구조 (현재 위치)<br>2. 인터넷<br>3. 프로그래밍 언어<br>4. 프론트엔드<br>5. 백엔드<br>6. Git<br>7. 보안`,
-    `<b>자유롭게 이동</b><br><br>원하는 카테고리를 자유롭게 선택할 수 있습니다.<br><br>각 카테고리는 독립적인 맵으로 구성되어 있습니다.`
-   ]},
-
   // Level 2 stations (중급)
   {id:'gpu', minLevel:2, phase:1, icon:'🎮', label:'그래픽 공방 (GPU)', tag:'화면을 그리는 전문가', color:0x7c4dff,
    pos:new THREE.Vector3(-16, 1.2, 5), camPos:new THREE.Vector3(-14, 4, 9),
@@ -1733,9 +2859,6 @@ function renderRelationshipDiagram(){
       <div class="diagram-node" style="left:10%;top:15%;background:rgba(255,255,255,.1);border-color:#ffffff;width:80%" onclick="visitStationById('overview')">
         🔭 전체 조망
       </div>
-      <div class="diagram-node" style="left:10%;top:40%;background:rgba(156,39,176,.1);border-color:#9c27b0;width:80%" onclick="visitStationById('portal')">
-        🚪 포탈
-      </div>
       <div style="position:absolute;left:10%;top:70%;font-size:.7em;color:#8a8aa8">모든 것을 연결하는 흐름</div>
     </div>
     
@@ -1780,9 +2903,26 @@ function animate(){
   }
 
   // Buildings float
-  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, portalDoor, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, cacheBuilding, reactBuilding, httpBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
+  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, cacheBuilding, reactBuilding, httpBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
     b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
   });
+
+  // CPU indicator rotates
+  cpuIndicator.rotation.y = t * 2.0;
+
+  // Server factory LEDs blink
+  sfLeds.forEach((led, i) => {
+    led.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(t * 3.0 + i * 2.0);
+  });
+
+  // Firewall gate light pulses
+  fwLight.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(t * 4.0);
+
+  // Security warning light pulses
+  warnLight.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(t * 5.0);
+
+  // CCTV camera slight rotation
+  cctvCam.rotation.y = Math.sin(t * 0.5) * 0.4;
 
   // Mailman walks
   mailman.position.x = Math.sin(t * 0.25) * 3;
