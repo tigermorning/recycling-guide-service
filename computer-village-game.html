@@ -136,6 +136,21 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-thumb{background:#6c5ce7;border-radius:3px}
 
+/* ---- Interior Info Panel ---- */
+#interiorInfo{position:fixed;top:50%;left:20px;transform:translateY(-50%);width:280px;background:rgba(10,9,22,.95);border:1px solid rgba(108,92,231,.5);border-radius:16px;padding:20px;backdrop-filter:blur(12px);z-index:8;display:none;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#interiorInfo.show{display:block;animation:capIn .4s ease}
+#interiorInfo h3{font-size:1.1em;color:#a29bfe;margin-bottom:10px}
+#interiorInfo p{font-size:.88em;line-height:1.7;color:#d0d0e8;margin-bottom:8px}
+#interiorInfo ul{list-style:none;padding:0;margin:0}
+#interiorInfo li{font-size:.82em;color:#c0c0e0;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px}
+#interiorInfo .cache-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+#interiorInfo .cache-l1{background:#ff1744;box-shadow:0 0 8px #ff1744}
+#interiorInfo .cache-l2{background:#ffd600;box-shadow:0 0 8px #ffd600}
+#interiorInfo .cache-ram{background:#448aff;box-shadow:0 0 8px #448aff}
+#interiorInfo .cache-storage{background:#9e9e9e}
+#interiorInfo .exit-hint{margin-top:14px;font-size:.75em;color:#8a8aa8;text-align:center;padding:8px;border-radius:8px;background:rgba(255,255,255,.04)}
+#interiorInfo .exit-hint kbd{background:rgba(255,255,255,.12);padding:2px 8px;border-radius:4px;font-family:monospace}
+
 @media(max-width:640px){
   .hud-title{font-size:.95em}
   #caption{width:94vw;padding:18px}
@@ -187,6 +202,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 <div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 맵 이동 &nbsp;·&nbsp; 오른쪽 드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대/축소 &nbsp;·&nbsp; 더블클릭: 확대 이동</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
 <div id="levelUnlock"></div>
+<div id="interiorInfo"></div>
 
 <div id="intro">
   <div class="intro-card">
@@ -255,9 +271,14 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let currentLevel = 1;
 const LEVEL_NAMES = {1:'초급', 2:'중급', 3:'고급'};
 const LEVEL_UNLOCK_MSG = {
-  2: {title:'🔓 중급이 열렸습니다!', desc:'이제 건물 안으로 들어가 내부 구조를 탐험할 수 있습니다.', badge:'중급', cls:'inter'},
-  3: {title:'🔓 고급이 열렸습니다!', desc:'전문적인 개념까지 자유롭게 둘러보세요.', badge:'고급', cls:'adv'}
+  2: {title:'🔓 중급이 열렸습니다!', desc:'프로세스/스레드, 커널/셸, 브라우저 캐시 등 더 깊은 개념이 추가되었습니다.', badge:'중급', cls:'inter'},
+  3: {title:'🔓 고급이 열렸습니다!', desc:'SSH, AI 토큰, 동기/비동기, 라우팅 등 전문 개념까지 자유롭게 둘러보세요.', badge:'고급', cls:'adv'}
 };
+
+/* ---- Interior State ---- */
+let interiorMode = false;
+let currentInterior = null;
+let exteriorCamState = null;
 
 /* ---- Scene Setup ---- */
 const scene = new THREE.Scene();
@@ -434,7 +455,7 @@ motherboardFence.add(mbLabel);
 scene.add(motherboardFence);
 
 /* ---- Building Label Helpers ---- */
-function makeLabel(name, tag, y) {
+function makeLabel(name, tag, y, zOff) {
   const c = document.createElement('canvas');
   c.width = 768; c.height = 192;
   const x = c.getContext('2d');
@@ -448,10 +469,11 @@ function makeLabel(name, tag, y) {
   x.fillText(tag, 384, 140);
   const m = new THREE.Mesh(
     new THREE.PlaneGeometry(4, 1.0),
-    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide})
+    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide, depthTest: false})
   );
-  m.position.set(0, y, 0);
-  m.rotation.x = -0.2;
+  m.position.set(0, y, zOff || 2.0);
+  m.rotation.x = -0.15;
+  m.renderOrder = 999;
   return m;
 }
 function miniLabel(text, bg, w, h) {
@@ -700,7 +722,7 @@ doorHandle.position.set(0.2, 0.65, 1.56);
 cpuRamHouse.add(doorHandle);
 
 // Main label
-cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 5.2));
+cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 2.5, 2.5));
 
 // CPU sub-label (left)
 const cpuSub = miniLabel('CPU (큰 방)', 'rgba(139,115,85,0.9)');
@@ -763,6 +785,290 @@ boxPositions.forEach(pos => {
 });
 
 scene.add(basementGroup);
+
+/* ============================================================
+   CPU+RAM Interior Visualization
+   ============================================================ */
+const cpuRamInterior = new THREE.Group();
+cpuRamInterior.visible = false;
+cpuRamInterior.position.set(-14, 0, 7);
+
+// Interior floor (green PCB board)
+const interiorFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(8, 0.1, 6),
+  new THREE.MeshStandardMaterial({color:0x1a5c1a, roughness:0.6})
+);
+interiorFloor.position.y = 0.05;
+cpuRamInterior.add(interiorFloor);
+
+// PCB traces on floor
+const traceMat = new THREE.MeshStandardMaterial({color:0x2d8a2d, roughness:0.5});
+for(let i = 0; i < 12; i++){
+  const trace = new THREE.Mesh(
+    new THREE.BoxGeometry(6 + Math.random()*2, 0.01, 0.06),
+    traceMat
+  );
+  trace.position.set(0, 0.11, -2.5 + i * 0.5);
+  cpuRamInterior.add(trace);
+}
+for(let i = 0; i < 8; i++){
+  const trace = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.01, 4 + Math.random()*2),
+    traceMat
+  );
+  trace.position.set(-3 + i * 0.8, 0.11, 0);
+  cpuRamInterior.add(trace);
+}
+
+// ---- CPU Die (center, large) ----
+const cpuChipGroup = new THREE.Group();
+cpuChipGroup.position.set(-0.5, 0.15, 0);
+
+// CPU package (silver heat spreader)
+const cpuPackage = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 0.3, 2.5),
+  new THREE.MeshStandardMaterial({color:0xb0bec5, roughness:0.3, metalness:0.5})
+);
+cpuPackage.position.y = 0.15;
+cpuChipGroup.add(cpuPackage);
+
+// CPU die (gold center)
+const cpuDie = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 0.08, 1.0),
+  new THREE.MeshStandardMaterial({color:0xffd600, emissive:0xffd600, emissiveIntensity:0.3, roughness:0.2, metalness:0.7})
+);
+cpuDie.position.y = 0.34;
+cpuChipGroup.add(cpuDie);
+
+// CPU cores (4 glowing squares on die)
+const cpuCores = [];
+const coreMat = new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:0.6});
+[[-0.2, 0.2], [0.2, 0.2], [-0.2, -0.2], [0.2, -0.2]].forEach(([x, z]) => {
+  const core = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.05, 0.3),
+    coreMat.clone()
+  );
+  core.position.set(x, 0.39, z);
+  cpuChipGroup.add(core);
+  cpuCores.push(core);
+});
+
+// CPU pins around the edge
+const pinMat = new THREE.MeshStandardMaterial({color:0xffab00, roughness:0.3, metalness:0.6});
+for(let i = 0; i < 16; i++){
+  for(let side = 0; side < 4; side++){
+    const pin = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.08, 0.04),
+      pinMat
+    );
+    const angle = side * Math.PI / 2;
+    const offset = -0.9 + (i / 15) * 1.8;
+    let px, pz;
+    if(side === 0){ px = offset; pz = -1.25; }
+    else if(side === 1){ px = offset; pz = 1.25; }
+    else if(side === 2){ px = -1.25; pz = offset; }
+    else { px = 1.25; pz = offset; }
+    pin.position.set(px, 0.08, pz);
+    cpuChipGroup.add(pin);
+  }
+}
+
+cpuRamInterior.add(cpuChipGroup);
+
+// ---- Cache hierarchy labels (3D text via sprites) ----
+function makeInteriorLabel(text, color, fontSize){
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.beginPath(); ctx.roundRect(5,5,502,118,12); ctx.fill();
+  ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.roundRect(5,5,502,118,12); ctx.stroke();
+  ctx.fillStyle = color; ctx.font = `bold ${fontSize||36}px Arial`; ctx.textAlign = 'center';
+  ctx.fillText(text, 256, 75);
+  const tex = new THREE.CanvasTexture(c);
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.0, 0.5),
+    new THREE.MeshBasicMaterial({map: tex, transparent: true, side: THREE.DoubleSide})
+  );
+  return m;
+}
+
+// L1 Cache (smallest, on CPU die)
+const l1Label = makeInteriorLabel('L1 Cache (1클럭)', '#ff1744');
+l1Label.position.set(-0.5, 1.2, 0);
+cpuRamInterior.add(l1Label);
+
+const l1Box = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.15, 0.8),
+  new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:0.4, transparent:true, opacity:0.7})
+);
+l1Box.position.set(-0.5, 0.45, 0);
+cpuRamInterior.add(l1Box);
+
+// L2 Cache (medium, on CPU package)
+const l2Label = makeInteriorLabel('L2 Cache (3-10클럭)', '#ffd600');
+l2Label.position.set(-0.5, 1.6, -1.5);
+cpuRamInterior.add(l2Label);
+
+const l2Box = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 0.12, 1.5),
+  new THREE.MeshStandardMaterial({color:0xffd600, emissive:0xffd600, emissiveIntensity:0.3, transparent:true, opacity:0.5})
+);
+l2Box.position.set(-0.5, 0.42, 0);
+cpuRamInterior.add(l2Box);
+
+// L3 Cache (largest, shared)
+const l3Label = makeInteriorLabel('L3 Cache (공유)', '#ff9100');
+l3Label.position.set(-0.5, 2.0, 1.5);
+cpuRamInterior.add(l3Label);
+
+const l3Box = new THREE.Mesh(
+  new THREE.BoxGeometry(2.2, 0.08, 2.2),
+  new THREE.MeshStandardMaterial({color:0xff9100, emissive:0xff9100, emissiveIntensity:0.2, transparent:true, opacity:0.35})
+);
+l3Box.position.set(-0.5, 0.38, 0);
+cpuRamInterior.add(l3Box);
+
+// ---- RAM Modules (right side) ----
+const ramModules = new THREE.Group();
+ramModules.position.set(2.5, 0.15, 0);
+
+for(let stick = 0; stick < 3; stick++){
+  const ramStick = new THREE.Group();
+  ramStick.position.set(0, stick * 0.35, -0.8 + stick * 0.3);
+
+  // RAM PCB
+  const ramPcb = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 0.08, 0.6),
+    new THREE.MeshStandardMaterial({color:0x1a5c1a, roughness:0.6})
+  );
+  ramPcb.position.y = 0.6;
+  ramPcb.rotation.z = Math.PI / 2 * 0.1;
+  ramStick.add(ramPcb);
+
+  // RAM chips (black ICs)
+  for(let c = 0; c < 4; c++){
+    const chip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.25, 0.05, 0.3),
+      new THREE.MeshStandardMaterial({color:0x1a1a1a, roughness:0.4})
+    );
+    chip.position.set(-0.6 + c * 0.4, 0.65, 0);
+    ramStick.add(chip);
+  }
+
+  // Gold contacts at bottom
+  const contacts = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.06, 0.08),
+    new THREE.MeshStandardMaterial({color:0xffab00, roughness:0.3, metalness:0.7})
+  );
+  contacts.position.set(0, 0.55, 0.32);
+  ramStick.add(contacts);
+
+  // RAM LED
+  const ramLed = new THREE.Mesh(
+    new THREE.SphereGeometry(0.04, 8, 8),
+    new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:1.0})
+  );
+  ramLed.position.set(0.9, 0.65, 0.32);
+  ramStick.add(ramLed);
+
+  ramModules.add(ramStick);
+}
+cpuRamInterior.add(ramModules);
+
+// RAM label
+const ramLabelInterior = makeInteriorLabel('RAM (100클럭)', '#448aff');
+ramLabelInterior.position.set(2.5, 1.8, 0);
+cpuRamInterior.add(ramLabelInterior);
+
+// ---- Storage indicator (below) ----
+const storageLabel = makeInteriorLabel('저장장치 (100,000클럭)', '#9e9e9e');
+storageLabel.position.set(0, 0.3, 2.5);
+cpuRamInterior.add(storageLabel);
+
+// ---- Data Buses ----
+// Data bus (blue): RAM to CPU
+const dataBusCurve = new THREE.LineCurve3(
+  new THREE.Vector3(2.0, 0.7, 0),
+  new THREE.Vector3(0.7, 0.3, 0)
+);
+const dataBusGeo = new THREE.TubeGeometry(dataBusCurve, 10, 0.06, 8, false);
+const dataBusMesh = new THREE.Mesh(dataBusGeo, new THREE.MeshStandardMaterial({color:0x448aff, emissive:0x448aff, emissiveIntensity:0.6}));
+cpuRamInterior.add(dataBusMesh);
+
+// Address bus (green): CPU to RAM
+const addrBusCurve = new THREE.LineCurve3(
+  new THREE.Vector3(0.7, 0.35, 0.3),
+  new THREE.Vector3(2.0, 0.7, 0.3)
+);
+const addrBusGeo = new THREE.TubeGeometry(addrBusCurve, 10, 0.04, 8, false);
+const addrBusMesh = new THREE.Mesh(addrBusGeo, new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.5}));
+cpuRamInterior.add(addrBusMesh);
+
+// Control bus (red): CPU to all
+const ctrlBusCurve = new THREE.LineCurve3(
+  new THREE.Vector3(0.7, 0.35, -0.3),
+  new THREE.Vector3(2.0, 0.7, -0.3)
+);
+const ctrlBusGeo = new THREE.TubeGeometry(ctrlBusCurve, 10, 0.04, 8, false);
+const ctrlBusMesh = new THREE.Mesh(ctrlBusGeo, new THREE.MeshStandardMaterial({color:0xff1744, emissive:0xff1744, emissiveIntensity:0.5}));
+cpuRamInterior.add(ctrlBusMesh);
+
+// Bus labels
+const busLabelData = makeInteriorLabel('데이터 버스 (Blue)', '#448aff', 28);
+busLabelData.position.set(1.4, 1.2, -0.6);
+cpuRamInterior.add(busLabelData);
+
+const busLabelAddr = makeInteriorLabel('주소 버스 (Green)', '#00e676', 28);
+busLabelAddr.position.set(1.4, 1.5, 0);
+cpuRamInterior.add(busLabelAddr);
+
+const busLabelCtrl = makeInteriorLabel('제어 버스 (Red)', '#ff1744', 28);
+busLabelCtrl.position.set(1.4, 1.8, 0.6);
+cpuRamInterior.add(busLabelCtrl);
+
+// ---- Animated Data Blocks ----
+const interiorDataBlocks = [];
+for(let i = 0; i < 10; i++){
+  const colors = [0x448aff, 0x00e676, 0xff1744, 0xffd600, 0xff9100];
+  const block = new THREE.Mesh(
+    new THREE.BoxGeometry(0.15, 0.15, 0.15),
+    new THREE.MeshStandardMaterial({color: colors[i % colors.length], emissive: colors[i % colors.length], emissiveIntensity: 0.8})
+  );
+  block.userData = {
+    startPos: new THREE.Vector3(
+      2.0 + Math.random() * 0.5 - 0.25,
+      0.7 + Math.random() * 0.3,
+      Math.random() * 0.6 - 0.3
+    ),
+    endPos: new THREE.Vector3(
+      -0.5 + Math.random() * 0.5,
+      0.4 + Math.random() * 0.2,
+      Math.random() * 0.6 - 0.3
+    ),
+    speed: 0.3 + Math.random() * 0.5,
+    phase: Math.random() * Math.PI * 2,
+    type: i % 3  // 0=data, 1=address, 2=control
+  };
+  cpuRamInterior.add(block);
+  interiorDataBlocks.push(block);
+}
+
+// ---- Interior Lighting ----
+const interiorLight = new THREE.PointLight(0x448aff, 1.0, 12);
+interiorLight.position.set(0, 3, 0);
+cpuRamInterior.add(interiorLight);
+
+const cpuGlowLight = new THREE.PointLight(0xffd600, 0.8, 8);
+cpuGlowLight.position.set(-0.5, 2, 0);
+cpuRamInterior.add(cpuGlowLight);
+
+const ramGlowLight = new THREE.PointLight(0x448aff, 0.6, 8);
+ramGlowLight.position.set(2.5, 2, 0);
+cpuRamInterior.add(ramGlowLight);
+
+scene.add(cpuRamInterior);
 
 // (cpuRamHouse sub-labels and doors are built into the custom geometry above)
 
@@ -837,7 +1143,7 @@ dnsBase.position.y = 0.15;
 dnsBase.castShadow = true; dnsBase.receiveShadow = true;
 postOffice.add(dnsBase);
 
-postOffice.add(makeLabel('DNS (주소 안내판)', '이름 → 주소 변환', 5.0));
+postOffice.add(makeLabel('DNS (주소 안내판)', '이름 → 주소 변환', 2.5, 2.5));
 postOffice.position.set(-2, 0, 8);
 scene.add(postOffice);
 
@@ -895,7 +1201,7 @@ routerTower.add(tlHouse);
   routerTower.add(led);
 });
 
-routerTower.add(makeLabel('교차로 (라우터)', '데이터 경로 결정', 4.0));
+routerTower.add(makeLabel('교차로 (라우터)', '데이터 경로 결정', 2.5, 2.5));
 routerTower.position.set(0, 0, -7);
 scene.add(routerTower);
 
@@ -982,7 +1288,7 @@ const sfWin = new THREE.MeshStandardMaterial({color:0x90caf9, emissive:0x90caf9,
   serverFactory.add(w);
 });
 
-serverFactory.add(makeLabel('공장 (서버)', '백엔드 · 24시간 가동', 5.5));
+serverFactory.add(makeLabel('공장 (서버)', '백엔드 · 24시간 가동', 2.8, 2.5));
 serverFactory.position.set(10, 0, 7);
 scene.add(serverFactory);
 
@@ -1047,7 +1353,7 @@ const dockDoor = new THREE.Mesh(
 dockDoor.position.set(0, 0.65, 1.51);
 databaseWarehouse.add(dockDoor);
 
-databaseWarehouse.add(makeLabel('창고 (데이터베이스)', '데이터 저장소', 5.0));
+databaseWarehouse.add(makeLabel('창고 (데이터베이스)', '데이터 저장소', 2.5, 2.5));
 databaseWarehouse.position.set(14, 0, 5);
 scene.add(databaseWarehouse);
 
@@ -1122,7 +1428,7 @@ const fwLight = new THREE.Mesh(
 fwLight.position.set(0, 2.7, 0.25);
 firewallGate.add(fwLight);
 
-firewallGate.add(makeLabel('문 (방화벽)', '보안 · 출입 통제', 4.5));
+firewallGate.add(makeLabel('문 (방화벽)', '보안 · 출입 통제', 2.5, 2.5));
 firewallGate.position.set(18, 0, -5);
 scene.add(firewallGate);
 
@@ -1206,8 +1512,8 @@ const gpuDoor = new THREE.Mesh(
 gpuDoor.position.set(-0.5, 0.5, 1.08);
 gpuBuilding.add(gpuDoor);
 
-gpuBuilding.add(makeLabel('그래픽 공방 (GPU)', '화면을 그리는 전문가', 4.2));
-gpuBuilding.position.set(-16, 0, 5);
+gpuBuilding.add(makeLabel('그래픽 공방 (GPU)', '화면을 그리는 전문가', 2.5, 2.0));
+gpuBuilding.position.set(-16, 0, 3);
 scene.add(gpuBuilding);
 
 /* ---- 8. Monitor / Exhibition Hall (outside motherboard) ---- */
@@ -1273,8 +1579,8 @@ const stand = new THREE.Mesh(
 stand.position.set(0, 0.15, 0);
 monitorBuilding.add(stand);
 
-monitorBuilding.add(makeLabel('전시장 (모니터)', 'GPU가 만든 그림을 전시', 5.0));
-monitorBuilding.position.set(-22, 0, 7);
+monitorBuilding.add(makeLabel('전시장 (모니터)', 'GPU가 만든 그림을 전시', 2.5, 2.0));
+monitorBuilding.position.set(-22, 0, 5);
 scene.add(monitorBuilding);
 
 /* ---- 9. HTML/CSS / Design Room ---- */
@@ -1339,7 +1645,7 @@ const htmlWin = new THREE.Mesh(
 htmlWin.position.set(0, 1.5, 1.13);
 htmlCssBuilding.add(htmlWin);
 
-htmlCssBuilding.add(makeLabel('도안실 (HTML/CSS)', '웹페이지의 골조와 옷', 3.8));
+htmlCssBuilding.add(makeLabel('도안실 (HTML/CSS)', '웹페이지의 골조와 옷', 2.5, 2.0));
 htmlCssBuilding.position.set(-3, 0, -5);
 scene.add(htmlCssBuilding);
 
@@ -1413,7 +1719,7 @@ javascriptBuilding.add(jsDoor);
   javascriptBuilding.add(btn);
 });
 
-javascriptBuilding.add(makeLabel('제어소 (JavaScript)', '웹페이지의 두뇌', 4.5));
+javascriptBuilding.add(makeLabel('제어소 (JavaScript)', '웹페이지의 두뇌', 2.5, 2.0));
 javascriptBuilding.position.set(3, 0, -5);
 scene.add(javascriptBuilding);
 
@@ -1482,7 +1788,7 @@ const njWin = new THREE.Mesh(
 njWin.position.set(0.5, 1.5, 1.03);
 nodejsBuilding.add(njWin);
 
-nodejsBuilding.add(makeLabel('작업장 (Node.js/Python)', '서버 측 처리', 3.8));
+nodejsBuilding.add(makeLabel('작업장 (Node.js/Python)', '서버 측 처리', 2.5, 2.0));
 nodejsBuilding.position.set(10, 0, 3);
 scene.add(nodejsBuilding);
 
@@ -1539,7 +1845,7 @@ const pillarMat2 = new THREE.MeshStandardMaterial({color:0x4fc3f7, roughness:0.5
   cloudBuilding.add(p);
 });
 
-cloudBuilding.add(makeLabel('구름 도시 (AWS/Azure)', '클라우드 서비스', 5.0));
+cloudBuilding.add(makeLabel('구름 도시 (AWS/Azure)', '클라우드 서비스', 2.5, 2.0));
 cloudBuilding.position.set(20, 0, 7);
 scene.add(cloudBuilding);
 
@@ -1590,7 +1896,7 @@ const dirHead = new THREE.Mesh(
 dirHead.position.set(0, 0.75, 0);
 loadbalancerBuilding.add(dirHead);
 
-loadbalancerBuilding.add(makeLabel('교차로 배분기 (LB)', '요청 균등 배분', 3.5));
+loadbalancerBuilding.add(makeLabel('교차로 배분기 (LB)', '요청 균등 배분', 2.5, 2.0));
 loadbalancerBuilding.position.set(14, 0, 3);
 scene.add(loadbalancerBuilding);
 
@@ -1670,7 +1976,7 @@ const gitDoor = new THREE.Mesh(
 gitDoor.position.set(0, 0.5, 1.08);
 gitBuilding.add(gitDoor);
 
-gitBuilding.add(makeLabel('기록실 (Git)', '코드 변경 기록', 4.2));
+gitBuilding.add(makeLabel('기록실 (Git)', '코드 변경 기록', 2.5, 2.0));
 gitBuilding.position.set(6, 0, -5);
 scene.add(gitBuilding);
 
@@ -1780,71 +2086,147 @@ const center = new THREE.Mesh(
 center.position.set(0.05, 1.8, 0);
 reactBuilding.add(center);
 
-reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 5.0));
+reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 2.5, 2.5));
 reactBuilding.position.set(0, 0, -9);
 scene.add(reactBuilding);
 
-/* ---- 17. HTTPS / Secure Document ---- */
+/* ---- 17. HTTP / Data Transmission Rules ---- */
 const httpBuilding = new THREE.Group();
-httpBuilding.userData = {name:'HTTPS (보안 규칙)', tag:'암호화된 데이터 전송', icon:'🔐', phase:2, description:'암호화된 데이터 전송 규칙을 보여주는 문서'};
+httpBuilding.userData = {name:'HTTP (데이터 전송)', tag:'데이터 전송 규칙', icon:'📜', phase:2, description:'데이터가 오가는 기본 규칙을 보여주는 문서'};
 
 // Document (scroll/paper)
-const docBody = new THREE.Mesh(
+const httpDoc = new THREE.Mesh(
   new THREE.BoxGeometry(1.5, 2.0, 0.1),
   new THREE.MeshStandardMaterial({color:0xfafafa, roughness:0.5})
 );
-docBody.position.y = 1.2;
-docBody.castShadow = true; docBody.receiveShadow = true;
-httpBuilding.add(docBody);
+httpDoc.position.y = 1.2;
+httpDoc.castShadow = true; httpDoc.receiveShadow = true;
+httpBuilding.add(httpDoc);
 
-// Document lines (text representation)
-const textMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.4});
+// Document lines (text)
+const httpTextMat = new THREE.MeshStandardMaterial({color:0x90a4ae, roughness:0.4});
 [{y:1.8},{y:1.6},{y:1.4},{y:1.2},{y:1.0}].forEach(p => {
   const line = new THREE.Mesh(
     new THREE.BoxGeometry(1.1, 0.04, 0.02),
-    textMat
+    httpTextMat
   );
   line.position.set(0, p.y, 0.07);
   httpBuilding.add(line);
 });
 
-// Lock symbol (HTTPS)
-const lockBody = new THREE.Mesh(
-  new THREE.BoxGeometry(0.35, 0.3, 0.15),
-  new THREE.MeshStandardMaterial({color:0x4caf50, roughness:0.5})
-);
-lockBody.position.set(0, 0.5, 0.1);
-httpBuilding.add(lockBody);
-
-// Lock shackle
-const lockShackle = new THREE.Mesh(
-  new THREE.TorusGeometry(0.12, 0.03, 8, 16, Math.PI),
-  new THREE.MeshStandardMaterial({color:0x388e3c, roughness:0.5})
-);
-lockShackle.position.set(0, 0.7, 0.1);
-lockShackle.rotation.z = Math.PI;
-httpBuilding.add(lockShackle);
-
-// HTTPS glow
-const httpsGlow = new THREE.Mesh(
-  new THREE.BoxGeometry(1.6, 0.2, 0.05),
-  new THREE.MeshStandardMaterial({color:0x4caf50, emissive:0x4caf50, emissiveIntensity:0.6})
-);
-httpsGlow.position.set(0, 2.3, 0.07);
-httpBuilding.add(httpsGlow);
+// Status code badges (200, 404, 500)
+const statusCodeMat = [
+  {color:0x4caf50, text:'200'},
+  {color:0xff9800, text:'404'},
+  {color:0xf44336, text:'500'}
+];
+statusCodeMat.forEach((s, i) => {
+  const badge = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.2, 0.05),
+    new THREE.MeshStandardMaterial({color:s.color, emissive:s.color, emissiveIntensity:0.3})
+  );
+  badge.position.set(-0.45 + i * 0.45, 0.5, 0.08);
+  httpBuilding.add(badge);
+});
 
 // Document stand
-const docStand = new THREE.Mesh(
+const httpDocStand = new THREE.Mesh(
   new THREE.BoxGeometry(0.8, 0.1, 0.4),
   new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8})
 );
-docStand.position.y = 0.05;
-docStand.receiveShadow = true;
-httpBuilding.add(docStand);
+httpDocStand.position.y = 0.05;
+httpDocStand.receiveShadow = true;
+httpBuilding.add(httpDocStand);
 
-httpBuilding.add(makeLabel('HTTPS (보안 규칙)', '암호화된 데이터 전송', 4.0));
-httpBuilding.position.set(2, 0, 8);
+httpBuilding.add(makeLabel('HTTP (데이터 전송)', '데이터 전송 규칙', 2.5, 2.5));
+httpBuilding.position.set(0, 0, 8);
 scene.add(httpBuilding);
+
+/* ---- 18. HTTPS / Secure Data Transmission ---- */
+const httpsBuilding = new THREE.Group();
+httpsBuilding.userData = {name:'HTTPS (보안 전송)', tag:'암호화된 데이터 전송', icon:'🔐', phase:2, description:'암호화된 안전한 데이터 전송 규칙'};
+
+// Document (scroll/paper)
+const httpsDoc = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 2.0, 0.1),
+  new THREE.MeshStandardMaterial({color:0xfafafa, roughness:0.5})
+);
+httpsDoc.position.y = 1.2;
+httpsDoc.castShadow = true; httpsDoc.receiveShadow = true;
+httpsBuilding.add(httpsDoc);
+
+// Document lines (text)
+[{y:1.8},{y:1.6},{y:1.4},{y:1.2}].forEach(p => {
+  const line = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 0.04, 0.02),
+    httpTextMat
+  );
+  line.position.set(0, p.y, 0.07);
+  httpsBuilding.add(line);
+});
+
+// Lock body (larger, more visible)
+const lockBody = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.4, 0.2),
+  new THREE.MeshStandardMaterial({color:0x4caf50, roughness:0.5})
+);
+lockBody.position.set(0, 0.65, 0.12);
+httpsBuilding.add(lockBody);
+
+// Lock keyhole
+const keyhole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8),
+  new THREE.MeshStandardMaterial({color:0x1b5e20})
+);
+keyhole.position.set(0, 0.65, 0.23);
+keyhole.rotation.x = Math.PI / 2;
+httpsBuilding.add(keyhole);
+
+// Lock shackle (U-shape using 3 boxes)
+// Left vertical
+const shackleLeft = new THREE.Mesh(
+  new THREE.BoxGeometry(0.06, 0.25, 0.06),
+  new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.5, metalness:0.4})
+);
+shackleLeft.position.set(-0.15, 0.98, 0.12);
+httpsBuilding.add(shackleLeft);
+
+// Right vertical
+const shackleRight = new THREE.Mesh(
+  new THREE.BoxGeometry(0.06, 0.25, 0.06),
+  new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.5, metalness:0.4})
+);
+shackleRight.position.set(0.15, 0.98, 0.12);
+httpsBuilding.add(shackleRight);
+
+// Top horizontal
+const shackleTop = new THREE.Mesh(
+  new THREE.BoxGeometry(0.36, 0.06, 0.06),
+  new THREE.MeshStandardMaterial({color:0x8d6e63, roughness:0.5, metalness:0.4})
+);
+shackleTop.position.set(0, 1.12, 0.12);
+httpsBuilding.add(shackleTop);
+
+// Green glow (secure indicator)
+const httpsGlow = new THREE.Mesh(
+  new THREE.BoxGeometry(1.6, 0.15, 0.05),
+  new THREE.MeshStandardMaterial({color:0x4caf50, emissive:0x4caf50, emissiveIntensity:0.8})
+);
+httpsGlow.position.set(0, 2.3, 0.07);
+httpsBuilding.add(httpsGlow);
+
+// Document stand
+const httpsDocStand = new THREE.Mesh(
+  new THREE.BoxGeometry(0.8, 0.1, 0.4),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8})
+);
+httpsDocStand.position.y = 0.05;
+httpsDocStand.receiveShadow = true;
+httpsBuilding.add(httpsDocStand);
+
+httpsBuilding.add(makeLabel('HTTPS (보안 전송)', '암호화된 데이터 전송', 2.5, 2.5));
+httpsBuilding.position.set(4, 0, 8);
+scene.add(httpsBuilding);
 
 /* ---- 18. Docker / Container Yard ---- */
 const dockerBuilding = new THREE.Group();
@@ -1911,7 +2293,7 @@ const craneCable = new THREE.Mesh(
 craneCable.position.set(-0.3, 2.2, 0.4);
 dockerBuilding.add(craneCable);
 
-dockerBuilding.add(makeLabel('컨테이너 야적장 (Docker)', '이식 가능한 실행 환경', 4.0));
+dockerBuilding.add(makeLabel('컨테이너 야적장 (Docker)', '이식 가능한 실행 환경', 2.5, 2.0));
 dockerBuilding.position.set(20, 0, 3);
 scene.add(dockerBuilding);
 
@@ -1996,7 +2378,7 @@ const cicdDoor = new THREE.Mesh(
 cicdDoor.position.set(0, 0.5, 0.92);
 cicdBuilding.add(cicdDoor);
 
-cicdBuilding.add(makeLabel('자동 공정 (CI/CD)', '자동 테스트 · 배포', 4.2));
+cicdBuilding.add(makeLabel('자동 공정 (CI/CD)', '자동 테스트 · 배포', 2.5, 2.0));
 cicdBuilding.position.set(20, 0, -1);
 scene.add(cicdBuilding);
 
@@ -2087,9 +2469,365 @@ const secWin = new THREE.Mesh(
 secWin.position.set(0, 1.3, 0.78);
 securityBuilding.add(secWin);
 
-securityBuilding.add(makeLabel('금고 (보안)', '데이터 보호', 4.5));
+securityBuilding.add(makeLabel('금고 (보안)', '데이터 보호', 2.5, 2.0));
 securityBuilding.position.set(22, 0, -7);
 scene.add(securityBuilding);
+
+// === 새 건물: 블로그 바이브코딩 개념 ===
+
+// 은행 (프로세스/스레드) - 멀티 창구 은행 건물
+const bankBuilding = new THREE.Group();
+bankBuilding.userData = {name:'은행 (프로세스/스레드)', tag:'실행 중인 프로그램 · 작업 단위', icon:'🏦', phase:1, description:'프로세스는 은행 지점, 스레드는 창구 직원'};
+
+const bankBody = new THREE.Mesh(
+  new THREE.BoxGeometry(3.5, 2.2, 2.5),
+  new THREE.MeshStandardMaterial({color:0xff9800, roughness:0.7})
+);
+bankBody.position.y = 1.1;
+bankBody.castShadow = true; bankBody.receiveShadow = true;
+bankBuilding.add(bankBody);
+
+// 은행 지붕
+const bankRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(2.5, 1.0, 4),
+  new THREE.MeshStandardMaterial({color:0xe65100, roughness:0.6})
+);
+bankRoof.position.y = 2.7;
+bankRoof.rotation.y = Math.PI/4;
+bankRoof.castShadow = true;
+bankBuilding.add(bankRoof);
+
+// 창구 3개 (스레드)
+for(let i=0; i<3; i++){
+  const windowFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6, 0.8, 0.15),
+    new THREE.MeshStandardMaterial({color:0x5d4037})
+  );
+  windowFrame.position.set(-1.0 + i*1.0, 1.4, 1.3);
+  bankBuilding.add(windowFrame);
+
+  const windowGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.5, 0.1),
+    new THREE.MeshStandardMaterial({color:0x81d4fa, emissive:0x81d4fa, emissiveIntensity:0.3})
+  );
+  windowGlass.position.set(-1.0 + i*1.0, 1.4, 1.35);
+  bankBuilding.add(windowGlass);
+}
+
+// 문
+const bankDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 1.2, 0.15),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+bankDoor.position.set(0, 0.6, 1.3);
+bankBuilding.add(bankDoor);
+
+bankBuilding.add(makeLabel('은행 (프로세스/스레드)', '실행 중인 프로그램 · 작업 단위', 2.5, 2.0));
+bankBuilding.position.set(-18, 0, 3);
+scene.add(bankBuilding);
+
+// 알맹이 (커널/셸) - 달걀 모양 건물
+const eggBuilding = new THREE.Group();
+eggBuilding.userData = {name:'알맹이 (커널/셸)', tag:'운영체제 핵심 · 명령 해석', icon:'🥚', phase:1, description:'커널은 알맹이, 셸은 껍데기'};
+
+// 달걀 껍데기 (셸)
+const eggShell = new THREE.Mesh(
+  new THREE.SphereGeometry(1.2, 16, 16, 0, Math.PI*2, 0, Math.PI/2),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.6, side:THREE.DoubleSide})
+);
+eggShell.position.y = 1.2;
+eggShell.castShadow = true;
+eggBuilding.add(eggShell);
+
+// 달걀 알맹이 (커널)
+const eggYolk = new THREE.Mesh(
+  new THREE.SphereGeometry(0.6, 12, 12),
+  new THREE.MeshStandardMaterial({color:0xffeb3b, emissive:0xffeb3b, emissiveIntensity:0.5})
+);
+eggYolk.position.y = 1.0;
+eggYolk.castShadow = true;
+eggBuilding.add(eggYolk);
+
+// 기반
+const eggBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.3, 1.3, 0.15, 16),
+  new THREE.MeshStandardMaterial({color:0x5d4037})
+);
+eggBase.position.y = 0.07;
+eggBuilding.add(eggBase);
+
+// 문 (입구)
+const eggDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.7, 0.15),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+eggDoor.position.set(0, 0.35, 1.25);
+eggBuilding.add(eggDoor);
+
+eggBuilding.add(makeLabel('알맹이 (커널/셸)', '운영체제 핵심 · 명령 해석', 2.5, 2.0));
+eggBuilding.position.set(-20, 0, 6);
+scene.add(eggBuilding);
+
+// 책상 (브라우저 캐시) - 책상 위 복사본
+const deskBuilding = new THREE.Group();
+deskBuilding.userData = {name:'책상 (브라우저 캐시)', tag:'임시 복사본 저장', icon:'📋', phase:2, description:'사이트의 임시 복사본을 보관하는 책상'};
+
+// 책상 상판
+const deskTop = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 0.12, 1.8),
+  new THREE.MeshStandardMaterial({color:0x8bc34a, roughness:0.7})
+);
+deskTop.position.y = 1.2;
+deskTop.castShadow = true; deskTop.receiveShadow = true;
+deskBuilding.add(deskTop);
+
+// 다리 4개
+for(let i=0; i<4; i++){
+  const leg = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8),
+    new THREE.MeshStandardMaterial({color:0x5d4037})
+  );
+  leg.position.set(-1.0 + (i%2)*2.0, 0.6, -0.7 + Math.floor(i/2)*1.4);
+  deskBuilding.add(leg);
+}
+
+// 책 (복사본)
+const book1 = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 0.08, 0.4),
+  new THREE.MeshStandardMaterial({color:0xf44336})
+);
+book1.position.set(-0.5, 1.3, 0);
+deskBuilding.add(book1);
+
+const book2 = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.08, 0.35),
+  new THREE.MeshStandardMaterial({color:0x2196f3})
+);
+book2.position.set(0.3, 1.3, 0.2);
+deskBuilding.add(book2);
+
+// 모니터 (원본 표시)
+const monitorOnDesk = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.8, 0.08),
+  new THREE.MeshStandardMaterial({color:0x263238})
+);
+monitorOnDesk.position.set(0, 1.8, -0.5);
+deskBuilding.add(monitorOnDesk);
+
+const monitorScreen = new THREE.Mesh(
+  new THREE.BoxGeometry(1.0, 0.6, 0.05),
+  new THREE.MeshStandardMaterial({color:0x4caf50, emissive:0x4caf50, emissiveIntensity:0.4})
+);
+monitorScreen.position.set(0, 1.8, -0.45);
+deskBuilding.add(monitorScreen);
+
+deskBuilding.add(makeLabel('책상 (브라우저 캐시)', '임시 복사본 저장', 2.0, 1.5));
+deskBuilding.position.set(-5, 0, -2);
+scene.add(deskBuilding);
+
+// 토큰 교환소 (AI 토큰) - 동전 교환 부스
+const tokenBuilding = new THREE.Group();
+tokenBuilding.userData = {name:'토큰 교환소 (AI 토큰)', tag:'AI 계산 단위 · 비용', icon:'🪙', phase:2, description:'AI가 글을 읽고 쓸 때 쓰는 계산 단위'};
+
+// 메인 부스
+const tokenBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.0, 2.0, 1.5),
+  new THREE.MeshStandardMaterial({color:0xe91e63, roughness:0.7})
+);
+tokenBody.position.y = 1.0;
+tokenBody.castShadow = true; tokenBody.receiveShadow = true;
+tokenBuilding.add(tokenBody);
+
+// 지붕
+const tokenRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.5, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0x880e4f, roughness:0.6})
+);
+tokenRoof.position.y = 2.4;
+tokenRoof.rotation.y = Math.PI/4;
+tokenRoof.castShadow = true;
+tokenBuilding.add(tokenRoof);
+
+// 동전 장식
+for(let i=0; i<5; i++){
+  const coin = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.15, 0.03, 12),
+    new THREE.MeshStandardMaterial({color:0xffd700, emissive:0xffd700, emissiveIntensity:0.5})
+  );
+  coin.position.set(-0.6 + i*0.3, 2.6 + Math.sin(i)*0.1, 0);
+  coin.rotation.x = Math.PI/2;
+  tokenBuilding.add(coin);
+}
+
+// 문
+const tokenDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.9, 0.15),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+tokenDoor.position.set(0, 0.45, 0.78);
+tokenBuilding.add(tokenDoor);
+
+tokenBuilding.add(makeLabel('토큰 교환소 (AI 토큰)', 'AI 계산 단위 · 비용', 2.5, 2.0));
+tokenBuilding.position.set(5, 0, -2);
+scene.add(tokenBuilding);
+
+// 열쇠공방 (SSH) - 열쇠 모양 건물
+const sshBuilding = new THREE.Group();
+sshBuilding.userData = {name:'열쇠공방 (SSH)', tag:'공개키·개인키 인증', icon:'🔑', phase:3, description:'공개키와 개인키로 안전하게 접속'};
+
+// 본체
+const sshBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.0, 2.2, 1.5),
+  new THREE.MeshStandardMaterial({color:0x009688, roughness:0.7})
+);
+sshBody.position.y = 1.1;
+sshBody.castShadow = true; sshBody.receiveShadow = true;
+sshBuilding.add(sshBody);
+
+// 지붕
+const sshRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.5, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0x004d40, roughness:0.6})
+);
+sshRoof.position.y = 2.6;
+sshRoof.rotation.y = Math.PI/4;
+sshRoof.castShadow = true;
+sshBuilding.add(sshRoof);
+
+// 열쇠 구멍 장식
+const keyHole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.08, 0.2, 8),
+  new THREE.MeshStandardMaterial({color:0x000000})
+);
+keyHole.position.set(0, 1.5, 0.78);
+sshBuilding.add(keyHole);
+
+const keySlot = new THREE.Mesh(
+  new THREE.BoxGeometry(0.04, 0.2, 0.2),
+  new THREE.MeshStandardMaterial({color:0x000000})
+);
+keySlot.position.set(0, 1.35, 0.78);
+sshBuilding.add(keySlot);
+
+// 문
+const sshDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.9, 0.15),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+sshDoor.position.set(0, 0.45, 0.78);
+sshBuilding.add(sshDoor);
+
+sshBuilding.add(makeLabel('열쇠공방 (SSH)', '공개키·개인키 인증', 2.5, 2.0));
+sshBuilding.position.set(18, 0, -9);
+scene.add(sshBuilding);
+
+// 전화교환 (동기/비동기) - 전화 교환대
+const syncAsyncBuilding = new THREE.Group();
+syncAsyncBuilding.userData = {name:'전화교환 (동기/비동기)', tag:'데이터 처리 방식', icon:'📞', phase:2, description:'동기는 전화, 비동기는 문자'};
+
+// 교환대 본체
+const syncBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 2.0, 2.0),
+  new THREE.MeshStandardMaterial({color:0x3f51b5, roughness:0.7})
+);
+syncBody.position.y = 1.0;
+syncBody.castShadow = true; syncBody.receiveShadow = true;
+syncAsyncBuilding.add(syncBody);
+
+// 지붕
+const syncRoof = new THREE.Mesh(
+  new THREE.ConeGeometry(1.8, 0.8, 4),
+  new THREE.MeshStandardMaterial({color:0x1a237e, roughness:0.6})
+);
+syncRoof.position.y = 2.4;
+syncRoof.rotation.y = Math.PI/4;
+syncRoof.castShadow = true;
+syncAsyncBuilding.add(syncRoof);
+
+// 전화기 장식
+for(let i=0; i<3; i++){
+  const phone = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 0.15, 8),
+    new THREE.MeshStandardMaterial({color:0x212121})
+  );
+  phone.position.set(-0.6 + i*0.6, 2.2, 1.05);
+  syncAsyncBuilding.add(phone);
+
+  const phoneBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.15, 0.05, 0.15),
+    new THREE.MeshStandardMaterial({color:0x212121})
+  );
+  phoneBase.position.set(-0.6 + i*0.6, 2.1, 1.05);
+  syncAsyncBuilding.add(phoneBase);
+}
+
+// 문
+const syncDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.9, 0.15),
+  new THREE.MeshStandardMaterial({color:0x3e2723})
+);
+syncDoor.position.set(0, 0.45, 1.08);
+syncAsyncBuilding.add(syncDoor);
+
+syncAsyncBuilding.add(makeLabel('전화교환 (동기/비동기)', '데이터 처리 방식', 2.5, 2.0));
+syncAsyncBuilding.position.set(-8, 0, 3);
+scene.add(syncAsyncBuilding);
+
+// 신호등 (라우팅) - 교차로 신호등
+const routingBuilding = new THREE.Group();
+routingBuilding.userData = {name:'신호등 (라우팅)', tag:'URL → 페이지 연결', icon:'🚦', phase:2, description:'URL을 페이지에 연결하는 교통경찰'};
+
+// 기둥
+const signalPole = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.1, 0.1, 3.0, 8),
+  new THREE.MeshStandardMaterial({color:0x424242})
+);
+signalPole.position.y = 1.5;
+routingBuilding.add(signalPole);
+
+// 신호등 상자
+const signalBox = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 1.5, 0.4),
+  new THREE.MeshStandardMaterial({color:0x212121})
+);
+signalBox.position.y = 2.8;
+routingBuilding.add(signalBox);
+
+// 빨간불
+const redLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.12, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xff0000, emissive:0xff0000, emissiveIntensity:0.8})
+);
+redLight.position.set(0, 3.3, 0.25);
+routingBuilding.add(redLight);
+
+// 노란불
+const yellowLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.12, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xffeb3b, emissive:0xffeb3b, emissiveIntensity:0.8})
+);
+yellowLight.position.set(0, 2.8, 0.25);
+routingBuilding.add(yellowLight);
+
+// 초록불
+const greenLight = new THREE.Mesh(
+  new THREE.SphereGeometry(0.12, 8, 8),
+  new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.8})
+);
+greenLight.position.set(0, 2.3, 0.25);
+routingBuilding.add(greenLight);
+
+// 기반
+const signalBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16),
+  new THREE.MeshStandardMaterial({color:0x616161})
+);
+signalBase.position.y = 0.05;
+routingBuilding.add(signalBase);
+
+routingBuilding.add(makeLabel('신호등 (라우팅)', 'URL → 페이지 연결', 2.5, 2.0));
+routingBuilding.position.set(3, 0, -8);
+scene.add(routingBuilding);
 
 /* ---- Characters ---- */
 const people = [];
@@ -2336,12 +3074,20 @@ const STATIONS = [
     `<b>프레임워크의 장점</b><br><br>매번 바퀴를 새로 만들 필요 없이, 검증된 뼈대 위에 내 로직만 얹으면 됩니다. 개발 속도가 엄청 빨라져요!`
    ]},
 
-  {id:'http', minLevel:3, phase:2, icon:'📬', label:'우편 규칙 (HTTP)', tag:'데이터 전송 규칙', color:0x536dfe,
-   pos:new THREE.Vector3(2, 1.2, 8), camPos:new THREE.Vector3(-1, 4, 11),
+  {id:'http', minLevel:3, phase:2, icon:'📜', label:'HTTP (데이터 전송)', tag:'데이터 전송 규칙', color:0x536dfe,
+   pos:new THREE.Vector3(0, 1.2, 8), camPos:new THREE.Vector3(-3, 4, 11),
    levels:[
-    `<b>왜 우편 규칙으로 표현했을까요?</b><br><br>HTTP는 인터넷에서 데이터가 오가는 규칙입니다. 마치 우편 서비스의 배송 규칙처럼요.`,
+    `<b>왜 문서 형태로 표현했을까요?</b><br><br>HTTP는 인터넷에서 데이터가 오가는 기본 규칙입니다. 마치 규칙서처럼, 웹이 작동하는 방법을 정해놓은 문서입니다.`,
     `<b>HTTP의 역할</b><br><br>GET, POST, PUT, DELETE 같은 메서드로 서버에 요청합니다. 웹페이지를 열면 브라우저가 HTTP로 서버에 데이터를 달라고 해요.`,
-    `<b>HTTP와 HTTPS</b><br><br>HTTPS는 암호화된 HTTP입니다. 중요한 정보(비밀번호, 카드번호)를 보낼 땐 반드시 HTTPS를 써야 안전합니다.`
+    `<b>HTTP 상태 코드</b><br><br>200(성공), 404(찾을 수 없음), 500(서버 오류) 같은 상태 코드로 결과를 알려줍니다.`
+   ]},
+
+  {id:'https', minLevel:3, phase:2, icon:'🔐', label:'HTTPS (보안 전송)', tag:'암호화된 데이터 전송', color:0x4caf50,
+   pos:new THREE.Vector3(4, 1.2, 8), camPos:new THREE.Vector3(1, 4, 11),
+   levels:[
+    `<b>왜 자물쇠가 있는 문서일까요?</b><br><br>HTTPS는 암호화된 HTTP입니다. 자물쇠는 데이터가 안전하게 보호됨을 의미합니다.`,
+    `<b>HTTPS의 역할</b><br><br>HTTP와 같지만 데이터가 암호화되어 전송됩니다. 비밀번호, 카드번호 같은 중요한 정보를 보낼 때 반드시 필요합니다.`,
+    `<b>HTTPS와 보안</b><br><br>브라우저 주소창의 자물쇠 아이콘은HTTPS 연결을 나타냅니다. 자물쇠가 없으면 개인정보가 노출될 위험이 있습니다.`
    ]},
 
   {id:'docker', minLevel:3, phase:3, icon:'🐳', label:'컨테이너 야적장 (Docker)', tag:'이식 가능한 실행 환경', color:0x18ffff,
@@ -2366,6 +3112,64 @@ const STATIONS = [
     `<b>왜 금고로 표현했을까요?</b><br><br>보안은 컴퓨터 시스템의 소중한 데이터를 지키는 금고입니다.`,
     `<b>보안의 역할</b><br><br>암호화, 인증, 접근 제어 등으로 데이터를 안전하게 지킵니다. 해커로부터 시스템을 보호하는 최후의 방어선이에요.`,
     `<b>보안이 중요한 이유</b><br><br>하나의 보안 취약점으로 수백만 명의 개인정보가 유출될 수 있습니다. 보안은 개발의 마지막이 아니라 처음부터 고려해야 합니다.`
+   ]},
+
+  // === 추가: 블로그 바이브코딩 개념 ===
+
+  {id:'process_thread', minLevel:2, phase:1, icon:'🏦', label:'은행 (프로세스/스레드)', tag:'실행 중인 프로그램 · 작업 단위', color:0xff9800,
+   pos:new THREE.Vector3(-18, 1.5, 5), camPos:new THREE.Vector3(-16, 4, 8),
+   levels:[
+    `<b>왜 은행으로 표현했을까요?</b><br><br>프로세스는 <b>실행 중인 프로그램</b>입니다. 마치 은행 지점처럼, 하나의 프로그램이 실행되면 OS가 메모리를 할당하고 독립된 공간을 만들어줘요.<br><br>스레드는 그 안의 <b>창구 직원</b>처럼, 실제 일을 처리하는 작은 작업 단위입니다.`,
+    `<b>멀티프로세싱 vs 멀티스레딩</b><br><br>멀티프로세싱 = 여러 은행 지점 (각자 독립된 금고/서류함)<br>멀티스레딩 = 한 지점 안 여러 창구 직원 (같은 금고를 공유)<br><br>지점(프로세스)이 많으면 안전하지만 비싸고, 창구(스레드)가 많으면 빠르지만 충돌 위험이 있어요.`,
+    `<b>시분할(Time-sharing)</b><br><br>코어 8개에 스레드 수백 개가 떠 있어도 모두 처리되는 이유는, OS가 아주 짧은 시간씩 번갈아 실행해주기 때문이에요.<br><br>마치 은행에서 한 창구가 잠시 쉴 때 다른 창구를 먼저 처리하는 것처럼, 모든 일이 순식간에 번갈아 일어납니다.`
+   ]},
+
+  {id:'kernel_shell', minLevel:2, phase:1, icon:'🥚', label:'알맹이 (커널/셸)', tag:'운영체제 핵심 · 명령 해석', color:0x795548,
+   pos:new THREE.Vector3(-20, 1.2, 8), camPos:new THREE.Vector3(-18, 3.5, 11),
+   levels:[
+    `<b>달걀 비유</b><br><br>커널(Kernel)은 <b>운영체제의 알맹이</b>입니다. CPU, 메모리, 파일, 네트워크 같은 컴퓨터의 진짜 자원을 관리해요.<br><br>셸(Shell)은 그 알맹이를 감싸는 <b>껍데기</b>입니다. 사용자의 명령을 해석해서 커널에 전달하는 통역사예요.`,
+    `<b>터미널과 프롬프트</b><br><br>터미널은 키보드와 화면이 달린 "말단 장치"에서 온 이름이에요. 지금은 화면 속 앱으로 흉내 내는 "터미널 에뮬레이터"를 써요.<br><br>프롬프트는 셸이 "나 지금 입력 기다리고 있어요"라고 보여주는 표시예요.`,
+    `<b>Claude Code는 어디에 있을까?</b><br><br>Claude Code는 터미널도, 셸도, 커널도 아니에요. <b>셸 위에서 실행되는 프로그램</b>이에요. PowerShell이 $env:Path에서 claude를 찾아 새 프로세스로 실행하죠.`
+   ]},
+
+  {id:'browser_cache', minLevel:2, phase:2, icon:'📋', label:'책상 (브라우저 캐시)', tag:'임시 복사본 저장', color:0x8bc34a,
+   pos:new THREE.Vector3(-5, 1.2, -2), camPos:new THREE.Vector3(-8, 3.5, 1),
+   levels:[
+    `<b>왜 책상 위 복사본으로 표현했을까요?</b><br><br>브라우저 캐시는 <b>사이트의 임시 복사본</b>입니다. 매번 서버에서 새로 받아오지 않고, 책상 위에 둔 복사본을 다시 보는 것처럼요.<br><br>문제는 원본(진짜 최신 사이트)이 바뀌었는데도, 책상 위 복사본(캐시)이 예전 것이라 바뀐 걸 못 보는 경우가 생겨요.`,
+    `<b>해결법</b><br><br>1. 강력 새로고침: Ctrl+Shift+R<br>2. 시크릿 창: 캐시를 안 쓰는 창<br>3. 캐시 완전 삭제: Ctrl+Shift+Delete<br><br>서버가 정말 최신 상태인지 확인하고 싶으면 curl 명령어를 써봐요.`,
+    `<b>CPU 캐시 vs 브라우저 캐시</b><br><br>CPU 캐시는 하드웨어 안의 자주 쓰는 데이터 보관소 (L1/L2/L3), 브라우저 캐시는 소프트웨어 수준의 웹페이지 임시 복사본이에요. 둘 다 "자주 쓰는 걸 가까이에"라는 원리지만, 관리하는 주체가 다릅니다.`
+   ]},
+
+  {id:'ai_token', minLevel:3, phase:2, icon:'🪙', label:'토큰 교환소 (AI 토큰)', tag:'AI 계산 단위 · 비용', color:0xe91e63,
+   pos:new THREE.Vector3(5, 1.2, -2), camPos:new THREE.Vector3(3, 3.5, 1),
+   levels:[
+    `<b>토큰이란?</b><br><br>토큰은 AI가 글을 읽고 쓸 때 쓰는 <b>계산 단위</b>예요. 사람이 "단어"로 세는 것처럼, AI는 문장을 토큰이라는 작은 조각으로 잘라서 처리해요.`,
+    `<b>왜 토큰을 아껴야 할까?</b><br><br>1. <b>비용</b>: API 방식으로 쓰면 토큰 수만큼 요금<br>2. <b>속도</b>: 토큰이 많을수록 처리 시간 증가<br>3. <b>기억 용량 한계</b>: 한도에 가까워지면 예전 대화를 잊어버림<br><br>2026년 우버는 AI 코딩 도구 예산을 4월 만에 다 썼고, 한 기업은 에이전트 무한 루프로 매달 2~3억 원을 지출했어요.`,
+    `<b>토큰 아끼는 방법</b><br><br>- 파일 전체를 매번 다시 보여주는 대신 바뀐 부분만 수정<br>- 설명을 간결하게<br>- 같은 걸 여러 번 확인하거나 반복하지 않기<br><br>AI에게 일을 많이 맡길수록, 어떻게 하면 효율적으로 시킬지도 함께 고민해야 해요.`
+   ]},
+
+  {id:'ssh', minLevel:3, phase:3, icon:'🔑', label:'열쇠공방 (SSH)', tag:'공개키·개인키 인증', color:0x009688,
+   pos:new THREE.Vector3(18, 1.2, -9), camPos:new THREE.Vector3(16, 3.5, -6),
+   levels:[
+    `<b>SSH란?</b><br><br>SSH(Secure Shell)는 두 컴퓨터가 인터넷을 통해 <b>안전하게(암호화해서) 통신</b>할 수 있게 해주는 프로토콜이에요. GitHub에 접속할 때 비밀번호 대신 미리 만들어둔 열쇠 한 쌍으로 자동 인증을 해줘요.`,
+    `<b>공개키와 개인키</b><br><br>- <b>개인키(private key)</b>: 내 컴퓨터에만 보관, 절대 공유 X (도장 그 자체)<br>- <b>공개키(public key)</b>: 상대 서버에 미리 등록 (도장의 인주 샘플)<br><br>접속할 때마다 서버가 랜덤 데이터를 보내고, 내 컴퓨터가 개인키로 서명을 만들어 보냄. 서버는 공개키로 검증해요.`,
+    `<b>패스키도 같은 원리</b><br><br>요즘 구글·애플 로그인에서 쓰는 패스키(Passkey)도 SSH와 똑같은 공개키 암호 방식이에요. 지문/얼굴인식은 서버로 전송되는 게 아니라, 내 폰 안에 있는 개인키를 꺼내 쓰기 위한 잠금 해제 수단일 뿐이에요.`
+   ]},
+
+  {id:'sync_async', minLevel:3, phase:2, icon:'📞', label:'전화교환 (동기/비동기)', tag:'데이터 처리 방식', color:0x3f51b5,
+   pos:new THREE.Vector3(-8, 1.2, 5), camPos:new THREE.Vector3(-11, 3.5, 8),
+   levels:[
+    `<b>동기 vs 비동기</b><br><br><b>동기(synchronous)</b>는 전화 통화예요. 상대가 받을 때까지 기다리고, 통화가 끝날 때까지 다른 일을 못 해요.<br><br><b>비동기(asynchronous)</b>는 문자예요. 보내놓고 하던 일을 계속하다가, 답장이 오면 그때 확인해요.`,
+    `<b>이벤트 루프</b><br><br>자바스크립트는 기본적으로 <b>스레드 하나</b>에서만 실행돼요. 오래 걸리는 일을 비동기로 처리하면, 브라우저가 뒤에서 대신 처리하고, 결과를 대기줄에 올려놔요.<br><br>한 명뿐인 일꾼은 지금 하던 일을 마친 뒤에 그 대기줄을 확인해서 결과를 처리하는데, 이 대기줄을 계속 돌리는 구조를 <b>이벤트 루프(event loop)</b>라고 불러요.`,
+    `<b>비동기가 필요한 이유</b><br><br>서버에 데이터를 요청하거나(fetch), 시간을 재놓을 때(setTimeout), 요청만 걸어두고 곧바로 다음 일로 넘어가요.<br><br>만약 동기 방식만 쓴다면, 버튼 클릭 후 서버 응답을 3초 기다리는 동안 화면 전체가 멈춰버려요. 스크롤도 안 되고 다른 버튼도 안 눌리는 거죠.`
+   ]},
+
+  {id:'routing', minLevel:3, phase:2, icon:'🚦', label:'신호등 (라우팅)', tag:'URL → 페이지 연결', color:0xff5722,
+   pos:new THREE.Vector3(3, 1.2, -8), camPos:new THREE.Vector3(1, 3.5, -5),
+   levels:[
+    `<b>라우팅이란?</b><br><br>라우팅은 "어떤 요청이 들어왔을 때, 그걸 어디로 보낼지 정해서 연결해주는 것"이에요. 교차로에 서 있는 교통경찰처럼, 차(방문자)의 상태를 보고 갈 곳을 정해줘요.`,
+    `<b>블로그 라우팅 예시</b><br><br>루트 index.html이 브라우저 언어를 감지해서, 한국어면 ko/, 영어면 en/, 중국어면 zh/로 자동으로 보내줘요.<br><br>사용자가 언어를 고를 필요도 없이, 이미 그렇게 동작하도록 만들어져 있어요.`,
+    `<b>라우팅 vs 라우터</b><br><br>라우터(Router)는 물리적 장비로 데이터의 경로를 정해요. 라우팅(Routing)은 소프트웨어 수준에서 URL을 페이지에 연결하는 로직이에요. 이름은 비슷하지만 다뤄야 할 대상이 달라요.`
    ]},
 ];
 
@@ -2464,9 +3268,11 @@ addEventListener('pointermove', e => {
   moved += Math.abs(dx) + Math.abs(dy);
   
   if (isRotating) {
+    // 좌클릭 = 회전
     camGoal.theta -= dx * 0.005;
     camGoal.phi = clamp(camGoal.phi + dy * 0.005, MIN_PHI, MAX_PHI);
   } else {
+    // 우클릭 = 팬 (이동)
     const panSpeed = camGoal.radius * 0.0015;
     const worldUp = new THREE.Vector3(0, 1, 0);
     const camDir = new THREE.Vector3();
@@ -2502,12 +3308,26 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 canvas.addEventListener('dblclick', e => {
   if (isFlying) return;
-  
+
   const rect = canvas.getBoundingClientRect();
   pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
-  
+
+  // If in interior mode, exit on double-click
+  if (interiorMode) {
+    exitInterior();
+    return;
+  }
+
+  // Check if clicking on CPU+RAM house (all children)
+  const cpuRamHits = raycaster.intersectObjects(cpuRamHouse.children, true);
+  if (cpuRamHits.length) {
+    enterInterior('cpuRam');
+    return;
+  }
+
+  // Original fly-to-ground behavior
   const groundHits = raycaster.intersectObject(ground);
   if (groundHits.length) {
     const point = groundHits[0].point;
@@ -2839,6 +3659,110 @@ window.visitStationById = function(id) {
 };
 
 /* ============================================================
+   Interior Mode System
+   ============================================================ */
+const interiorInfoEl = document.getElementById('interiorInfo');
+
+function enterInterior(buildingId) {
+  interiorMode = true;
+  currentInterior = buildingId;
+
+  // Save current camera state
+  exteriorCamState = {
+    target: camGoal.target.clone(),
+    radius: camGoal.radius,
+    theta: camGoal.theta,
+    phi: camGoal.phi
+  };
+
+  if (buildingId === 'cpuRam') {
+    cpuRamInterior.visible = true;
+
+    // Dim exterior buildings slightly
+    [cpuRamHouse, basementGroup, motherboardFence].forEach(g => {
+      g.traverse(child => {
+        if (child.material && child.material.opacity !== undefined) {
+          child.userData._origOpacity = child.material.opacity;
+          child.material.transparent = true;
+          child.material.opacity = Math.min(child.material.opacity, 0.15);
+        }
+      });
+    });
+
+    // Zoom camera inside
+    flyTo(
+      new THREE.Vector3(-14, 3.5, 7),
+      new THREE.Vector3(-14, 1.0, 7),
+      1200
+    );
+
+    showInteriorInfo('cpuRam');
+  }
+}
+
+function exitInterior() {
+  if (!interiorMode) return;
+  interiorMode = false;
+  currentInterior = null;
+
+  // Hide interior
+  cpuRamInterior.visible = false;
+
+  // Restore exterior building opacities
+  [cpuRamHouse, basementGroup, motherboardFence].forEach(g => {
+    g.traverse(child => {
+      if (child.material && child.userData._origOpacity !== undefined) {
+        child.material.opacity = child.userData._origOpacity;
+        if (child.userData._origOpacity >= 1) child.material.transparent = false;
+        delete child.userData._origOpacity;
+      }
+    });
+  });
+
+  // Hide info panel
+  interiorInfoEl.classList.remove('show');
+  interiorInfoEl.style.display = 'none';
+
+  // Restore camera
+  if (exteriorCamState) {
+    const offset = new THREE.Vector3(8, 8, 8);
+    flyTo(
+      new THREE.Vector3(
+        exteriorCamState.target.x + offset.x,
+        exteriorCamState.radius * Math.cos(exteriorCamState.phi),
+        exteriorCamState.target.z + offset.z
+      ),
+      exteriorCamState.target.clone(),
+      1200
+    );
+  }
+}
+
+function showInteriorInfo(buildingId) {
+  if (buildingId === 'cpuRam') {
+    interiorInfoEl.innerHTML = `
+      <h3>CPU + RAM 내부</h3>
+      <p>CPU가 RAM에서 데이터를 가져와 처리하는 과정</p>
+      <ul>
+        <li><span class="cache-dot cache-l1"></span>L1 캐시: CPU 내부, 가장 빠름 (1클럭)</li>
+        <li><span class="cache-dot cache-l2"></span>L2 캐시: CPU 패키지 내부 (3-10클럭)</li>
+        <li><span class="cache-dot cache-ram"></span>RAM: 외부 메모리 (100클럭)</li>
+        <li><span class="cache-dot cache-storage"></span>저장장치: 가장 느림 (100,000클럭)</li>
+      </ul>
+      <p style="margin-top:10px;font-size:.8em;color:#8a8aa8">
+        데이터 블록이 RAM에서 CPU로 이동하는 것을 관찰하세요.
+        <br>파란색 = 데이터 버스
+        <br>초록색 = 주소 버스
+        <br>빨간색 = 제어 버스
+      </p>
+      <div class="exit-hint">더블클릭 또는 <kbd>ESC</kbd>로 나가기</div>
+    `;
+  }
+  interiorInfoEl.classList.add('show');
+  interiorInfoEl.style.display = 'block';
+}
+
+/* ============================================================
    Animation Loop
    ============================================================ */
 function animate(){
@@ -2855,7 +3779,7 @@ function animate(){
   }
 
   // Buildings float
-  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, reactBuilding, httpBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
+  [cpuRamHouse, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitBuilding, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding].forEach((b, i) => {
     b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
   });
 
@@ -2895,9 +3819,39 @@ function animate(){
     s.marker.userData.halo.scale.setScalar(sc);
   });
 
+  // Interior data block animations
+  if(interiorMode && currentInterior === 'cpuRam'){
+    interiorDataBlocks.forEach((block, i) => {
+      block.userData.phase += 0.015 + block.userData.speed * 0.01;
+      const cycle = (Math.sin(block.userData.phase) + 1) / 2;
+      block.position.lerpVectors(block.userData.startPos, block.userData.endPos, cycle);
+      // Pulse scale
+      const sc = 0.8 + 0.4 * Math.abs(Math.sin(block.userData.phase * 2));
+      block.scale.setScalar(sc);
+    });
+
+    // CPU cores pulsing
+    cpuCores.forEach((core, i) => {
+      core.material.emissiveIntensity = 0.3 + 0.7 * Math.abs(Math.sin(t * 4 + i * 1.5));
+    });
+
+    // Interior lights flicker
+    interiorLight.intensity = 0.8 + 0.3 * Math.sin(t * 3);
+    cpuGlowLight.intensity = 0.6 + 0.4 * Math.sin(t * 5);
+  }
+
   renderer.render(scene, camera);
 }
 animate();
+
+/* ============================================================
+   ESC Key Handler for Interior Mode
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && interiorMode) {
+    exitInterior();
+  }
+});
 
 /* ============================================================
    Intro & Welcome
