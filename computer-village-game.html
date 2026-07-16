@@ -621,112 +621,95 @@ function createMailman(){
    Buildings - Phase 1: 컴퓨터 구조 (왜 주택인가?)
    ============================================================ */
 
-/* ---- 1. CPU+RAM House: Two connected rooms ---- */
+/* ---- 1. CPU+RAM House: Single unified building ---- */
 const cpuRamHouse = new THREE.Group();
-cpuRamHouse.userData = {name:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', icon:'🏠', phase:1, description:'같은 건물 안에 CPU 방(큰 방)과 RAM 방(작은 방)이 있는 구조'};
+cpuRamHouse.userData = {name:'주택 (CPU + RAM)', tag:'중앙처리장치 + 단기기억', icon:'🏠', phase:1, description:'CPU와 RAM이 함께 작동하는 하나의 건물'};
 
-// CPU room (larger, taller)
+// Main body (single unified building)
 const cpuBody = new THREE.Mesh(
-  new THREE.BoxGeometry(3, 3, 2.8),
+  new THREE.BoxGeometry(4.5, 3.2, 2.8),
   new THREE.MeshStandardMaterial({color:0x8b7355, roughness:0.7})
 );
-cpuBody.position.set(-0.5, 1.5, 0);
+cpuBody.position.y = 1.6;
 cpuBody.castShadow = true; cpuBody.receiveShadow = true;
 cpuRamHouse.add(cpuBody);
 
+// Roof
 const cpuRoof = new THREE.Mesh(
-  new THREE.ConeGeometry(2.2, 1.0, 4),
+  new THREE.ConeGeometry(3.2, 1.2, 4),
   new THREE.MeshStandardMaterial({color:0xcd853f, roughness:0.6})
 );
-cpuRoof.position.set(-0.5, 3.5, 0);
+cpuRoof.position.y = 3.8;
 cpuRoof.rotation.y = Math.PI/4;
 cpuRoof.castShadow = true;
 cpuRamHouse.add(cpuRoof);
 
-// Rotating processing indicator on CPU roof
+// Rotating processing indicator on roof
 const cpuIndicator = new THREE.Mesh(
-  new THREE.BoxGeometry(0.6, 0.12, 0.6),
+  new THREE.BoxGeometry(0.8, 0.15, 0.8),
   new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.8})
 );
-cpuIndicator.position.set(-0.5, 4.1, 0);
+cpuIndicator.position.y = 4.5;
 cpuRamHouse.add(cpuIndicator);
 
 const cpuIndicator2 = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.08, 0.08, 0.3, 8),
+  new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8),
   new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.6})
 );
-cpuIndicator2.position.set(-0.5, 4.3, 0);
+cpuIndicator2.position.y = 4.7;
 cpuRamHouse.add(cpuIndicator2);
 
-// RAM room (shorter, smaller)
-const ramBody = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2.2, 2.8),
-  new THREE.MeshStandardMaterial({color:0x607d8b, roughness:0.7})
-);
-ramBody.position.set(0.8, 1.1, 0);
-ramBody.castShadow = true; ramBody.receiveShadow = true;
-cpuRamHouse.add(ramBody);
-
-const ramRoof = new THREE.Mesh(
-  new THREE.ConeGeometry(1.5, 0.7, 4),
-  new THREE.MeshStandardMaterial({color:0x546e7a, roughness:0.6})
-);
-ramRoof.position.set(0.8, 2.45, 0);
-ramRoof.rotation.y = Math.PI/4;
-ramRoof.castShadow = true;
-cpuRamHouse.add(ramRoof);
-
-// Glowing RAM windows (active memory)
-const ramGlow = new THREE.MeshStandardMaterial({color:0x80cbc4, emissive:0x80cbc4, emissiveIntensity:0.8});
-[{x:0.5,z:1.46},{x:1.1,z:1.46}].forEach(p => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.35,0.12), ramGlow);
-  w.position.set(p.x, 1.3, p.z);
-  cpuRamHouse.add(w);
-});
-
-// CPU windows
+// CPU section (left side, larger windows)
 const cpuWin = new THREE.MeshStandardMaterial({color:0x87ceeb, emissive:0x87ceeb, emissiveIntensity:0.4});
-[{x:-1.0,z:1.46},{x:0.0,z:1.46}].forEach(p => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(0.45,0.45,0.12), cpuWin);
-  w.position.set(p.x, 1.8, p.z);
+[{x:-1.2,z:1.46},{x:-0.4,z:1.46}].forEach(p => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.12), cpuWin);
+  w.position.set(p.x, 2.2, p.z);
   cpuRamHouse.add(w);
 });
 
-// Connection between rooms
-const conn = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5, 1.8, 0.4),
-  new THREE.MeshStandardMaterial({color:0x7a6245, roughness:0.7})
-);
-conn.position.set(0.35, 0.9, 0);
-cpuRamHouse.add(conn);
+// RAM section (right side, glowing windows)
+const ramGlow = new THREE.MeshStandardMaterial({color:0x80cbc4, emissive:0x80cbc4, emissiveIntensity:0.8});
+[{x:0.4,z:1.46},{x:1.2,z:1.46}].forEach(p => {
+  const w = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.12), ramGlow);
+  w.position.set(p.x, 2.0, p.z);
+  cpuRamHouse.add(w);
+});
 
-// CPU door
+// Internal divider line (subtle)
+const divider = new THREE.Mesh(
+  new THREE.BoxGeometry(0.08, 2.5, 0.08),
+  new THREE.MeshStandardMaterial({color:0x6d5a45, roughness:0.8})
+);
+divider.position.set(0, 1.25, 0);
+cpuRamHouse.add(divider);
+
+// Door
 const cpuDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.6, 1.2, 0.15),
+  new THREE.BoxGeometry(0.7, 1.3, 0.15),
   new THREE.MeshStandardMaterial({color:0x5d4037})
 );
-cpuDoor.position.set(-0.5, 0.6, 1.48);
+cpuDoor.position.set(0, 0.65, 1.48);
 cpuRamHouse.add(cpuDoor);
 
-// RAM door
-const ramDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.5, 1.0, 0.15),
-  new THREE.MeshStandardMaterial({color:0x4a3728})
+// Door handle
+const doorHandle = new THREE.Mesh(
+  new THREE.SphereGeometry(0.06, 8, 8),
+  new THREE.MeshStandardMaterial({color:0xffd93d, emissive:0xffd93d, emissiveIntensity:0.3})
 );
-ramDoor.position.set(0.8, 0.5, 1.48);
-cpuRamHouse.add(ramDoor);
+doorHandle.position.set(0.2, 0.65, 1.56);
+cpuRamHouse.add(doorHandle);
 
 // Main label
 cpuRamHouse.add(makeLabel('주택 (CPU + RAM)', '중앙처리장치 + 단기기억', 5.2));
 
-// CPU room sub-label
-const cpuSub = miniLabel('CPU 방 (큰 방)', 'rgba(139,115,85,0.9)');
-cpuSub.position.set(-0.5, 2.2, 1.56);
+// CPU sub-label (left)
+const cpuSub = miniLabel('CPU (큰 방)', 'rgba(139,115,85,0.9)');
+cpuSub.position.set(-0.8, 3.5, 1.56);
 cpuRamHouse.add(cpuSub);
 
-// RAM room sub-label
-const ramSub = miniLabel('RAM 방 (작은 방)', 'rgba(112,128,144,0.9)');
-ramSub.position.set(0.8, 1.6, 1.56);
+// RAM sub-label (right)
+const ramSub = miniLabel('RAM (작은 방)', 'rgba(112,128,144,0.9)');
+ramSub.position.set(0.8, 3.2, 1.56);
 cpuRamHouse.add(ramSub);
 
 // Basement door
@@ -734,12 +717,12 @@ const basementDoor = new THREE.Mesh(
   new THREE.BoxGeometry(0.8, 0.6, 0.1),
   new THREE.MeshStandardMaterial({color:0x8b6914})
 );
-basementDoor.position.set(0.35, 0.3, 1.48);
+basementDoor.position.set(0, 0.3, 1.48);
 cpuRamHouse.add(basementDoor);
 
 // Basement label
 const bsLabel = miniLabel('지하실 (저장장치)', 'rgba(218,165,32,0.9)', 2.0, 0.5);
-bsLabel.position.set(0.35, -0.5, 1.6);
+bsLabel.position.set(0, -0.5, 1.6);
 cpuRamHouse.add(bsLabel);
 
 cpuRamHouse.position.set(-14, 0, 7);
