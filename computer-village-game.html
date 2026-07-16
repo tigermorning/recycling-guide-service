@@ -135,7 +135,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 
 <div id="hud">
   <div class="hud-title">🏘️ 컴퓨터 마을 견학
-    <small>건물 클릭: 설명 · 수평 드래그: 이동 · 수직 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>
+    <small>건물 클릭: 설명 · 드래그: 이동 · 오른쪽 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>
   </div>
   <div class="hud-right">
     <div id="progressChip">0 / 10 방문</div>
@@ -169,7 +169,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 </div>
 
 <div id="caption"></div>
-<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 수평 드래그: 맵 이동 &nbsp;·&nbsp; 수직 드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대/축소 &nbsp;·&nbsp; 더블클릭: 확대 이동</div>
+<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 맵 이동 &nbsp;·&nbsp; 오른쪽 드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대/축소 &nbsp;·&nbsp; 더블클릭: 확대 이동</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
 
 <div id="intro">
@@ -211,8 +211,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
       여기가 <span class="highlight">컴퓨터 마을</span>입니다.<br>
       각 건물에는 컴퓨터의 어떤 개념이 숨어 있어요.<br><br>
       <span class="highlight">건물을 클릭</span>하면 설명이 나옵니다.<br>
-      <span class="highlight">수평으로 드래그</span>하면 맵이 이동하고,<br>
-      <span class="highlight">수직으로 드래그</span>하면 회전할 수 있어요.<br>
+      <span class="highlight">드래그</span>로 맵을 이동하고, <span class="highlight">오른쪽 드래그</span>로 회전할 수 있어요.<br>
       <span class="highlight">스크롤</span>로 확대/축소하고,<br>
       <span class="highlight">더블클릭</span>으로 원하는 위치를 확대해서 볼 수 있어요.<br><br>
       <span class="highlight">"🔗 관계 보기"</span> 버튼을 누르면 컴퓨터 구성요소들이<br>
@@ -981,7 +980,7 @@ STATIONS.forEach((s,i)=>{
 });
 
 /* ============================================================
-   Camera Controls - Perspective-Based Navigation
+   Camera Controls - Standard Map Style
    ============================================================ */
 let isFlying = false;
 const camState = {
@@ -1014,6 +1013,7 @@ function applyCamera() {
 applyCamera();
 
 let isDragging = false;
+let isRotating = false;
 let lastMouse = { x: 0, y: 0 };
 let moved = 0;
 
@@ -1021,11 +1021,12 @@ canvas.addEventListener('pointerdown', e => {
   if (isFlying) return;
   
   isDragging = true;
+  isRotating = e.button === 2;
   lastMouse.x = e.clientX;
   lastMouse.y = e.clientY;
   moved = 0;
   
-  canvas.style.cursor = 'grabbing';
+  canvas.style.cursor = isRotating ? 'crosshair' : 'grabbing';
 });
 
 addEventListener('pointermove', e => {
@@ -1035,12 +1036,9 @@ addEventListener('pointermove', e => {
   const dy = e.clientY - lastMouse.y;
   moved += Math.abs(dx) + Math.abs(dy);
   
-  const absDx = Math.abs(dx);
-  const absDy = Math.abs(dy);
-  
-  if (e.shiftKey || absDy > absDx) {
-    camGoal.theta -= dx * 0.004;
-    camGoal.phi = clamp(camGoal.phi + dy * 0.004, MIN_PHI, MAX_PHI);
+  if (isRotating) {
+    camGoal.theta -= dx * 0.005;
+    camGoal.phi = clamp(camGoal.phi + dy * 0.005, MIN_PHI, MAX_PHI);
   } else {
     const panSpeed = camGoal.radius * 0.0015;
     const worldUp = new THREE.Vector3(0, 1, 0);
@@ -1069,6 +1067,7 @@ addEventListener('pointerup', e => {
     handlePick(e);
   }
   isDragging = false;
+  isRotating = false;
   canvas.style.cursor = 'grab';
 });
 
