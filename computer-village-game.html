@@ -169,7 +169,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 </div>
 
 <div id="caption"></div>
-<div id="hint">💡 건물을 클릭하면 설명이 나옵니다 · 드래그로 회전 · 스크롤로 확대</div>
+<div id="hint">💡 건물 클릭: 설명 &nbsp;·&nbsp; 드래그: 좌우상하 이동 &nbsp;·&nbsp; Shift+드래그: 앞뒤 이동 &nbsp;·&nbsp; Ctrl+드래그: 회전 &nbsp;·&nbsp; 스크롤: 확대</div>
 <div id="finish">🎉 모든 장소를 둘러보셨습니다! 컴퓨터가 어떻게 작동하는지 이해하셨나요?</div>
 
 <div id="intro">
@@ -980,12 +980,14 @@ applyCamera();
 // 마우스 컨트롤
 let ptrDown = {x:0, y:0};
 let isCtrl = false;
+let isShift = false;
 let moved = 0;
 
 canvas.addEventListener('pointerdown', e=>{
   ptrDown.x = e.clientX;
   ptrDown.y = e.clientY;
   isCtrl = e.ctrlKey || e.metaKey;
+  isShift = e.shiftKey;
   moved = 0;
 });
 addEventListener('pointermove', e=>{
@@ -1001,16 +1003,24 @@ addEventListener('pointermove', e=>{
     camState.phi = clamp(camState.phi - dy * 0.005, 0.2, Math.PI - 0.2);
     applyCamera();
   } else {
-    // 일반 드래그: 이동 (팬)
-    const right = new THREE.Vector3();
-    const up = new THREE.Vector3(0, 1, 0);
-    camera.getWorldDirection(right);
-    right.cross(up).normalize();
-    const forward = new THREE.Vector3().copy(right).cross(camera.up).normalize();
+    // 방향 벡터 계산
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
+    const forward = new THREE.Vector3().crossVectors(worldUp, right).normalize();
     
-    const panSpeed = camState.radius * 0.002;
-    camState.target.add(right.multiplyScalar(-dx * panSpeed));
-    camState.target.add(forward.multiplyScalar(dy * panSpeed));
+    const panSpeed = camState.radius * 0.003;
+    
+    if(isShift){
+      // Shift + 드래그: 앞뒤 + 상하 이동
+      camState.target.add(forward.multiplyScalar(-dy * panSpeed));
+      camState.target.y += dx * panSpeed;
+    } else {
+      // 일반 드래그: 좌우 + 상하 이동
+      camState.target.add(right.multiplyScalar(-dx * panSpeed));
+      camState.target.y += -dy * panSpeed;
+    }
     applyCamera();
   }
   ptrDown.x = e.clientX;
