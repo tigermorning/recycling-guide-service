@@ -1031,7 +1031,7 @@ addEventListener('pointermove', e => {
   
   if (e.buttons === 2 || (e.buttons === 1 && e.ctrlKey)) {
     camGoal.theta -= dx * 0.005;
-    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.2, Math.PI - 0.2);
+    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.8, 1.7);
   } else {
     const panSpeed = camGoal.radius * 0.002;
     const worldUp = new THREE.Vector3(0, 1, 0);
