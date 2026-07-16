@@ -981,7 +981,7 @@ STATIONS.forEach((s,i)=>{
 });
 
 /* ============================================================
-   Camera Controls - Map Drag Style
+   Camera Controls - Perspective-Based Navigation
    ============================================================ */
 let isFlying = false;
 const camState = {
@@ -997,6 +997,11 @@ const camGoal = {
   theta: 0.35,
   phi: 1.25
 };
+
+const MIN_RADIUS = 8;
+const MAX_RADIUS = 40;
+const MIN_PHI = 0.5;
+const MAX_PHI = 1.8;
 
 function applyCamera() {
   camera.position.set(
@@ -1034,18 +1039,19 @@ addEventListener('pointermove', e => {
   const absDy = Math.abs(dy);
   
   if (e.shiftKey || absDy > absDx) {
-    camGoal.theta -= dx * 0.005;
-    camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.8, 1.7);
+    camGoal.theta -= dx * 0.004;
+    camGoal.phi = clamp(camGoal.phi + dy * 0.004, MIN_PHI, MAX_PHI);
   } else {
-    const panSpeed = camGoal.radius * 0.002;
+    const panSpeed = camGoal.radius * 0.0015;
     const worldUp = new THREE.Vector3(0, 1, 0);
     const camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
     const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
+    const forward = new THREE.Vector3().crossVectors(worldUp, right).normalize();
     
     const newTarget = camGoal.target.clone();
     newTarget.add(right.multiplyScalar(-dx * panSpeed));
-    newTarget.y += dy * panSpeed;
+    newTarget.add(forward.multiplyScalar(dy * panSpeed));
     
     newTarget.x = clamp(newTarget.x, -25, 25);
     newTarget.y = clamp(newTarget.y, 1, 8);
@@ -1090,8 +1096,8 @@ canvas.addEventListener('dblclick', e => {
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
   if (!isFlying) {
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    camGoal.radius = clamp(camGoal.radius * zoomFactor, 4, 60);
+    const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
+    camGoal.radius = clamp(camGoal.radius * zoomFactor, MIN_RADIUS, MAX_RADIUS);
   }
 }, { passive: false });
 
