@@ -1033,7 +1033,7 @@ addEventListener('pointermove', e => {
   const absDx = Math.abs(dx);
   const absDy = Math.abs(dy);
   
-  if (e.shiftKey || absDy > absDx * 1.5) {
+  if (e.shiftKey || absDy > absDx) {
     camGoal.theta -= dx * 0.005;
     camGoal.phi = clamp(camGoal.phi + dy * 0.005, 0.8, 1.7);
   } else {
@@ -1043,8 +1043,15 @@ addEventListener('pointermove', e => {
     camera.getWorldDirection(camDir);
     const right = new THREE.Vector3().crossVectors(camDir, worldUp).normalize();
     
-    camGoal.target.add(right.multiplyScalar(-dx * panSpeed));
-    camGoal.target.y += dy * panSpeed;
+    const newTarget = camGoal.target.clone();
+    newTarget.add(right.multiplyScalar(-dx * panSpeed));
+    newTarget.y += dy * panSpeed;
+    
+    newTarget.x = clamp(newTarget.x, -25, 25);
+    newTarget.y = clamp(newTarget.y, 1, 8);
+    newTarget.z = clamp(newTarget.z, -25, 25);
+    
+    camGoal.target.copy(newTarget);
   }
   
   lastMouse.x = e.clientX;
