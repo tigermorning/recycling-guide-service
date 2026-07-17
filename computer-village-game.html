@@ -3674,27 +3674,7 @@ function makeBusLabel(text, color, pos) {
 const busLabelPos = new THREE.Vector3(-15, 1, 12);
 motherboardFence.add(makeBusLabel('시스템 버스 (System Bus)', 0xffffff, busLabelPos));
 
-// 시스템 버스 데이터 흐름 애니메이션
-const busDots = [];
-function createBusDot(color, pathStart, pathEnd) {
-  const geo = new THREE.SphereGeometry(0.08, 8, 8);
-  const mat = new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.3, transparent: true, opacity: 0.9});
-  const dot = new THREE.Mesh(geo, mat);
-  dot.position.copy(pathStart);
-  const mid = new THREE.Vector3(
-    (pathStart.x + pathEnd.x) / 2,
-    2.5,
-    (pathStart.z + pathEnd.z) / 2
-  );
-  dot.userData = {curve: new THREE.QuadraticBezierCurve3(pathStart, mid, pathEnd), progress: Math.random()};
-  scene.add(dot);
-  busDots.push(dot);
-  return dot;
-}
-
-createBusDot(0xff6d00, aluPos.clone(), busEnd.clone());
-createBusDot(0x00bcd4, regPos.clone(), busEnd.clone());
-createBusDot(0x7c4dff, cuPos.clone(), busEnd.clone());
+// 시스템 버스 데이터 흐름 애니메이션 (제거됨)
 
 /* ---- Data Flow Lines ---- */
 function createFlowLine(from, to, color=0xffd93d){
@@ -4758,17 +4738,6 @@ function animate(){
 
   // CCTV camera slight rotation
   cctvCam.rotation.y = Math.sin(t * 0.5) * 0.4;
-
-  // 시스템 버스 데이터 흐름
-  busDots.forEach(dot => {
-    dot.userData.progress += 0.008;
-    if (dot.userData.progress > 1) dot.userData.progress = 0;
-    const p = dot.userData.progress;
-    const curve = dot.userData.curve;
-    const pos = curve.getPoint(p);
-    dot.position.copy(pos);
-    dot.material.opacity = 0.5 + 0.5 * Math.sin(p * Math.PI);
-  });
 
   // Mailman walks
   mailman.position.x = Math.sin(t * 0.25) * 3;
