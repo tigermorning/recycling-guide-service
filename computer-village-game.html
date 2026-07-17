@@ -167,7 +167,7 @@ button.cbtn:hover{filter:brightness(1.15);transform:translateY(-1px)}
     <small>건물 클릭: 설명 · 드래그: 이동 · 오른쪽 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>
   </div>
   <div class="hud-right">
-    <div id="levelChip">초급</div>
+    <div id="levelChip" style="display:none">초급</div>
     <div id="progressChip">0 / 12 방문</div>
     <button id="relationshipBtn">🔗 관계 보기</button>
     <button id="drawerToggle">☰ 장소 목록</button>
@@ -549,13 +549,9 @@ const nameLabels = [];
 let focusedStationId = null;
 const __labelWorldPos = new THREE.Vector3();
 
-/* ---- Level System ---- */
-let currentLevel = 1;
-const LEVEL_NAMES = {1:'초급', 2:'중급', 3:'고급'};
-const LEVEL_UNLOCK_MSG = {
-  2: {title:'🔓 중급이 열렸습니다!', desc:'프로세스/스레드, 커널/셸, 브라우저 캐시 등 더 깊은 개념이 추가되었습니다.', badge:'중급', cls:'inter'},
-  3: {title:'🔓 고급이 열렸습니다!', desc:'SSH, AI 토큰, 동기/비동기, 라우팅 등 전문 개념까지 자유롭게 둘러보세요.', badge:'고급', cls:'adv'}
-};
+/* ---- Level System (모든 레벨 공개) ---- */
+let currentLevel = 3;
+const LEVEL_NAMES = {1:'기본', 2:'중급', 3:'고급'};
 
 /* ---- Interior State ---- */
 let interiorMode = false;
@@ -4280,16 +4276,6 @@ async function visitStation(st){
     setTimeout(()=>finishToast.classList.remove('show'), 5000);
   }
   // Check if current level is complete
-  const currentLevelStations = STATIONS.filter(s => s.minLevel === currentLevel);
-  const currentLevelVisited = currentLevelStations.every(s => visited.has(s.id));
-  if(currentLevelVisited && currentLevel < 3){
-    const nextLevel = currentLevel + 1;
-    currentLevel = nextLevel;
-    document.getElementById('levelChip').textContent = LEVEL_NAMES[nextLevel];
-    showLevelUnlock(nextLevel);
-    rebuildHotspots();
-    renderDrawer();
-  }
   showCaption(st);
 }
 
