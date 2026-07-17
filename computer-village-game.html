@@ -721,28 +721,65 @@ const rightWallBottomRight = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 2.5
 rightWallBottomRight.position.set(-4, 0.9, 10.75);
 motherboardFence.add(rightWallBottomRight);
 
-// 창고(저장장치) 외부 표시 - 벽 안쪽에 보이는 창고 표시
-const storageIndicator = new THREE.Mesh(
-  new THREE.BoxGeometry(0.1, 2.0, 2.5),
-  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8, transparent:true, opacity:0.7})
+// 창고(저장장치) - 사무실 왼쪽 벽에 붙은 작은 창고
+const extStorageGroup = new THREE.Group();
+extStorageGroup.position.set(-16, 0, 14);
+
+// 창고 몸체 (사무실 벽에 붙어있음)
+const extStorageBody = new THREE.Mesh(
+  new THREE.BoxGeometry(1.5, 1.8, 2.5),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
 );
-storageIndicator.position.set(-15.9, 1.0, 8);
-motherboardFence.add(storageIndicator);
+extStorageBody.position.set(-0.75, 0.9, 0);
+extStorageBody.castShadow = true;
+extStorageGroup.add(extStorageBody);
 
-// 창고 내부가 보이는 큰 창 (유리)
-const storageWinGlow = new THREE.MeshStandardMaterial({color:0xffab00, emissive:0xffab00, emissiveIntensity:0.4, transparent:true, opacity:0.5});
-const storageWindow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 2.0), storageWinGlow);
-storageWindow.position.set(-15.92, 1.2, 8);
-motherboardFence.add(storageWindow);
+// 창고 지붕
+const extStorageRoof = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 0.1, 2.8),
+  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.6})
+);
+extStorageRoof.position.set(-0.75, 1.85, 0);
+extStorageGroup.add(extStorageRoof);
 
-// SSD/HDD가 보이는 작은 창문들
-const storageWin1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.3, transparent:true, opacity:0.6}));
-storageWin1.position.set(-15.93, 1.3, 7.5);
-motherboardFence.add(storageWin1);
+// SSD 구획 (작고 빠름) - 왼쪽
+const extSsdBox = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.6, 0.8),
+  new THREE.MeshStandardMaterial({color:0x2e7d32, roughness:0.5})
+);
+extSsdBox.position.set(-0.4, 0.5, -0.6);
+extStorageGroup.add(extSsdBox);
 
-const storageWin2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0xff9800, emissive:0xff9800, emissiveIntensity:0.3, transparent:true, opacity:0.6}));
-storageWin2.position.set(-15.93, 1.3, 8.5);
-motherboardFence.add(storageWin2);
+// SSD 라벨
+const extSsdLabel = miniLabel('SSD', 'rgba(0,230,118,0.9)');
+extSsdLabel.position.set(-0.4, 1.0, -0.6);
+extStorageGroup.add(extSsdLabel);
+
+// HDD 구획 (크고 느림) - 오른쪽
+const extHddBox = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 0.8, 1.0),
+  new THREE.MeshStandardMaterial({color:0x795548, roughness:0.7})
+);
+extHddBox.position.set(-0.4, 0.6, 0.5);
+extStorageGroup.add(extHddBox);
+
+// HDD 라벨
+const extHddLabel = miniLabel('HDD', 'rgba(255,152,0,0.9)');
+extHddLabel.position.set(-0.4, 1.15, 0.5);
+extStorageGroup.add(extHddLabel);
+
+// 창고 문
+const extStorageDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 0.9, 0.08),
+  new THREE.MeshStandardMaterial({color:0x4e342e})
+);
+extStorageDoor.position.set(-1.51, 0.45, 0);
+extStorageGroup.add(extStorageDoor);
+
+// 창고 명패
+extStorageGroup.add(makeLabel('창고 (저장장치)', '영구 보관 · 뒤편', 2.3, 0));
+
+motherboardFence.add(extStorageGroup);
 
 // 왼쪽 벽 창문 (유리)
 const glassMat = new THREE.MeshStandardMaterial({color:0x87ceeb, emissive:0x87ceeb, emissiveIntensity:0.2, transparent:true, opacity:0.5});
@@ -1395,72 +1432,6 @@ intRamGroup.add(makeInteriorLabel('서류함 (RAM)', '#607d8b'));
 cpuRamInterior.add(intRamGroup);
 
 // ============================================================
-//  창고 (저장장치) - 사무실 뒤편, 책상에서 가장 먼 거리
-// ============================================================
-const intStorageGroup = new THREE.Group();
-intStorageGroup.position.set(4.0, 0, 0);
-
-// 창고 바닥 구획 ( SSD: 왼쪽, HDD: 오른쪽 )
-// SSD 구획 (빠르지만 작음)
-const intSsdSection = new THREE.Mesh(
-  new THREE.BoxGeometry(1.4, 1.2, 1.2),
-  new THREE.MeshStandardMaterial({color:0x2e7d32, roughness:0.5, metalness:0.2})
-);
-intSsdSection.position.set(-0.9, 0.6, 0);
-intSsdSection.castShadow = true;
-intStorageGroup.add(intSsdSection);
-
-// SSD 내부 발광 (빠름을 표현)
-const intSsdGlow = new THREE.Mesh(
-  new THREE.BoxGeometry(1.2, 0.8, 1.0),
-  new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.3, transparent:true, opacity:0.3})
-);
-intSsdGlow.position.set(-0.9, 0.6, 0);
-intStorageGroup.add(intSsdGlow);
-
-// SSD 라벨
-const intSsdLabel = makeInteriorLabel('소형 보관함 (SSD)', '#00e676');
-intSsdLabel.position.set(-0.9, 1.5, 0);
-intStorageGroup.add(intSsdLabel);
-
-// SSD 역할 라벨
-const intSsdDesc = makeInteriorLabel('빠름 · 자주 쓰는 파일', '#4caf50', 20);
-intSsdDesc.position.set(-0.9, 1.85, 0);
-intStorageGroup.add(intSsdDesc);
-
-// HDD 구획 (느리지만 넓음)
-const intHddSection = new THREE.Mesh(
-  new THREE.BoxGeometry(1.8, 1.4, 1.4),
-  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.7})
-);
-intHddSection.position.set(1.0, 0.7, 0);
-intHddSection.castShadow = true;
-intStorageGroup.add(intHddSection);
-
-// HDD 플레이터 (원형 디스크)
-const intHddPlatter = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.4, 0.4, 0.05, 20),
-  new THREE.MeshStandardMaterial({color:0xb0bec5, roughness:0.3, metalness:0.6})
-);
-intHddPlatter.position.set(1.0, 1.1, 0);
-intStorageGroup.add(intHddPlatter);
-
-// HDD 라벨
-const intHddLabel = makeInteriorLabel('대형 창고 (HDD)', '#ff9800');
-intHddLabel.position.set(1.0, 1.65, 0);
-intStorageGroup.add(intHddLabel);
-
-// HDD 역할 라벨
-const intHddDesc = makeInteriorLabel('느리지만 넓음 · 오래된 파일', '#ff9800', 20);
-intHddDesc.position.set(1.0, 2.0, 0);
-intStorageGroup.add(intHddDesc);
-
-// 창고 전체 명패
-intStorageGroup.add(makeInteriorLabel('창고 (저장장치)', '#78909c'));
-
-cpuRamInterior.add(intStorageGroup);
-
-// ============================================================
 //  조명
 // ============================================================
 const intAmbient = new THREE.AmbientLight(0xffffff, 0.6);
@@ -1795,7 +1766,7 @@ dockDoor.position.set(0, 0.65, 1.51);
 databaseWarehouse.add(dockDoor);
 
 databaseWarehouse.add(makeLabel('창고 (데이터베이스)', '데이터 저장소', 2.5, 2.5));
-databaseWarehouse.position.set(14, 0, 5);
+databaseWarehouse.position.set(18, 0, 10);
 scene.add(databaseWarehouse);
 
 /* ---- 6. Firewall Gate ---- */
@@ -1972,7 +1943,7 @@ gpuDoor.position.set(-0.5, 0.5, 1.08);
 gpuBuilding.add(gpuDoor);
 
 gpuBuilding.add(makeLabel('그래픽 공방 (GPU)', '화면을 그리는 전문가', 2.5, 2.0));
-gpuBuilding.position.set(-16, 0, 3);
+gpuBuilding.position.set(-16, 0, -1);
 scene.add(gpuBuilding);
 
 /* ---- 8. Monitor / Exhibition Hall (outside motherboard) ---- */
@@ -2039,7 +2010,7 @@ stand.position.set(0, 0.15, 0);
 monitorBuilding.add(stand);
 
 monitorBuilding.add(makeLabel('전시장 (모니터)', 'GPU가 만든 그림을 전시', 2.5, 2.0));
-monitorBuilding.position.set(-22, 0, 5);
+monitorBuilding.position.set(-24, 0, 8);
 scene.add(monitorBuilding);
 
 /* ---- 9. HTML/CSS / Design Room ---- */
@@ -2305,7 +2276,7 @@ const pillarMat2 = new THREE.MeshStandardMaterial({color:0x4fc3f7, roughness:0.5
 });
 
 cloudBuilding.add(makeLabel('구름 도시 (AWS/Azure)', '클라우드 서비스', 2.5, 2.0));
-cloudBuilding.position.set(20, 0, 7);
+cloudBuilding.position.set(26, 0, 10);
 scene.add(cloudBuilding);
 
 /* ---- 13. Load Balancer ---- */
@@ -2356,7 +2327,7 @@ dirHead.position.set(0, 0.75, 0);
 loadbalancerBuilding.add(dirHead);
 
 loadbalancerBuilding.add(makeLabel('교차로 배분기 (LB)', '요청 균등 배분', 2.5, 2.0));
-loadbalancerBuilding.position.set(14, 0, 3);
+loadbalancerBuilding.position.set(18, 0, 4);
 scene.add(loadbalancerBuilding);
 
 /* ---- 14. Git Archive ---- */
@@ -2619,7 +2590,7 @@ center.position.set(0.05, 1.8, 0);
 reactBuilding.add(center);
 
 reactBuilding.add(makeLabel('프레임워크 광장 (React/Vue)', '재사용 가능한 블록', 2.5, 2.5));
-reactBuilding.position.set(0, 0, -9);
+reactBuilding.position.set(-6, 0, -12);
 scene.add(reactBuilding);
 
 /* ---- 17. HTTP / Data Transmission Rules ---- */
@@ -2671,7 +2642,7 @@ httpDocStand.receiveShadow = true;
 httpBuilding.add(httpDocStand);
 
 httpBuilding.add(makeLabel('HTTP (데이터 전송)', '데이터 전송 규칙', 2.5, 2.5));
-httpBuilding.position.set(0, 0, 8);
+httpBuilding.position.set(0, 0, 14);
 scene.add(httpBuilding);
 
 /* ---- 18. HTTPS / Secure Data Transmission ---- */
@@ -2757,7 +2728,7 @@ httpsDocStand.receiveShadow = true;
 httpsBuilding.add(httpsDocStand);
 
 httpsBuilding.add(makeLabel('HTTPS (보안 전송)', '암호화된 데이터 전송', 2.5, 2.5));
-httpsBuilding.position.set(4, 0, 8);
+httpsBuilding.position.set(6, 0, 14);
 scene.add(httpsBuilding);
 
 /* ---- 18. Docker / Container Yard ---- */
@@ -2826,7 +2797,7 @@ craneCable.position.set(-0.3, 2.2, 0.4);
 dockerBuilding.add(craneCable);
 
 dockerBuilding.add(makeLabel('컨테이너 야적장 (Docker)', '이식 가능한 실행 환경', 2.5, 2.0));
-dockerBuilding.position.set(20, 0, 3);
+dockerBuilding.position.set(26, 0, 4);
 scene.add(dockerBuilding);
 
 /* ---- 19. CI/CD / Auto Pipeline ---- */
@@ -2911,7 +2882,7 @@ cicdDoor.position.set(0, 0.5, 0.92);
 cicdBuilding.add(cicdDoor);
 
 cicdBuilding.add(makeLabel('자동 공정 (CI/CD)', '자동 테스트 · 배포', 2.5, 2.0));
-cicdBuilding.position.set(20, 0, -1);
+cicdBuilding.position.set(26, 0, -1);
 scene.add(cicdBuilding);
 
 /* ---- 20. Security / Guard Post ---- */
@@ -3002,7 +2973,7 @@ secWin.position.set(0, 1.3, 0.78);
 securityBuilding.add(secWin);
 
 securityBuilding.add(makeLabel('금고 (보안)', '데이터 보호', 2.5, 2.0));
-securityBuilding.position.set(22, 0, -7);
+securityBuilding.position.set(26, 0, -7);
 scene.add(securityBuilding);
 
 // === 새 건물: 블로그 바이브코딩 개념 ===
@@ -3055,7 +3026,7 @@ bankDoor.position.set(0, 0.6, 1.3);
 bankBuilding.add(bankDoor);
 
 bankBuilding.add(makeLabel('은행 (프로세스/스레드)', '실행 중인 프로그램 · 작업 단위', 2.5, 2.0));
-bankBuilding.position.set(-18, 0, 3);
+bankBuilding.position.set(-20, 0, 0);
 scene.add(bankBuilding);
 
 // 알맹이 (커널/셸) - 달걀 모양 건물
@@ -3097,7 +3068,7 @@ eggDoor.position.set(0, 0.35, 1.25);
 eggBuilding.add(eggDoor);
 
 eggBuilding.add(makeLabel('알맹이 (커널/셸)', '운영체제 핵심 · 명령 해석', 2.5, 2.0));
-eggBuilding.position.set(-20, 0, 6);
+eggBuilding.position.set(-22, 0, 3);
 scene.add(eggBuilding);
 
 /* ---- 1a-3. OS Building: 관리사무소 (Management Office) ---- */
@@ -3216,7 +3187,7 @@ browserMonitorScreen.position.set(0, 1.8, -0.45);
 deskBuilding.add(browserMonitorScreen);
 
 deskBuilding.add(makeLabel('책상 (브라우저 캐시)', '임시 복사본 저장', 2.0, 1.5));
-deskBuilding.position.set(-5, 0, -2);
+deskBuilding.position.set(-8, 0, -2);
 scene.add(deskBuilding);
 
 // 토큰 교환소 (AI 토큰) - 동전 교환 부스
@@ -3262,7 +3233,7 @@ tokenDoor.position.set(0, 0.45, 0.78);
 tokenBuilding.add(tokenDoor);
 
 tokenBuilding.add(makeLabel('토큰 교환소 (AI 토큰)', 'AI 계산 단위 · 비용', 2.5, 2.0));
-tokenBuilding.position.set(5, 0, -2);
+tokenBuilding.position.set(0, 0, -2);
 scene.add(tokenBuilding);
 
 // 열쇠공방 (SSH) - 열쇠 모양 건물
@@ -3312,7 +3283,7 @@ sshDoor.position.set(0, 0.45, 0.78);
 sshBuilding.add(sshDoor);
 
 sshBuilding.add(makeLabel('열쇠공방 (SSH)', '공개키·개인키 인증', 2.5, 2.0));
-sshBuilding.position.set(18, 0, -9);
+sshBuilding.position.set(22, 0, -12);
 scene.add(sshBuilding);
 
 // 전화교환 (동기/비동기) - 전화 교환대
@@ -3364,7 +3335,7 @@ syncDoor.position.set(0, 0.45, 1.08);
 syncAsyncBuilding.add(syncDoor);
 
 syncAsyncBuilding.add(makeLabel('전화교환 (동기/비동기)', '데이터 처리 방식', 2.5, 2.0));
-syncAsyncBuilding.position.set(-8, 0, 3);
+syncAsyncBuilding.position.set(-8, 0, 0);
 scene.add(syncAsyncBuilding);
 
 // 신호등 (라우팅) - 교차로 신호등
@@ -3420,7 +3391,7 @@ signalBase.position.y = 0.05;
 routingBuilding.add(signalBase);
 
 routingBuilding.add(makeLabel('신호등 (라우팅)', 'URL → 페이지 연결', 2.5, 2.0));
-routingBuilding.position.set(3, 0, -8);
+routingBuilding.position.set(6, 0, -10);
 scene.add(routingBuilding);
 
 /* ---- Store original colors for level-based visibility ---- */
@@ -3674,7 +3645,7 @@ const STATIONS = [
    ]},
   
   {id:'storage', minLevel:1, phase:1, icon:'🏭', label:'창고 (저장장치)', tag:'영구 보관 · 느리지만 용량 큼', color:0xf9a825,
-   pos:new THREE.Vector3(4, 1.2, 0), camPos:new THREE.Vector3(6, 3, 3),
+   pos:new THREE.Vector3(-16, 1.2, 14), camPos:new THREE.Vector3(-14, 3.5, 18),
    levels:[
     `<b>왜 창고일까요?</b><br><br>저장장치는 사무실 안 <b>뒤편 창고</b>입니다. 책상에서 가장 먼 거리에 있어 데이터를 꺼내느라 시간이 걸리지만, <b>모든 파일을 영구적으로 보관</b>합니다.`,
     `<b>SSD vs HDD</b><br><br><b>소형 보관함 (SSD)</b>: 빠르고 작습니다. 자주 쓰는 프로그램과 파일을 보관합니다.<br><b>대형 창고 (HDD)</b>: 느리지만 넓습니다. 오래된 파일과 백업을 보관합니다.`,
@@ -3716,7 +3687,7 @@ const STATIONS = [
    ]},
   
   {id:'database', minLevel:1, phase:3, icon:'📦', label:'창고 (데이터베이스)', tag:'데이터 저장소', color:0xfd79a8,
-   pos:new THREE.Vector3(14, 1.2, 5), camPos:new THREE.Vector3(16, 3.5, 8),
+   pos:new THREE.Vector3(18, 1.2, 10), camPos:new THREE.Vector3(20, 3.5, 14),
    levels:[
     `<b>왜 창고로 표현했을까요?</b><br><br>데이터베이스는 <b>수많은 사람들의 기록을 깔끔하게 정리해 보관하는 창고</b>입니다.<br><br>표(테이블) 형태로 정리되어 있어 빠르게 찾을 수 있습니다.`,
     `<b>데이터베이스의 역할</b><br><br>여러분이 어떤 앱에 회원가입을 하면, 이름과 이메일이 바로 이런 창고 어딘가에 한 줄로 저장됩니다.<br><br>다음에 로그인할 때 공장(서버)의 뇌가 이 창고를 뒤져 "아, 이 사람 맞네" 하고 확인해주는 것입니다.`,
@@ -3742,7 +3713,7 @@ const STATIONS = [
   
   // Level 2 stations (중급)
   {id:'gpu', minLevel:2, phase:1, icon:'🎮', label:'그래픽 공방 (GPU)', tag:'화면을 그리는 전문가', color:0x7c4dff,
-   pos:new THREE.Vector3(-16, 1.2, 5), camPos:new THREE.Vector3(-14, 4, 9),
+   pos:new THREE.Vector3(-16, 1.2, -1), camPos:new THREE.Vector3(-14, 4, 4),
    levels:[
     `<b>왜 별도의 그림 방이 있을까요?</b><br><br>GPU는 화면에 보이는 모든 그림과 영상을 그리는 전문가입니다. CPU가 수학 문제를 푸는 것이라면, GPU는 그림을 그리는 것입니다!`,
     `<b>GPU의 역할</b><br><br>게임, 동영상, 3D 모델링 등 화면에 보이는 모든 것을 빠르게 그립니다. 수천 개의 작은 계산을 동시에 할 수 있어요.`,
@@ -3750,7 +3721,7 @@ const STATIONS = [
    ]},
 
   {id:'monitor', minLevel:2, phase:1, icon:'🖥️', label:'전시장 (모니터)', tag:'결과물을 눈에 보이게', color:0x00e5ff,
-   pos:new THREE.Vector3(-8, 1.5, 9), camPos:new THREE.Vector3(-10, 4, 13),
+   pos:new THREE.Vector3(-24, 1.5, 8), camPos:new THREE.Vector3(-22, 4, 13),
    levels:[
     `<b>왜 전시장으로 표현했을까요?</b><br><br>모니터는 컴퓨터가 만든 결과물을 보여주는 전시 공간입니다. 마치 미술관의 전시장처럼요.`,
     `<b>모니터의 역할</b><br><br>컴퓨터가 처리한 결과를 눈에 보이는 형상으로 바꿔서 보여줍니다. 해상도, 주사율, 색상 표현력이 중요해요.`,
@@ -3782,7 +3753,7 @@ const STATIONS = [
    ]},
 
   {id:'cloud', minLevel:2, phase:3, icon:'🏙️', label:'구름 도시 (AWS/Azure)', tag:'클라우드 서비스', color:0x40c4ff,
-   pos:new THREE.Vector3(20, 2, 7), camPos:new THREE.Vector3(22, 5, 11),
+   pos:new THREE.Vector3(26, 2, 10), camPos:new THREE.Vector3(28, 5, 14),
    levels:[
     `<b>왜 구름 도시로 표현했을까요?</b><br><br>클라우드 서비스는 인터넷 위의 거대한 도시입니다. 세계 곳곳의 컴퓨터들이 연결되어 있어요.`,
     `<b>AWS와 Azure의 역할</b><br><br>서버, 데이터베이스, 저장공간 등을 인터넷으로 빌려주는 서비스입니다. 직접 컴퓨터를 사지 않고도 인터넷으로 빌려 쓸 수 있어요.`,
@@ -3792,7 +3763,7 @@ const STATIONS = [
    ]},
 
   {id:'loadbalancer', minLevel:2, phase:3, icon:'⚖️', label:'교차로 배분기 (로드밸런서)', tag:'요청 균등 배분', color:0x1de9b6,
-   pos:new THREE.Vector3(14, 1.5, 3), camPos:new THREE.Vector3(16, 4, 6),
+   pos:new THREE.Vector3(18, 1.5, 4), camPos:new THREE.Vector3(20, 4, 8),
    levels:[
     `<b>왜 교차로 배분기로 표현했을까요?</b><br><br>로드밸런서는 수많은 사용자의 요청을 서버들에 골고루 나눠주는 교차로의 신호등입니다.`,
     `<b>로드밸런서의 역할</b><br><br>한 서버에 요청이 몰리면 느려지잖아요. 로드밸런서가 요청을 균등하게 나눠서 모든 서버가 골고루 일하게 해줘요.`,
@@ -3810,7 +3781,7 @@ const STATIONS = [
 
   // Level 3 stations (고급)
   {id:'cache', minLevel:3, phase:1, icon:'⚡', label:'캐시 (L1/L2/L3)', tag:'CPU 내부 초고속 기억', color:0xff1744,
-   pos:new THREE.Vector3(-13, 1.2, 7), camPos:new THREE.Vector3(-11, 3.5, 10),
+   pos:new THREE.Vector3(-9, 1.2, 7), camPos:new THREE.Vector3(-7, 3.5, 10),
    levels:[
     `<b>왜 CPU 옆에 작은 탑이 있을까요?</b><br><br>캐시는 <b>CPU 안에 들어있는 초고속 저장 공간</b>입니다. 실제로 CPU 다이 위에 물리적으로 붙어 있어요.<br><br>그래서 CPU 건물 바로 옆에 작은 탑으로 표현했습니다.`,
     `<b>캐시의 계층</b><br><br><b>L1</b> (빨간색, 가장 위): CPU 코어 바로 위, 가장 빠름 (1클럭)<br><b>L2</b> (노란색, 중간): CPU 패키지 내부 (3-10클럭)<br><b>L3</b> (주황색, 아래): 여러 코어가 공유 (10-20클럭)<br><br>위로 갈수록 빠르고, 작아집니다.`,
@@ -3819,7 +3790,7 @@ const STATIONS = [
    ]},
 
   {id:'react', minLevel:3, phase:2, icon:'⚛️', label:'프레임워크 광장 (React/Vue)', tag:'재사용 가능한 블록', color:0x448aff,
-   pos:new THREE.Vector3(0, 1.5, -9), camPos:new THREE.Vector3(-3, 4, -6),
+   pos:new THREE.Vector3(-6, 1.5, -12), camPos:new THREE.Vector3(-9, 4, -9),
    levels:[
     `<b>왜 프레임워크 광장으로 표현했을까요?</b><br><br>React/Vue는 웹페이지를 만들 때 쓰는 도구 상자입니다. 처음부터 다 만들지 않고, 미리 만든 블록으로 빠르게 조립해요.`,
     `<b>React와 Vue</b><br><br>둘 다 복잡한 웹페이지를 쉽게 만들 수 있게 해줍니다. React는 페이스북이, Vue는 커뮤니티가 만들었어요.`,
@@ -3827,7 +3798,7 @@ const STATIONS = [
    ]},
 
   {id:'http', minLevel:3, phase:2, icon:'📜', label:'HTTP (데이터 전송)', tag:'데이터 전송 규칙', color:0x536dfe,
-   pos:new THREE.Vector3(0, 1.2, 8), camPos:new THREE.Vector3(-3, 4, 11),
+   pos:new THREE.Vector3(0, 1.2, 14), camPos:new THREE.Vector3(-3, 4, 18),
    levels:[
     `<b>왜 문서 형태로 표현했을까요?</b><br><br>HTTP는 인터넷에서 데이터가 오가는 기본 규칙입니다. 마치 규칙서처럼, 웹이 작동하는 방법을 정해놓은 문서입니다.`,
     `<b>HTTP의 역할</b><br><br>GET, POST, PUT, DELETE 같은 메서드로 서버에 요청합니다. 웹페이지를 열면 브라우저가 HTTP로 서버에 데이터를 달라고 해요.`,
@@ -3835,7 +3806,7 @@ const STATIONS = [
    ]},
 
   {id:'https', minLevel:3, phase:2, icon:'🔐', label:'HTTPS (보안 전송)', tag:'암호화된 데이터 전송', color:0x4caf50,
-   pos:new THREE.Vector3(4, 1.2, 8), camPos:new THREE.Vector3(1, 4, 11),
+   pos:new THREE.Vector3(6, 1.2, 14), camPos:new THREE.Vector3(3, 4, 18),
    levels:[
     `<b>왜 자물쇠가 있는 문서일까요?</b><br><br>HTTPS는 암호화된 HTTP입니다. 자물쇠는 데이터가 안전하게 보호됨을 의미합니다.`,
     `<b>HTTPS의 역할</b><br><br>HTTP와 같지만 데이터가 암호화되어 전송됩니다. 비밀번호, 카드번호 같은 중요한 정보를 보낼 때 반드시 필요합니다.`,
@@ -3843,7 +3814,7 @@ const STATIONS = [
    ]},
 
   {id:'docker', minLevel:3, phase:3, icon:'🐳', label:'컨테이너 야적장 (Docker)', tag:'이식 가능한 실행 환경', color:0x18ffff,
-   pos:new THREE.Vector3(20, 2, 3), camPos:new THREE.Vector3(22, 5, 7),
+   pos:new THREE.Vector3(26, 2, 4), camPos:new THREE.Vector3(28, 5, 8),
    levels:[
     `<b>왜 컨테이너 야적장으로 표현했을까요?</b><br><br>Docker는 프로그램을 컨테이너에 담아서 어디서든 똑같이 실행되게 하는 기술입니다.`,
     `<b>Docker의 역할</b><br><br>'내 컴퓨터에서 잘 되는데 왜 너네 컴퓨터에선 안 되지?'라는 문제를 해결해줍니다. 프로그램과 필요한 모든 것을 컨테이너에 담아요.`,
@@ -3851,7 +3822,7 @@ const STATIONS = [
    ]},
 
   {id:'cicd', minLevel:3, phase:3, icon:'🔄', label:'자동 공정 (CI/CD)', tag:'자동 테스트 · 배포', color:0x64ffda,
-   pos:new THREE.Vector3(20, 1.5, -1), camPos:new THREE.Vector3(22, 4, 3),
+   pos:new THREE.Vector3(26, 1.5, -1), camPos:new THREE.Vector3(28, 4, 3),
    levels:[
     `<b>왜 자동 공정으로 표현했을까요?</b><br><br>CI/CD는 코드를 자동으로 테스트하고 배포하는 공장의 자동화 라인입니다.`,
     `<b>CI (지속적 통합)</b><br><br>코드를 수정하면 자동으로 테스트를 돌려서 문제가 없는지 확인해줍니다.`,
@@ -3859,7 +3830,7 @@ const STATIONS = [
    ]},
 
   {id:'security', minLevel:3, phase:3, icon:'🔐', label:'금고 (보안)', tag:'데이터 보호', color:0xb388ff,
-   pos:new THREE.Vector3(22, 1.5, -7), camPos:new THREE.Vector3(20, 4, -4),
+   pos:new THREE.Vector3(26, 1.5, -7), camPos:new THREE.Vector3(24, 4, -4),
    levels:[
     `<b>왜 금고로 표현했을까요?</b><br><br>보안은 컴퓨터 시스템의 소중한 데이터를 지키는 금고입니다.`,
     `<b>보안의 역할</b><br><br>암호화, 인증, 접근 제어 등으로 데이터를 안전하게 지킵니다. 해커로부터 시스템을 보호하는 최후의 방어선이에요.`,
@@ -3869,7 +3840,7 @@ const STATIONS = [
   // === 추가: 블로그 바이브코딩 개념 ===
 
   {id:'process_thread', minLevel:2, phase:1, icon:'🏦', label:'은행 (프로세스/스레드)', tag:'실행 중인 프로그램 · 작업 단위', color:0xff9800,
-   pos:new THREE.Vector3(-18, 1.5, 5), camPos:new THREE.Vector3(-16, 4, 8),
+   pos:new THREE.Vector3(-20, 1.5, 0), camPos:new THREE.Vector3(-18, 4, 4),
    levels:[
     `<b>왜 은행으로 표현했을까요?</b><br><br>프로세스는 <b>실행 중인 프로그램</b>입니다. 마치 은행 지점처럼, 하나의 프로그램이 실행되면 OS가 메모리를 할당하고 독립된 공간을 만들어줘요.<br><br>스레드는 그 안의 <b>창구 직원</b>처럼, 실제 일을 처리하는 작은 작업 단위입니다.`,
     `<b>멀티프로세싱 vs 멀티스레딩</b><br><br>멀티프로세싱 = 여러 은행 지점 (각자 독립된 금고/서류함)<br>멀티스레딩 = 한 지점 안 여러 창구 직원 (같은 금고를 공유)<br><br>지점(프로세스)이 많으면 안전하지만 비싸고, 창구(스레드)가 많으면 빠르지만 충돌 위험이 있어요.`,
@@ -3877,7 +3848,7 @@ const STATIONS = [
    ]},
 
   {id:'kernel_shell', minLevel:2, phase:1, icon:'🥚', label:'알맹이 (커널/셸)', tag:'운영체제 핵심 · 명령 해석', color:0x795548,
-   pos:new THREE.Vector3(-20, 1.2, 8), camPos:new THREE.Vector3(-18, 3.5, 11),
+   pos:new THREE.Vector3(-22, 1.2, 3), camPos:new THREE.Vector3(-20, 3.5, 7),
    levels:[
     `<b>달걀 비유</b><br><br>커널(Kernel)은 <b>운영체제의 알맹이</b>입니다. CPU, 메모리, 파일, 네트워크 같은 컴퓨터의 진짜 자원을 관리해요.<br><br>셸(Shell)은 그 알맹이를 감싸는 <b>껍데기</b>입니다. 사용자의 명령을 해석해서 커널에 전달하는 통역사예요.`,
     `<b>터미널과 프롬프트</b><br><br>터미널은 키보드와 화면이 달린 "말단 장치"에서 온 이름이에요. 지금은 화면 속 앱으로 흉내 내는 "터미널 에뮬레이터"를 써요.<br><br>프롬프트는 셸이 "나 지금 입력 기다리고 있어요"라고 보여주는 표시예요.`,
@@ -3885,7 +3856,7 @@ const STATIONS = [
    ]},
 
   {id:'browser_cache', minLevel:2, phase:2, icon:'📋', label:'책상 (브라우저 캐시)', tag:'임시 복사본 저장', color:0x8bc34a,
-   pos:new THREE.Vector3(-5, 1.2, -2), camPos:new THREE.Vector3(-8, 3.5, 1),
+   pos:new THREE.Vector3(-8, 1.2, -2), camPos:new THREE.Vector3(-11, 3.5, 1),
    levels:[
     `<b>왜 책상 위 복사본으로 표현했을까요?</b><br><br>브라우저 캐시는 <b>사이트의 임시 복사본</b>입니다. 매번 서버에서 새로 받아오지 않고, 책상 위에 둔 복사본을 다시 보는 것처럼요.<br><br>문제는 원본(진짜 최신 사이트)이 바뀌었는데도, 책상 위 복사본(캐시)이 예전 것이라 바뀐 걸 못 보는 경우가 생겨요.`,
     `<b>해결법</b><br><br>1. 강력 새로고침: Ctrl+Shift+R<br>2. 시크릿 창: 캐시를 안 쓰는 창<br>3. 캐시 완전 삭제: Ctrl+Shift+Delete<br><br>서버가 정말 최신 상태인지 확인하고 싶으면 curl 명령어를 써봐요.`,
@@ -3893,7 +3864,7 @@ const STATIONS = [
    ]},
 
   {id:'ai_token', minLevel:3, phase:2, icon:'🪙', label:'토큰 교환소 (AI 토큰)', tag:'AI 계산 단위 · 비용', color:0xe91e63,
-   pos:new THREE.Vector3(5, 1.2, -2), camPos:new THREE.Vector3(3, 3.5, 1),
+   pos:new THREE.Vector3(0, 1.2, -2), camPos:new THREE.Vector3(-3, 3.5, 1),
    levels:[
     `<b>토큰이란?</b><br><br>토큰은 AI가 글을 읽고 쓸 때 쓰는 <b>계산 단위</b>예요. 사람이 "단어"로 세는 것처럼, AI는 문장을 토큰이라는 작은 조각으로 잘라서 처리해요.`,
     `<b>왜 토큰을 아껴야 할까?</b><br><br>1. <b>비용</b>: API 방식으로 쓰면 토큰 수만큼 요금<br>2. <b>속도</b>: 토큰이 많을수록 처리 시간 증가<br>3. <b>기억 용량 한계</b>: 한도에 가까워지면 예전 대화를 잊어버림<br><br>2026년 우버는 AI 코딩 도구 예산을 4월 만에 다 썼고, 한 기업은 에이전트 무한 루프로 매달 2~3억 원을 지출했어요.`,
@@ -3901,7 +3872,7 @@ const STATIONS = [
    ]},
 
   {id:'ssh', minLevel:3, phase:3, icon:'🔑', label:'열쇠공방 (SSH)', tag:'공개키·개인키 인증', color:0x009688,
-   pos:new THREE.Vector3(18, 1.2, -9), camPos:new THREE.Vector3(16, 3.5, -6),
+   pos:new THREE.Vector3(22, 1.2, -12), camPos:new THREE.Vector3(20, 3.5, -9),
    levels:[
     `<b>SSH란?</b><br><br>SSH(Secure Shell)는 두 컴퓨터가 인터넷을 통해 <b>안전하게(암호화해서) 통신</b>할 수 있게 해주는 프로토콜이에요. GitHub에 접속할 때 비밀번호 대신 미리 만들어둔 열쇠 한 쌍으로 자동 인증을 해줘요.`,
     `<b>공개키와 개인키</b><br><br>- <b>개인키(private key)</b>: 내 컴퓨터에만 보관, 절대 공유 X (도장 그 자체)<br>- <b>공개키(public key)</b>: 상대 서버에 미리 등록 (도장의 인주 샘플)<br><br>접속할 때마다 서버가 랜덤 데이터를 보내고, 내 컴퓨터가 개인키로 서명을 만들어 보냄. 서버는 공개키로 검증해요.`,
@@ -3909,7 +3880,7 @@ const STATIONS = [
    ]},
 
   {id:'sync_async', minLevel:3, phase:2, icon:'📞', label:'전화교환 (동기/비동기)', tag:'데이터 처리 방식', color:0x3f51b5,
-   pos:new THREE.Vector3(-8, 1.2, 5), camPos:new THREE.Vector3(-11, 3.5, 8),
+   pos:new THREE.Vector3(-8, 1.2, 0), camPos:new THREE.Vector3(-11, 3.5, 4),
    levels:[
     `<b>동기 vs 비동기</b><br><br><b>동기(synchronous)</b>는 전화 통화예요. 상대가 받을 때까지 기다리고, 통화가 끝날 때까지 다른 일을 못 해요.<br><br><b>비동기(asynchronous)</b>는 문자예요. 보내놓고 하던 일을 계속하다가, 답장이 오면 그때 확인해요.`,
     `<b>이벤트 루프</b><br><br>자바스크립트는 기본적으로 <b>스레드 하나</b>에서만 실행돼요. 오래 걸리는 일을 비동기로 처리하면, 브라우저가 뒤에서 대신 처리하고, 결과를 대기줄에 올려놔요.<br><br>한 명뿐인 일꾼은 지금 하던 일을 마친 뒤에 그 대기줄을 확인해서 결과를 처리하는데, 이 대기줄을 계속 돌리는 구조를 <b>이벤트 루프(event loop)</b>라고 불러요.`,
@@ -3917,7 +3888,7 @@ const STATIONS = [
    ]},
 
   {id:'routing', minLevel:3, phase:2, icon:'🚦', label:'신호등 (라우팅)', tag:'URL → 페이지 연결', color:0xff5722,
-   pos:new THREE.Vector3(3, 1.2, -8), camPos:new THREE.Vector3(1, 3.5, -5),
+   pos:new THREE.Vector3(6, 1.2, -10), camPos:new THREE.Vector3(3, 3.5, -7),
    levels:[
     `<b>라우팅이란?</b><br><br>라우팅은 "어떤 요청이 들어왔을 때, 그걸 어디로 보낼지 정해서 연결해주는 것"이에요. 교차로에 서 있는 교통경찰처럼, 차(방문자)의 상태를 보고 갈 곳을 정해줘요.`,
     `<b>블로그 라우팅 예시</b><br><br>루트 index.html이 브라우저 언어를 감지해서, 한국어면 ko/, 영어면 en/, 중국어면 zh/로 자동으로 보내줘요.<br><br>사용자가 언어를 고를 필요도 없이, 이미 그렇게 동작하도록 만들어져 있어요.`,
