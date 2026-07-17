@@ -3689,7 +3689,7 @@ motherboardFence.add(sysBusLabel);
 const busDots = [];
 function createBusDot(color, pathStart, pathEnd) {
   const geo = new THREE.SphereGeometry(0.08, 8, 8);
-  const mat = new THREE.MeshBasicMaterial({color, transparent: true, opacity: 0.9});
+  const mat = new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.3, transparent: true, opacity: 0.9});
   const dot = new THREE.Mesh(geo, mat);
   dot.position.copy(pathStart);
   dot.userData = {start: pathStart.clone(), end: pathEnd.clone(), progress: Math.random()};
@@ -3698,9 +3698,9 @@ function createBusDot(color, pathStart, pathEnd) {
   return dot;
 }
 
-createBusDot(0xff1744, busStart.clone(), busEnd.clone());
-createBusDot(0x2979ff, busStart.clone().add(new THREE.Vector3(0.2,0,0)), busEnd.clone().add(new THREE.Vector3(0.2,0,0)));
-createBusDot(0x00e676, busStart.clone().add(new THREE.Vector3(-0.2,0,0)), busEnd.clone().add(new THREE.Vector3(-0.2,0,0)));
+createBusDot(0x8b0000, busStart.clone(), busEnd.clone());
+createBusDot(0x1a3a6a, busStart.clone().add(new THREE.Vector3(0.2,0,0)), busEnd.clone().add(new THREE.Vector3(0.2,0,0)));
+createBusDot(0x1a5c3a, busStart.clone().add(new THREE.Vector3(-0.2,0,0)), busEnd.clone().add(new THREE.Vector3(-0.2,0,0)));
 
 /* ---- Data Flow Lines ---- */
 function createFlowLine(from, to, color=0xffd93d){
