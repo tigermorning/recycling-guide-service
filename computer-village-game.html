@@ -716,6 +716,32 @@ const rightWallTop = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 8), wallMat
 rightWallTop.position.set(-4, 2.4, 8);
 motherboardFence.add(rightWallTop);
 
+// 오른쪽 벽 아래쪽 (문 영역 제외)
+const rightWallBottomLeft = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 2.5), wallMat2);
+rightWallBottomLeft.position.set(-4, 0.9, 5.25);
+motherboardFence.add(rightWallBottomLeft);
+
+const rightWallBottomRight = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 2.5), wallMat2);
+rightWallBottomRight.position.set(-4, 0.9, 10.75);
+motherboardFence.add(rightWallBottomRight);
+
+// 창고(저장장치) 외부 표시 - 벽 안쪽에 보이는 창고 표시
+const storageIndicator = new THREE.Mesh(
+  new THREE.BoxGeometry(0.1, 1.5, 1.8),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8, transparent:true, opacity:0.6})
+);
+storageIndicator.position.set(-15.9, 0.75, 8);
+motherboardFence.add(storageIndicator);
+
+const storageWinGlow = new THREE.MeshStandardMaterial({color:0xffab00, emissive:0xffab00, emissiveIntensity:0.3});
+const storageWin1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.35), storageWinGlow);
+storageWin1.position.set(-15.9, 1.2, 7.5);
+motherboardFence.add(storageWin1);
+
+const storageWin2 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.35), storageWinGlow);
+storageWin2.position.set(-15.9, 1.2, 8.5);
+motherboardFence.add(storageWin2);
+
 // 왼쪽 벽 창문 (유리)
 const glassMat = new THREE.MeshStandardMaterial({color:0x87ceeb, emissive:0x87ceeb, emissiveIntensity:0.2, transparent:true, opacity:0.5});
 [-14, -12, -10, -8, -6].forEach(x => {
@@ -814,6 +840,26 @@ mbLabel.position.set(-16.08, 1.8, 8);
 mbLabel.rotation.y = -Math.PI / 2;
 mbLabel.renderOrder = 999;
 motherboardFence.add(mbLabel);
+
+// 창고(저장장치) 외부 표시 명패
+const storageExtCanvas = document.createElement('canvas');
+storageExtCanvas.width = 256; storageExtCanvas.height = 64;
+const stgCtx = storageExtCanvas.getContext('2d');
+stgCtx.fillStyle = 'rgba(93,64,55,0.9)';
+stgCtx.beginPath(); stgCtx.roundRect(4,4,248,56,8); stgCtx.fill();
+stgCtx.fillStyle = '#ffffff';
+stgCtx.font = 'bold 22px Arial';
+stgCtx.textAlign = 'center';
+stgCtx.fillText('← 창고 (저장장치)', 128, 40);
+const storageExtTex = new THREE.CanvasTexture(storageExtCanvas);
+const storageExtLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.5, 0.4),
+  new THREE.MeshBasicMaterial({map:storageExtTex, transparent:true, side:THREE.DoubleSide, depthTest:false})
+);
+storageExtLabel.position.set(-16.08, 0.6, 8);
+storageExtLabel.rotation.y = -Math.PI / 2;
+storageExtLabel.renderOrder = 999;
+motherboardFence.add(storageExtLabel);
 
 scene.add(motherboardFence);
 
