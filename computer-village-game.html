@@ -1266,10 +1266,10 @@ const cacheGlow = new THREE.Mesh(
 cacheGlow.position.set(0, 0.3, 0);
 cacheTower.add(cacheGlow);
 
-cacheTower.add(makeLabel('책상 아래 서랍 (캐시)', '가장 가까이 · 가장 빠름', 1.2, 0.5));
+cacheTower.add(makeLabel('책상 아래 서랍 (캐시)', '가장 가까이 · 가장 빠름', 0.15, 0.5));
 
-// 서랍을 책상 아래에 배치
-cacheTower.position.set(-10, 0.2, 8);
+// 서랍을 책상 상판 바로 아래에 배치
+cacheTower.position.set(-12, 0.6, 8);
 scene.add(cacheTower);
 
 /* ---- 1b. RAM: 서류함 (Filing Cabinet) ---- */
@@ -3780,7 +3780,7 @@ function makeHotspot(color){
 const STATIONS = [
   // Phase 1: 컴퓨터 구조
   {id:'motherboard', minLevel:1, phase:1, icon:'🏢', label:'사무실 (메인보드)', tag:'모든 부품이 연결되는 건물', color:0x2d5a2d,
-   pos:new THREE.Vector3(-10, 0.2, 8), camPos:new THREE.Vector3(-8, 2, 14),
+    pos:new THREE.Vector3(-12, 0.6, 8), camPos:new THREE.Vector3(-8, 2, 14),
    levels:[
     `<b>왜 사무실로 표현했을까요?</b><br><br>메인보드는 <b>모든 부품이 들어있는 사무실</b>입니다. 책상, 서랍, 서류함이 모두 여기 안에 있습니다.`,
     `<b>메인보드의 역할</b><br><br>메인보드는 부품들끼리 <b>데이터를 주고받는 통로</b>입니다. 마치 사무실 안의 배관처럼, 모든 곳으로 데이터가 흘러갑니다.`,
