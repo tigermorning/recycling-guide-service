@@ -766,8 +766,30 @@ const extStorageDoor = new THREE.Mesh(
 extStorageDoor.position.set(-1.51, 0.45, 0);
 extStorageGroup.add(extStorageDoor);
 
-// 창고 명패
-extStorageGroup.add(makeLabel('창고 (저장장치)', '영구 보관 · 뒤편', 2.0, 0));
+// 창고 명패 (bloom 방지를 위해 어두운 색상 사용)
+{
+  const lc = document.createElement('canvas');
+  lc.width = 512; lc.height = 128;
+  const lx = lc.getContext('2d');
+  lx.fillStyle = 'rgba(0,0,0,0.85)';
+  lx.beginPath(); lx.roundRect(8,8,496,112,12); lx.fill();
+  lx.strokeStyle = '#555'; lx.lineWidth = 2;
+  lx.beginPath(); lx.roundRect(8,8,496,112,12); lx.stroke();
+  lx.fillStyle = '#888'; lx.font = 'bold 36px Arial'; lx.textAlign = 'center';
+  lx.fillText('창고 (저장장치)', 256, 58);
+  lx.font = '22px Arial'; lx.fillStyle = '#666';
+  lx.fillText('영구 보관 · 뒤편', 256, 95);
+  const lMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.0, 0.5),
+    new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(lc), transparent: true, side: THREE.DoubleSide, depthTest: false})
+  );
+  lMesh.position.set(0, 2.0, 0);
+  lMesh.rotation.x = -0.15;
+  lMesh.renderOrder = 999;
+  lMesh.userData.isNameLabel = true;
+  nameLabels.push(lMesh);
+  extStorageGroup.add(lMesh);
+}
 
 motherboardFence.add(extStorageGroup);
 
