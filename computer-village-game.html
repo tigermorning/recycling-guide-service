@@ -754,30 +754,64 @@ const officeDoorHandle = new THREE.Mesh(
 officeDoorHandle.position.set(-3.9, 1.1, 8.6);
 motherboardFence.add(officeDoorHandle);
 
-// 사무실 라벨 (왼쪽 옆)
+// 사무실 라벨 (왼쪽 외벽에 부착)
 const mbLabelCanvas = document.createElement('canvas');
 mbLabelCanvas.width = 512;
-mbLabelCanvas.height = 128;
+mbLabelCanvas.height = 160;
 const mbCtx = mbLabelCanvas.getContext('2d');
-mbCtx.fillStyle = 'rgba(26,92,26,0.9)';
+
+// 금속 명패 배경
+const mbGrad = mbCtx.createLinearGradient(0, 0, 0, 160);
+mbGrad.addColorStop(0, '#e8e8e8');
+mbGrad.addColorStop(0.5, '#c0c0c0');
+mbGrad.addColorStop(1, '#a0a0a0');
+mbCtx.fillStyle = mbGrad;
 mbCtx.beginPath();
-mbCtx.roundRect(10, 10, 492, 108, 16);
+mbCtx.roundRect(6, 6, 500, 148, 10);
 mbCtx.fill();
-mbCtx.fillStyle = '#ffffff';
-mbCtx.font = 'bold 48px Arial';
+
+// 테두리 ( rivet 장식 )
+mbCtx.strokeStyle = '#666';
+mbCtx.lineWidth = 3;
+mbCtx.beginPath();
+mbCtx.roundRect(6, 6, 500, 148, 10);
+mbCtx.stroke();
+
+// 안쪽 테두리
+mbCtx.strokeStyle = '#888';
+mbCtx.lineWidth = 1;
+mbCtx.beginPath();
+mbCtx.roundRect(16, 16, 480, 128, 6);
+mbCtx.stroke();
+
+// 리벳 (모서리)
+mbCtx.fillStyle = '#999';
+[[20, 20], [492, 20], [20, 140], [492, 140]].forEach(([rx, ry]) => {
+  mbCtx.beginPath();
+  mbCtx.arc(rx, ry, 5, 0, Math.PI * 2);
+  mbCtx.fill();
+});
+
+// 메인 텍스트
+mbCtx.fillStyle = '#1a3a1a';
+mbCtx.font = 'bold 44px Arial';
 mbCtx.textAlign = 'center';
-mbCtx.fillText('사무실 (메인보드)', 256, 70);
-mbCtx.font = '28px Arial';
-mbCtx.fillStyle = '#a0c0a0';
-mbCtx.fillText('더블클릭 → 내부 보기', 256, 110);
+mbCtx.fillText('사무실', 256, 68);
+mbCtx.font = 'bold 28px Arial';
+mbCtx.fillText('(메인보드)', 256, 100);
+
+// 서브 텍스트
+mbCtx.fillStyle = '#555';
+mbCtx.font = '20px Arial';
+mbCtx.fillText('더블클릭 → 내부 보기', 256, 132);
 
 const mbLabelTexture = new THREE.CanvasTexture(mbLabelCanvas);
 const mbLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(3, 0.75),
-  new THREE.MeshBasicMaterial({map:mbLabelTexture, transparent:true, side:THREE.DoubleSide, depthTest:false})
+  new THREE.PlaneGeometry(3.2, 1.0),
+  new THREE.MeshStandardMaterial({map:mbLabelTexture, transparent:false, side:THREE.FrontSide, depthTest:false, roughness:0.4, metalness:0.3})
 );
-mbLabel.position.set(-16.8, 1.8, 8);
-mbLabel.rotation.y = Math.PI / 2;
+mbLabel.position.set(-16.08, 1.8, 8);
+mbLabel.rotation.y = -Math.PI / 2;
 mbLabel.renderOrder = 999;
 motherboardFence.add(mbLabel);
 
