@@ -1174,69 +1174,6 @@ ramBuilding.add(makeLabel('서류함 (RAM)', '임시 기억 · 부르면 바로'
 ramBuilding.position.set(-9, 0, 8);
 scene.add(ramBuilding);
 
-/* ---- 1c. Storage Building: 창고 (Warehouse) ---- */
-const storageBuilding = new THREE.Group();
-storageBuilding.userData = {name:'창고 (저장장치)', tag:'장기 기억 · 영구 보관', icon:'🏭', phase:1, description:'저장장치는 창고입니다. 사무실 밖에 있어 꺼내느라 시간이 걸리지만, 모든 데이터를 영구적으로 보관합니다.'};
-
-// Storage body (warehouse) — 사무실보다 작은 창고
-const storageBody = new THREE.Mesh(
-  new THREE.BoxGeometry(2.2, 1.8, 1.8),
-  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
-);
-storageBody.position.y = 0.9;
-storageBody.castShadow = true; storageBody.receiveShadow = true;
-storageBuilding.add(storageBody);
-
-// Storage roof
-const storageRoof = new THREE.Mesh(
-  new THREE.BoxGeometry(2.5, 0.12, 2.1),
-  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.6})
-);
-storageRoof.position.y = 1.86;
-storageRoof.castShadow = true;
-storageBuilding.add(storageRoof);
-
-// Crates visible through window (data blocks)
-const crateMat = new THREE.MeshStandardMaterial({color:0xdaa520, roughness:0.7});
-[[-0.4, 0.4, 0.91], [0.2, 0.4, 0.91],
- [-0.2, 0.8, 0.91]].forEach(([x,y,z]) => {
-  const crate = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), crateMat);
-  crate.position.set(x, y, z);
-  storageBuilding.add(crate);
-});
-
-// Storage windows
-const storageWin = new THREE.MeshStandardMaterial({color:0xffab00, emissive:0xffab00, emissiveIntensity:0.3});
-[-0.5, 0.5].forEach(x => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.12), storageWin);
-  w.position.set(x, 1.3, 0.91);
-  storageBuilding.add(w);
-});
-
-// Storage door
-const storageDoor = new THREE.Mesh(
-  new THREE.BoxGeometry(0.6, 0.9, 0.12),
-  new THREE.MeshStandardMaterial({color:0x4e342e})
-);
-storageDoor.position.set(0, 0.45, 0.92);
-storageBuilding.add(storageDoor);
-
-// SSD/HDD 비유 라벨 — 창고 안의 두 종류 보관함
-const ssdLabel = miniLabel('SSD: 소형 보관함', 'rgba(0,100,50,0.9)');
-ssdLabel.position.set(-0.5, 2.15, 0);
-storageBuilding.add(ssdLabel);
-
-const hddLabel = miniLabel('HDD: 대형 보관함', 'rgba(120,70,0,0.9)');
-hddLabel.position.set(0.5, 2.15, 0);
-storageBuilding.add(hddLabel);
-
-// Speed indicator + metaphor
-storageBuilding.add(makeLabel('창고 (저장장치)', '사무실 밖 · 영구 보관 · 꺼내느라 시간 걸림', 2.8, 2.8));
-
-// 사무실 밖에 배치 (멀리 = 느림을 의미)
-storageBuilding.position.set(-12, 0, 13);
-scene.add(storageBuilding);
-
 /* ============================================================
    Office Interior Visualization
    ============================================================ */
@@ -1433,6 +1370,72 @@ intRamGroup.add(intRamLed);
 intRamGroup.add(makeInteriorLabel('서류함 (RAM)', '#607d8b'));
 
 cpuRamInterior.add(intRamGroup);
+
+// ============================================================
+//  창고 (저장장치) - 사무실 뒤편, 책상에서 가장 먼 거리
+// ============================================================
+const intStorageGroup = new THREE.Group();
+intStorageGroup.position.set(4.0, 0, 0);
+
+// 창고 바닥 구획 ( SSD: 왼쪽, HDD: 오른쪽 )
+// SSD 구획 (빠르지만 작음)
+const intSsdSection = new THREE.Mesh(
+  new THREE.BoxGeometry(1.4, 1.2, 1.2),
+  new THREE.MeshStandardMaterial({color:0x2e7d32, roughness:0.5, metalness:0.2})
+);
+intSsdSection.position.set(-0.9, 0.6, 0);
+intSsdSection.castShadow = true;
+intStorageGroup.add(intSsdSection);
+
+// SSD 내부 발광 (빠름을 표현)
+const intSsdGlow = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.8, 1.0),
+  new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.3, transparent:true, opacity:0.3})
+);
+intSsdGlow.position.set(-0.9, 0.6, 0);
+intStorageGroup.add(intSsdGlow);
+
+// SSD 라벨
+const intSsdLabel = makeInteriorLabel('소형 보관함 (SSD)', '#00e676');
+intSsdLabel.position.set(-0.9, 1.5, 0);
+intStorageGroup.add(intSsdLabel);
+
+// SSD 역할 라벨
+const intSsdDesc = makeInteriorLabel('빠름 · 자주 쓰는 파일', '#4caf50', 20);
+intSsdDesc.position.set(-0.9, 1.85, 0);
+intStorageGroup.add(intSsdDesc);
+
+// HDD 구획 (느리지만 넓음)
+const intHddSection = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 1.4, 1.4),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.7})
+);
+intHddSection.position.set(1.0, 0.7, 0);
+intHddSection.castShadow = true;
+intStorageGroup.add(intHddSection);
+
+// HDD 플레이터 (원형 디스크)
+const intHddPlatter = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.4, 0.4, 0.05, 20),
+  new THREE.MeshStandardMaterial({color:0xb0bec5, roughness:0.3, metalness:0.6})
+);
+intHddPlatter.position.set(1.0, 1.1, 0);
+intStorageGroup.add(intHddPlatter);
+
+// HDD 라벨
+const intHddLabel = makeInteriorLabel('대형 창고 (HDD)', '#ff9800');
+intHddLabel.position.set(1.0, 1.65, 0);
+intStorageGroup.add(intHddLabel);
+
+// HDD 역할 라벨
+const intHddDesc = makeInteriorLabel('느리지만 넓음 · 오래된 파일', '#ff9800', 20);
+intHddDesc.position.set(1.0, 2.0, 0);
+intStorageGroup.add(intHddDesc);
+
+// 창고 전체 명패
+intStorageGroup.add(makeInteriorLabel('창고 (저장장치)', '#78909c'));
+
+cpuRamInterior.add(intStorageGroup);
 
 // ============================================================
 //  조명
@@ -3398,13 +3401,12 @@ routingBuilding.position.set(3, 0, -8);
 scene.add(routingBuilding);
 
 /* ---- Store original colors for level-based visibility ---- */
-const allBuildings = [cpuRamHouse, cacheTower, ramBuilding, storageBuilding, osBuilding, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitPortal, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding];
+const allBuildings = [cpuRamHouse, cacheTower, ramBuilding, osBuilding, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitPortal, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding];
 
 const buildingStationMap = [
   {building: cpuRamHouse, id: 'cpu'},
   {building: cacheTower, id: 'cache'},
   {building: ramBuilding, id: 'ram'},
-  {building: storageBuilding, id: 'storage'},
   {building: osBuilding, id: 'os'},
   {building: postOffice, id: 'dns'},
   {building: routerTower, id: 'router'},
@@ -3649,11 +3651,11 @@ const STATIONS = [
    ]},
   
   {id:'storage', minLevel:1, phase:1, icon:'🏭', label:'창고 (저장장치)', tag:'영구 보관 · 느리지만 용량 큼', color:0xf9a825,
-   pos:new THREE.Vector3(-12, 1.2, 13), camPos:new THREE.Vector3(-10, 3.5, 16),
+   pos:new THREE.Vector3(4, 1.2, 0), camPos:new THREE.Vector3(6, 3, 3),
    levels:[
-    `<b>왜 창고일까요?</b><br><br>저장장치는 <b>창고</b>입니다. 사무실 밖에 있어 느리지만, 모든 물건을 영구적으로 보관합니다.`,
-    `<b>SSD vs HDD</b><br><br><b>SSD</b>는 빠르지만 비쌉니다.<br><b>HDD</b>는 느리지만 훨씬 넓습니다.`,
-    `<b>메모리 계층</b><br><br>컴퓨터의 기억 장치는 속도에 따라 계층이 나뉩니다:<br><br><b>서랍</b> (가장 빠름) → <b>서류함</b> (빠름) → <b>창고</b> (느리지만 넓음)<br><br>거리 = 속도입니다.`
+    `<b>왜 창고일까요?</b><br><br>저장장치는 사무실 안 <b>뒤편 창고</b>입니다. 책상에서 가장 먼 거리에 있어 데이터를 꺼내느라 시간이 걸리지만, <b>모든 파일을 영구적으로 보관</b>합니다.`,
+    `<b>SSD vs HDD</b><br><br><b>소형 보관함 (SSD)</b>: 빠르고 작습니다. 자주 쓰는 프로그램과 파일을 보관합니다.<br><b>대형 창고 (HDD)</b>: 느리지만 넓습니다. 오래된 파일과 백업을 보관합니다.`,
+    `<b>메모리 계층</b><br><br>사무실 안의 기억 장치:<br><b>서랍</b> (가장 빠름, 캐시) → <b>서류함</b> (빠름, RAM) → <b>창고</b> (느리지만 넓음, 저장장치)<br><br>거리 = 속도: 책상에서 먼 곳은 데이터를 꺼내느라 시간이 걸립니다.`
    ]},
   
   {id:'os', minLevel:1, phase:1, icon:'🏢', label:'관리사무소 (OS)', tag:'자원 배분 · 프로세스 관리', color:0x1a237e,
@@ -4437,7 +4439,7 @@ function enterInterior(buildingId) {
     cpuRamInterior.visible = true;
 
     // Hide exterior buildings
-    [cpuRamHouse, cacheTower, ramBuilding, storageBuilding, motherboardFence, osBuilding].forEach(g => {
+    [cpuRamHouse, cacheTower, ramBuilding, motherboardFence, osBuilding].forEach(g => {
       g.traverse(child => {
         if (child.material && child.material.opacity !== undefined) {
           child.userData._origOpacity = child.material.opacity;
@@ -4467,7 +4469,7 @@ function exitInterior() {
   cpuRamInterior.visible = false;
 
   // Restore exterior building opacities
-  [cpuRamHouse, cacheTower, ramBuilding, storageBuilding, motherboardFence, osBuilding].forEach(g => {
+  [cpuRamHouse, cacheTower, ramBuilding, motherboardFence, osBuilding].forEach(g => {
     g.traverse(child => {
       if (child.material && child.userData._origOpacity !== undefined) {
         child.material.opacity = child.userData._origOpacity;
@@ -4507,7 +4509,7 @@ function showInteriorInfo(buildingId) {
         <li>🗄️ <b>서류함 (RAM)</b>: 임시 기억 저장소</li>
       </ul>
       <p style="margin-top:10px;font-size:.8em;color:#8a8aa8">
-        사무실 밖에는 창고(저장장치)와 관리사무소(OS)가 있습니다.
+        사무실 뒤편에는 창고(저장장치), 밖에는 관리사무소(OS)가 있습니다.
         <br>거리 = 속도: 가까우면 빠름
       </p>
       <div class="exit-hint">더블클릭 또는 <kbd>ESC</kbd>로 나가기</div>
@@ -4534,7 +4536,7 @@ function animate(){
   }
 
   // Buildings float
-  [cpuRamHouse, cacheTower, ramBuilding, storageBuilding, osBuilding, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitPortal, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding].forEach((b, i) => {
+  [cpuRamHouse, cacheTower, ramBuilding, osBuilding, postOffice, routerTower, serverFactory, databaseWarehouse, firewallGate, gpuBuilding, monitorBuilding, htmlCssBuilding, javascriptBuilding, nodejsBuilding, cloudBuilding, loadbalancerBuilding, gitPortal, reactBuilding, httpBuilding, httpsBuilding, dockerBuilding, cicdBuilding, securityBuilding, bankBuilding, eggBuilding, deskBuilding, tokenBuilding, sshBuilding, syncAsyncBuilding, routingBuilding].forEach((b, i) => {
     b.position.y = Math.sin(t * 0.4 + i * 0.8) * 0.08;
   });
 
