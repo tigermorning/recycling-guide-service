@@ -750,11 +750,6 @@ const extSsdBox = new THREE.Mesh(
 extSsdBox.position.set(-0.4, 0.5, -0.6);
 extStorageGroup.add(extSsdBox);
 
-// SSD 라벨
-const extSsdLabel = miniLabel('SSD', 'rgba(20,60,20,0.95)');
-extSsdLabel.position.set(-0.4, 1.0, -0.6);
-extStorageGroup.add(extSsdLabel);
-
 // HDD 구획 (크고 느림) - 오른쪽
 const extHddBox = new THREE.Mesh(
   new THREE.BoxGeometry(0.7, 0.8, 1.0),
@@ -762,11 +757,6 @@ const extHddBox = new THREE.Mesh(
 );
 extHddBox.position.set(-0.4, 0.6, 0.5);
 extStorageGroup.add(extHddBox);
-
-// HDD 라벨
-const extHddLabel = miniLabel('HDD', 'rgba(50,30,20,0.95)');
-extHddLabel.position.set(-0.4, 1.15, 0.5);
-extStorageGroup.add(extHddLabel);
 
 // 창고 문
 const extStorageDoor = new THREE.Mesh(
@@ -1097,31 +1087,6 @@ const legMat = new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.7});
   cpuLeg.position.set(...pos);
   cpuRamHouse.add(cpuLeg);
 });
-
-// 모니터 (책상 위)
-const monitorBody = new THREE.Mesh(
-  new THREE.BoxGeometry(1.8, 1.2, 0.15),
-  new THREE.MeshStandardMaterial({color:0x2d2d2d, roughness:0.4})
-);
-monitorBody.position.set(CPU_CX, 1.8, 0);
-monitorBody.castShadow = true;
-cpuRamHouse.add(monitorBody);
-
-// 모니터 화면
-const monitorScreen = new THREE.Mesh(
-  new THREE.BoxGeometry(1.6, 1.0, 0.05),
-  new THREE.MeshStandardMaterial({color:0x4fc3f7, emissive:0x4fc3f7, emissiveIntensity:0.6})
-);
-monitorScreen.position.set(CPU_CX, 1.85, 0.08);
-cpuRamHouse.add(monitorScreen);
-
-// 모니터 받침대
-const monitorStand = new THREE.Mesh(
-  new THREE.BoxGeometry(0.3, 0.3, 0.3),
-  new THREE.MeshStandardMaterial({color:0x424242, roughness:0.5})
-);
-monitorStand.position.set(CPU_CX, 1.15, 0);
-cpuRamHouse.add(monitorStand);
 
 // 키보드
 const keyboard = new THREE.Mesh(
