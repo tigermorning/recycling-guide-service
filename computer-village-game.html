@@ -728,7 +728,7 @@ extStorageGroup.position.set(-16, 0, 14);
 // 창고 몸체 (사무실 벽에 붙어있음)
 const extStorageBody = new THREE.Mesh(
   new THREE.BoxGeometry(1.5, 1.8, 2.5),
-  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8})
+  new THREE.MeshStandardMaterial({color:0x3e2723, roughness:1.0})
 );
 extStorageBody.position.set(-0.75, 0.9, 0);
 extStorageBody.castShadow = true;
@@ -751,7 +751,7 @@ extSsdBox.position.set(-0.4, 0.5, -0.6);
 extStorageGroup.add(extSsdBox);
 
 // SSD 라벨
-const extSsdLabel = miniLabel('SSD', 'rgba(46,125,50,0.9)');
+const extSsdLabel = miniLabel('SSD', 'rgba(20,60,20,0.95)');
 extSsdLabel.position.set(-0.4, 1.0, -0.6);
 extStorageGroup.add(extSsdLabel);
 
@@ -764,7 +764,7 @@ extHddBox.position.set(-0.4, 0.6, 0.5);
 extStorageGroup.add(extHddBox);
 
 // HDD 라벨
-const extHddLabel = miniLabel('HDD', 'rgba(121,85,72,0.9)');
+const extHddLabel = miniLabel('HDD', 'rgba(50,30,20,0.95)');
 extHddLabel.position.set(-0.4, 1.15, 0.5);
 extStorageGroup.add(extHddLabel);
 
