@@ -3608,7 +3608,7 @@ function createBusRoad(from, to, color, thickness, label) {
 const cpuToRamBus = createBusRoad(
   new THREE.Vector3(-14, 0, 7),
   new THREE.Vector3(-10, 0, 7),
-  0x448aff, 0.5, 'CPU ↔ RAM'
+  0x448aff, 0.5, null
 );
 scene.add(cpuToRamBus);
 
@@ -3616,7 +3616,7 @@ scene.add(cpuToRamBus);
 const cpuToStorageBus = createBusRoad(
   new THREE.Vector3(-14, 0, 8.5),
   new THREE.Vector3(-14, 0, 12),
-  0xff9800, 0.25, 'CPU ↔ 저장장치'
+  0xff9800, 0.25, null
 );
 scene.add(cpuToStorageBus);
 
