@@ -3618,34 +3618,36 @@ const cpuToStorageBus = createBusRoad(
 scene.add(cpuToStorageBus);
 
 /* ---- 시스템 버스 (Address / Data / Control) ---- */
-function createSystemBus(from, to, color, label) {
-  const dir = new THREE.Vector3().subVectors(to, from).normalize();
-  const perp = new THREE.Vector3(-dir.z, 0, dir.x);
-  const curve = new THREE.LineCurve3(from, to);
-  const geo = new THREE.TubeGeometry(curve, 20, 0.06, 8, false);
+function createSystemBus(from, to, color) {
+  const mid = new THREE.Vector3(
+    (from.x + to.x) / 2,
+    0.15,
+    (from.z + to.z) / 2
+  );
+  const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+  const geo = new THREE.TubeGeometry(curve, 24, 0.06, 8, false);
   const mat = new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.1, transparent: true, opacity: 0.8});
   const mesh = new THREE.Mesh(geo, mat);
   mesh.renderOrder = 5;
   return mesh;
 }
 
-const busStart = new THREE.Vector3(-13, 0.05, 8);
-const busMid = new THREE.Vector3(-12.5, 0.05, 11);
+// CPU 구성요소 위치 (cpuRamHouse 기준 world 좌표)
+const cpuWorldPos = new THREE.Vector3(-12, 0, 8);
+const aluPos = cpuWorldPos.clone().add(new THREE.Vector3(1.0, 1.25, 0));
+const regPos = cpuWorldPos.clone().add(new THREE.Vector3(-1.0, 1.2, 0));
+const cuPos  = cpuWorldPos.clone().add(new THREE.Vector3(0, 1.2, -0.7));
 const busEnd = new THREE.Vector3(-16, 0.05, 14);
 
-const addrBus = createSystemBus(busStart, busEnd, 0xff1744, '주소 버스');
-const dataBus = createSystemBus(
-  busStart.clone().add(new THREE.Vector3(0.2, 0, 0)),
-  busEnd.clone().add(new THREE.Vector3(0.2, 0, 0)),
-  0x2979ff, '데이터 버스'
-);
-const ctrlBus = createSystemBus(
-  busStart.clone().add(new THREE.Vector3(-0.2, 0, 0)),
-  busEnd.clone().add(new THREE.Vector3(-0.2, 0, 0)),
-  0x00e676, '제어 버스'
-);
-motherboardFence.add(addrBus, dataBus, ctrlBus);
+// ALU → 창고 (주황)
+const aluBus = createSystemBus(aluPos, busEnd, 0xff6d00);
+// 레지스터 → 창고 (시안)
+const regBus = createSystemBus(regPos, busEnd, 0x00bcd4);
+// 제어장치 → 창고 (보라)
+const cuBus = createSystemBus(cuPos, busEnd, 0x7c4dff);
+motherboardFence.add(aluBus, regBus, cuBus);
 
+// 각 버스 라벨
 function makeBusLabel(text, color, pos) {
   const c = document.createElement('canvas');
   c.width = 256; c.height = 64;
@@ -3669,8 +3671,14 @@ function makeBusLabel(text, color, pos) {
   return m;
 }
 
-const sysBusLabel = makeBusLabel('시스템 버스 (System Bus)', 0xffffff, new THREE.Vector3(-12.5, 0.4, 11));
-motherboardFence.add(sysBusLabel);
+// 버스 라벨 (중간 지점)
+const busMidALU = aluPos.clone().lerp(busEnd, 0.5); busMidALU.y = 0.5;
+const busMidReg = regPos.clone().lerp(busEnd, 0.5); busMidReg.y = 0.5;
+const busMidCU  = cuPos.clone().lerp(busEnd, 0.5);  busMidCU.y  = 0.5;
+
+motherboardFence.add(makeBusLabel('ALU → 창고', 0xff6d00, busMidALU));
+motherboardFence.add(makeBusLabel('레지스터 → 창고', 0x00bcd4, busMidReg));
+motherboardFence.add(makeBusLabel('제어장치 → 창고', 0x7c4dff, busMidCU));
 
 // 시스템 버스 데이터 흐름 애니메이션
 const busDots = [];
@@ -3679,15 +3687,20 @@ function createBusDot(color, pathStart, pathEnd) {
   const mat = new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.3, transparent: true, opacity: 0.9});
   const dot = new THREE.Mesh(geo, mat);
   dot.position.copy(pathStart);
-  dot.userData = {start: pathStart.clone(), end: pathEnd.clone(), progress: Math.random()};
+  const mid = new THREE.Vector3(
+    (pathStart.x + pathEnd.x) / 2,
+    0.15,
+    (pathStart.z + pathEnd.z) / 2
+  );
+  dot.userData = {curve: new THREE.QuadraticBezierCurve3(pathStart, mid, pathEnd), progress: Math.random()};
   scene.add(dot);
   busDots.push(dot);
   return dot;
 }
 
-createBusDot(0x8b0000, busStart.clone(), busEnd.clone());
-createBusDot(0x1a3a6a, busStart.clone().add(new THREE.Vector3(0.2,0,0)), busEnd.clone().add(new THREE.Vector3(0.2,0,0)));
-createBusDot(0x1a5c3a, busStart.clone().add(new THREE.Vector3(-0.2,0,0)), busEnd.clone().add(new THREE.Vector3(-0.2,0,0)));
+createBusDot(0xff6d00, aluPos.clone(), busEnd.clone());
+createBusDot(0x00bcd4, regPos.clone(), busEnd.clone());
+createBusDot(0x7c4dff, cuPos.clone(), busEnd.clone());
 
 /* ---- Data Flow Lines ---- */
 function createFlowLine(from, to, color=0xffd93d){
@@ -4757,8 +4770,9 @@ function animate(){
     dot.userData.progress += 0.008;
     if (dot.userData.progress > 1) dot.userData.progress = 0;
     const p = dot.userData.progress;
-    dot.position.lerpVectors(dot.userData.start, dot.userData.end, p);
-    dot.position.y = 0.12 + Math.sin(p * Math.PI) * 0.15;
+    const curve = dot.userData.curve;
+    const pos = curve.getPoint(p);
+    dot.position.copy(pos);
     dot.material.opacity = 0.5 + 0.5 * Math.sin(p * Math.PI);
   });
 
