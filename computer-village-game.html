@@ -880,26 +880,6 @@ mbLabel.rotation.y = -Math.PI / 2;
 mbLabel.renderOrder = 999;
 motherboardFence.add(mbLabel);
 
-// 창고(저장장치) 외부 표시 명패
-const storageExtCanvas = document.createElement('canvas');
-storageExtCanvas.width = 256; storageExtCanvas.height = 64;
-const stgCtx = storageExtCanvas.getContext('2d');
-stgCtx.fillStyle = 'rgba(93,64,55,0.9)';
-stgCtx.beginPath(); stgCtx.roundRect(4,4,248,56,8); stgCtx.fill();
-stgCtx.fillStyle = '#ffffff';
-stgCtx.font = 'bold 22px Arial';
-stgCtx.textAlign = 'center';
-stgCtx.fillText('← 창고 (저장장치)', 128, 40);
-const storageExtTex = new THREE.CanvasTexture(storageExtCanvas);
-const storageExtLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(1.5, 0.4),
-  new THREE.MeshBasicMaterial({map:storageExtTex, transparent:true, side:THREE.DoubleSide, depthTest:false})
-);
-storageExtLabel.position.set(-16.08, 0.6, 8);
-storageExtLabel.rotation.y = -Math.PI / 2;
-storageExtLabel.renderOrder = 999;
-motherboardFence.add(storageExtLabel);
-
 scene.add(motherboardFence);
 
 /* ---- Building Label Helpers ---- */
@@ -1336,14 +1316,6 @@ const cabinetDrawerMat = new THREE.MeshStandardMaterial({color:0x607d8b, roughne
   handle.position.set(0, y, 0.55);
   ramBuilding.add(handle);
 });
-
-// LED 표시 (활성 서류)
-const ramLedCabinet = new THREE.Mesh(
-  new THREE.SphereGeometry(0.05, 8, 8),
-  new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:1.0})
-);
-ramLedCabinet.position.set(0.6, 2.0, 0.52);
-ramBuilding.add(ramLedCabinet);
 
 // 커널/사용자 영역 구분선
 const kernelDivider = new THREE.Mesh(
