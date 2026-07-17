@@ -3621,7 +3621,7 @@ scene.add(cpuToStorageBus);
 function createSystemBus(from, to, color) {
   const mid = new THREE.Vector3(
     (from.x + to.x) / 2,
-    0.15,
+    2.5,
     (from.z + to.z) / 2
   );
   const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
@@ -3647,7 +3647,7 @@ const regBus = createSystemBus(regPos, busEnd, 0x00bcd4);
 const cuBus = createSystemBus(cuPos, busEnd, 0x7c4dff);
 motherboardFence.add(aluBus, regBus, cuBus);
 
-// 각 버스 라벨
+// 시스템 버스 통칭 라벨
 function makeBusLabel(text, color, pos) {
   const c = document.createElement('canvas');
   c.width = 256; c.height = 64;
@@ -3671,14 +3671,8 @@ function makeBusLabel(text, color, pos) {
   return m;
 }
 
-// 버스 라벨 (중간 지점)
-const busMidALU = aluPos.clone().lerp(busEnd, 0.5); busMidALU.y = 0.5;
-const busMidReg = regPos.clone().lerp(busEnd, 0.5); busMidReg.y = 0.5;
-const busMidCU  = cuPos.clone().lerp(busEnd, 0.5);  busMidCU.y  = 0.5;
-
-motherboardFence.add(makeBusLabel('ALU → 창고', 0xff6d00, busMidALU));
-motherboardFence.add(makeBusLabel('레지스터 → 창고', 0x00bcd4, busMidReg));
-motherboardFence.add(makeBusLabel('제어장치 → 창고', 0x7c4dff, busMidCU));
+const busLabelPos = new THREE.Vector3(-13, 3.0, 11);
+motherboardFence.add(makeBusLabel('시스템 버스 (System Bus)', 0xffffff, busLabelPos));
 
 // 시스템 버스 데이터 흐름 애니메이션
 const busDots = [];
@@ -3689,7 +3683,7 @@ function createBusDot(color, pathStart, pathEnd) {
   dot.position.copy(pathStart);
   const mid = new THREE.Vector3(
     (pathStart.x + pathEnd.x) / 2,
-    0.15,
+    2.5,
     (pathStart.z + pathEnd.z) / 2
   );
   dot.userData = {curve: new THREE.QuadraticBezierCurve3(pathStart, mid, pathEnd), progress: Math.random()};
