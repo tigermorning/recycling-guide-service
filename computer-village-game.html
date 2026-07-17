@@ -3315,21 +3315,6 @@ const book2 = new THREE.Mesh(
 book2.position.set(0.3, 1.3, 0.2);
 deskBuilding.add(book2);
 
-// 모니터 (원본 표시)
-const monitorOnDesk = new THREE.Mesh(
-  new THREE.BoxGeometry(1.2, 0.8, 0.08),
-  new THREE.MeshStandardMaterial({color:0x263238})
-);
-monitorOnDesk.position.set(0, 1.8, -0.5);
-deskBuilding.add(monitorOnDesk);
-
-const browserMonitorScreen = new THREE.Mesh(
-  new THREE.BoxGeometry(1.0, 0.6, 0.05),
-  new THREE.MeshStandardMaterial({color:0x4caf50, emissive:0x4caf50, emissiveIntensity:0.4})
-);
-browserMonitorScreen.position.set(0, 1.8, -0.45);
-deskBuilding.add(browserMonitorScreen);
-
 deskBuilding.add(makeLabel('책상 (브라우저 캐시)', '임시 복사본 저장', 1.7, 1.0));
 deskBuilding.position.set(-8, 0, -2);
 scene.add(deskBuilding);
