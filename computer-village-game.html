@@ -723,19 +723,25 @@ motherboardFence.add(rightWallBottomRight);
 
 // 창고(저장장치) 외부 표시 - 벽 안쪽에 보이는 창고 표시
 const storageIndicator = new THREE.Mesh(
-  new THREE.BoxGeometry(0.1, 1.5, 1.8),
-  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8, transparent:true, opacity:0.6})
+  new THREE.BoxGeometry(0.1, 2.0, 2.5),
+  new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.8, transparent:true, opacity:0.7})
 );
-storageIndicator.position.set(-15.9, 0.75, 8);
+storageIndicator.position.set(-15.9, 1.0, 8);
 motherboardFence.add(storageIndicator);
 
-const storageWinGlow = new THREE.MeshStandardMaterial({color:0xffab00, emissive:0xffab00, emissiveIntensity:0.3});
-const storageWin1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.35), storageWinGlow);
-storageWin1.position.set(-15.9, 1.2, 7.5);
+// 창고 내부가 보이는 큰 창 (유리)
+const storageWinGlow = new THREE.MeshStandardMaterial({color:0xffab00, emissive:0xffab00, emissiveIntensity:0.4, transparent:true, opacity:0.5});
+const storageWindow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 2.0), storageWinGlow);
+storageWindow.position.set(-15.92, 1.2, 8);
+motherboardFence.add(storageWindow);
+
+// SSD/HDD가 보이는 작은 창문들
+const storageWin1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0x00e676, emissive:0x00e676, emissiveIntensity:0.3, transparent:true, opacity:0.6}));
+storageWin1.position.set(-15.93, 1.3, 7.5);
 motherboardFence.add(storageWin1);
 
-const storageWin2 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.35), storageWinGlow);
-storageWin2.position.set(-15.9, 1.2, 8.5);
+const storageWin2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.5), new THREE.MeshStandardMaterial({color:0xff9800, emissive:0xff9800, emissiveIntensity:0.3, transparent:true, opacity:0.6}));
+storageWin2.position.set(-15.93, 1.3, 8.5);
 motherboardFence.add(storageWin2);
 
 // 왼쪽 벽 창문 (유리)
@@ -1272,31 +1278,6 @@ const intLegMat = new THREE.MeshStandardMaterial({color:0x5d4037, roughness:0.7}
   leg.position.set(...pos);
   intDeskGroup.add(leg);
 });
-
-// 모니터
-const intMonitorBody = new THREE.Mesh(
-  new THREE.BoxGeometry(1.6, 1.0, 0.1),
-  new THREE.MeshStandardMaterial({color:0x2d2d2d, roughness:0.4})
-);
-intMonitorBody.position.set(0, 1.6, 0);
-intMonitorBody.castShadow = true;
-intDeskGroup.add(intMonitorBody);
-
-// 모니터 화면 (발광)
-const intMonitorScreen = new THREE.Mesh(
-  new THREE.BoxGeometry(1.4, 0.8, 0.05),
-  new THREE.MeshStandardMaterial({color:0x4fc3f7, emissive:0x4fc3f7, emissiveIntensity:0.6})
-);
-intMonitorScreen.position.set(0, 1.62, 0.06);
-intDeskGroup.add(intMonitorScreen);
-
-// 모니터 받침대
-const intMonitorStand = new THREE.Mesh(
-  new THREE.BoxGeometry(0.25, 0.2, 0.25),
-  new THREE.MeshStandardMaterial({color:0x424242, roughness:0.5})
-);
-intMonitorStand.position.set(0, 1.08, 0);
-intDeskGroup.add(intMonitorStand);
 
 // 키보드
 const intKeyboard = new THREE.Mesh(
