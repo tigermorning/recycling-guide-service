@@ -1159,43 +1159,96 @@ const cpuIndicator = new THREE.Mesh(
 cpuIndicator.position.set(CPU_CX, 1.2, -0.5);
 cpuRamHouse.add(cpuIndicator);
 
-// CPU 내부 구성요소: ALU, 레지스터, 제어장치
+// CPU 내부 구성요소: ALU, 레지스터, 제어장치 (강화된 시각화)
+const cpuParts = [];
+
 function makeCpuComponent(name, color, w, h, d) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.3, roughness: 0.5})
+    new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.4, roughness: 0.3, metalness: 0.5})
   );
   g.add(body);
+  // 라벨
   const c = document.createElement('canvas');
-  c.width = 128; c.height = 64;
+  c.width = 256; c.height = 64;
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, 128, 64);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 16px Arial';
+  ctx.beginPath(); ctx.roundRect(4, 4, 248, 56, 8); ctx.fill();
+  ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+  ctx.font = 'bold 24px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(name, 64, 38);
-  const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(w * 0.9, h * 0.8),
+  ctx.fillText(name, 128, 42);
+  const lbl = new THREE.Mesh(
+    new THREE.PlaneGeometry(w * 1.1, h * 0.9),
     new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide, depthTest: false})
   );
-  label.position.set(0, h / 2 + 0.01, d / 2 + 0.01);
-  label.renderOrder = 999;
-  g.add(label);
+  lbl.position.set(0, h / 2 + 0.02, d / 2 + 0.02);
+  lbl.renderOrder = 999;
+  g.add(lbl);
   return g;
 }
 
-const alu = makeCpuComponent('ALU (계산기)', 0xff6d00, 0.6, 0.3, 0.4);
-alu.position.set(CPU_CX + 0.9, 1.2, -0.3);
+// 톱니바퀴 (계산 동작 시각화)
+function addGear(parent, radius, color, yPos) {
+  const shape = new THREE.Shape();
+  const teeth = 8;
+  for (let i = 0; i < teeth * 2; i++) {
+    const angle = (i / (teeth * 2)) * Math.PI * 2;
+    const r = i % 2 === 0 ? radius : radius * 0.7;
+    const x = Math.cos(angle) * r;
+    const y = Math.sin(angle) * r;
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  }
+  shape.closePath();
+  const geo = new THREE.ExtrudeGeometry(shape, {depth: 0.05, bevelEnabled: false});
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.3, metalness: 0.7, roughness: 0.3}));
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = yPos;
+  parent.add(mesh);
+  cpuParts.push(mesh);
+  return mesh;
+}
+
+// ALU (계산기) - 큰 블록 + 톱니바퀴
+const alu = makeCpuComponent('ALU (계산기)', 0xff6d00, 1.2, 0.5, 0.8);
+alu.position.set(CPU_CX + 1.0, 1.25, 0);
+addGear(alu, 0.18, 0xff6d00, 0.28);
 cpuRamHouse.add(alu);
 
-const register = makeCpuComponent('레지스터', 0x00bcd4, 0.5, 0.25, 0.3);
-register.position.set(CPU_CX - 0.9, 1.2, -0.3);
+// 레지스터 (작은 저장장치) - 여러 칸
+const register = makeCpuComponent('레지스터', 0x00bcd4, 0.8, 0.4, 0.6);
+register.position.set(CPU_CX - 1.0, 1.2, 0);
+// 레지스터 내부 칸 표시
+for (let i = 0; i < 3; i++) {
+  const slot = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.25, 0.02),
+    new THREE.MeshStandardMaterial({color: 0x00838f, emissive: 0x00bcd4, emissiveIntensity: 0.3})
+  );
+  slot.position.set(-0.25 + i * 0.25, 0, 0.31);
+  register.add(slot);
+}
 cpuRamHouse.add(register);
 
-const controlUnit = makeCpuComponent('제어장치', 0x7c4dff, 0.5, 0.25, 0.3);
-controlUnit.position.set(CPU_CX, 1.2, -0.9);
+// 제어장치 - 신호를 내보내는 장치
+const controlUnit = makeCpuComponent('제어장치', 0x7c4dff, 0.8, 0.4, 0.6);
+controlUnit.position.set(CPU_CX, 1.2, -0.7);
+addGear(controlUnit, 0.15, 0x7c4dff, 0.22);
+// 제어 신호 표시 (작은 안테나)
+const antenna = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.02, 0.02, 0.3, 6),
+  new THREE.MeshStandardMaterial({color: 0xb388ff, emissive: 0x7c4dff, emissiveIntensity: 0.5})
+);
+antenna.position.set(0.3, 0.35, 0);
+controlUnit.add(antenna);
+const antennaTop = new THREE.Mesh(
+  new THREE.SphereGeometry(0.04, 8, 8),
+  new THREE.MeshStandardMaterial({color: 0xea80fc, emissive: 0xea80fc, emissiveIntensity: 1.0})
+);
+antennaTop.position.set(0.3, 0.52, 0);
+controlUnit.add(antennaTop);
+cpuParts.push(antennaTop);
 cpuRamHouse.add(controlUnit);
 
 // Main label
@@ -4725,6 +4778,15 @@ function animate(){
 
   // CPU indicator rotates
   cpuIndicator.rotation.y = t * 2.0;
+
+  // CPU 부품 톱니바퀴 회전 + 안테나 깜빡
+  cpuParts.forEach((p, i) => {
+    if (p.geometry.type === 'ExtrudeGeometry') {
+      p.rotation.z = t * 1.5 * (i % 2 === 0 ? 1 : -1);
+    } else {
+      p.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(t * 4.0 + i);
+    }
+  });
 
   // Router: packet orbits the roundabout, picking a new direction each lap
   routerOrbitDot.position.set(Math.sin(t*0.8)*1.7, 0.32, Math.cos(t*0.8)*1.7);
