@@ -3636,12 +3636,18 @@ const busStart = new THREE.Vector3(-13, 0.05, 8);
 const busMid = new THREE.Vector3(-12.5, 0.05, 11);
 const busEnd = new THREE.Vector3(-16, 0.05, 14);
 
-const sysBusCurve = new THREE.LineCurve3(busStart, busEnd);
-const sysBusGeo = new THREE.TubeGeometry(sysBusCurve, 20, 0.12, 8, false);
-const sysBusMat = new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4, transparent: true, opacity: 0.8});
-const sysBusMesh = new THREE.Mesh(sysBusGeo, sysBusMat);
-sysBusMesh.renderOrder = 5;
-motherboardFence.add(sysBusMesh);
+const addrBus = createSystemBus(busStart, busEnd, 0xff1744, '주소 버스');
+const dataBus = createSystemBus(
+  busStart.clone().add(new THREE.Vector3(0.2, 0, 0)),
+  busEnd.clone().add(new THREE.Vector3(0.2, 0, 0)),
+  0x2979ff, '데이터 버스'
+);
+const ctrlBus = createSystemBus(
+  busStart.clone().add(new THREE.Vector3(-0.2, 0, 0)),
+  busEnd.clone().add(new THREE.Vector3(-0.2, 0, 0)),
+  0x00e676, '제어 버스'
+);
+motherboardFence.add(addrBus, dataBus, ctrlBus);
 
 function makeBusLabel(text, color, pos) {
   const c = document.createElement('canvas');
@@ -3682,7 +3688,9 @@ function createBusDot(color, pathStart, pathEnd) {
   return dot;
 }
 
-createBusDot(0xffffff, busStart.clone(), busEnd.clone());
+createBusDot(0xff1744, busStart.clone(), busEnd.clone());
+createBusDot(0x2979ff, busStart.clone().add(new THREE.Vector3(0.2,0,0)), busEnd.clone().add(new THREE.Vector3(0.2,0,0)));
+createBusDot(0x00e676, busStart.clone().add(new THREE.Vector3(-0.2,0,0)), busEnd.clone().add(new THREE.Vector3(-0.2,0,0)));
 
 /* ---- Data Flow Lines ---- */
 function createFlowLine(from, to, color=0xffd93d){
