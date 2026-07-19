@@ -1,19 +1,12 @@
 import { Engine } from './core/Engine.ts';
 import { WorldManager } from './core/WorldManager.ts';
-import { InfoPanel } from './ui/InfoPanel.ts';
 import { HUD } from './ui/HUD.ts';
-import { Intro } from './ui/Intro.ts';
 import { Drawer } from './ui/Drawer.ts';
 import { PhaseProgress } from './ui/PhaseProgress.ts';
 import { Toast } from './ui/Toast.ts';
-import { RelationshipDiagram } from './ui/RelationshipDiagram.ts';
-import { RealWorld } from './worlds/RealWorld.ts';
-import { HardwareWorld } from './worlds/HardwareWorld.ts';
-import { NetworkWorld } from './worlds/NetworkWorld.ts';
 import * as THREE from 'three';
-import { DataFlowDemo } from './flow/DataFlowDemo.ts';
-import type { FlowStep } from './flow/DataFlowDemo.ts';
 import { learningProgress } from './learning/LearningProgress.ts';
+import type { FlowStep } from './flow/DataFlowDemo.ts';
 
 /**
  * 데모 시나리오 정의
@@ -254,8 +247,6 @@ async function main(): Promise<void> {
 
   const toast = new Toast();
   const hud = new HUD();
-  new InfoPanel();
-  new RelationshipDiagram();
   const phaseProgress = new PhaseProgress();
 
   const drawer = new Drawer((station) => {
@@ -284,6 +275,12 @@ async function main(): Promise<void> {
     { id: 'http', icon: '📜', label: 'HTTP (규약)', tag: '웹 데이터를 전송하는 통신 규칙', phase: 2, world: 'network' },
   ]);
 
+  const [{ RealWorld }, { HardwareWorld }, { NetworkWorld }] = await Promise.all([
+    import('./worlds/RealWorld.ts'),
+    import('./worlds/HardwareWorld.ts'),
+    import('./worlds/NetworkWorld.ts'),
+  ]);
+
   const realWorld = new RealWorld();
   const hardwareWorld = new HardwareWorld();
   const networkWorld = new NetworkWorld();
@@ -296,13 +293,18 @@ async function main(): Promise<void> {
   worlds.set('real-world', realWorld);
   worlds.set('hardware', hardwareWorld);
   worlds.set('network', networkWorld);
-  const dataFlowDemo = new DataFlowDemo(engine, worlds, worldManager);
+
+  let dataFlowDemo: import('./flow/DataFlowDemo.ts').DataFlowDemo | null = null;
 
   const demoButton = createDemoButton(async () => {
     const currentSteps = getAvailableDemoSteps();
     if (currentSteps.length === 0) {
       toast.showHint('⚠️ 아직 방문한 월드가 없습니다. 먼저 Real World와 Hardware World를 탐험해보세요!', 4000);
       return;
+    }
+    if (!dataFlowDemo) {
+      const { DataFlowDemo } = await import('./flow/DataFlowDemo.ts');
+      dataFlowDemo = new DataFlowDemo(engine, worlds, worldManager);
     }
     await dataFlowDemo.run(currentSteps);
   });
@@ -311,6 +313,15 @@ async function main(): Promise<void> {
   learningProgress.markWorldVisited('real-world');
   demoButton.updateStage();
   phaseProgress.setPhase(1);
+
+  const [{ InfoPanel }, { RelationshipDiagram }, { Intro }] = await Promise.all([
+    import('./ui/InfoPanel.ts'),
+    import('./ui/RelationshipDiagram.ts'),
+    import('./ui/Intro.ts'),
+  ]);
+
+  new InfoPanel();
+  new RelationshipDiagram();
 
   new Intro(() => {
     toast.showHint('💡 컴퓨터 본체를 클릭하면 하드웨어 월드로 진입합니다!', 6000);
