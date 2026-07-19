@@ -64,13 +64,51 @@ export class NetworkWorld extends World {
     this.scene.add(mainRoad);
   }
 
+  // ─── UNIFIED LABEL ────────────────────────────────────────────────────
+  private makeLabel(title: string, subtitle: string): THREE.Mesh {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 128;
+    const ctx = c.getContext('2d')!;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 496, 112, 14);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 496, 112, 14);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, 256, 55);
+
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#c0c0c0';
+    ctx.fillText(subtitle, 256, 95);
+
+    return new THREE.Mesh(
+      new THREE.PlaneGeometry(4.0, 1.0),
+      new THREE.MeshBasicMaterial({
+        map: new THREE.CanvasTexture(c),
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthTest: false,
+      }),
+    );
+  }
+
   private buildDNS(): void {
     const dns = new Building({
-      name: '우체국 (DNS)',
-      tag: '이름 → 주소 변환',
+      name: 'DNS (이름서버)',
+      tag: '이름을 주소로 변환하는 서버',
       icon: '📍',
       position: new THREE.Vector3(-8, 0, 3),
-      size: new THREE.Vector3(1.5, 2.0, 1.5),
+      size: new THREE.Vector3(1.8, 2.4, 1.8),
       color: 0x1565c0,
       roofColor: 0x0d47a1,
     });
@@ -81,8 +119,8 @@ export class NetworkWorld extends World {
     const routerGroup = new THREE.Group();
     routerGroup.userData = {
       isBuilding: true,
-      buildingName: '교차로 (라우터)',
-      buildingTag: '데이터 경로 결정',
+      buildingName: '라우터 (공유기)',
+      buildingTag: '데이터 경로를 결정하는 장치',
       buildingIcon: '🚦',
     };
 
@@ -156,12 +194,16 @@ export class NetworkWorld extends World {
 
     routerGroup.position.set(0, 0, 0);
     this.scene.add(routerGroup);
+
+    const routerLabel = this.makeLabel('라우터 (공유기)', '데이터 경로를 결정하는 장치');
+    routerLabel.position.set(0, 5.0, 0);
+    routerGroup.add(routerLabel);
   }
 
   private buildFirewall(): void {
     const fw = new Building({
-      name: '문 (방화벽)',
-      tag: '보안 · 출입 통제',
+      name: '방화벽 (화재벽)',
+      tag: '보안 위협을 차단하는 보안 장치',
       icon: '🛡️',
       position: new THREE.Vector3(8, 0, 0),
       size: new THREE.Vector3(2.0, 2.8, 0.5),
@@ -172,11 +214,11 @@ export class NetworkWorld extends World {
 
   private buildHTTP(): void {
     const http = new Building({
-      name: 'HTTP (데이터 전송)',
-      tag: '데이터 전송 규칙',
+      name: 'HTTP (규약)',
+      tag: '웹 데이터를 전송하는 통신 규칙',
       icon: '📜',
       position: new THREE.Vector3(0, 0, 6),
-      size: new THREE.Vector3(1.5, 2.0, 0.5),
+      size: new THREE.Vector3(1.8, 2.4, 0.5),
       color: 0xfafafa,
       windowColor: 0x90a4ae,
     });
@@ -212,5 +254,15 @@ export class NetworkWorld extends World {
     this.portals.push(toHardware);
     this.scene.add(toHardware.group);
     this.animatedObjects.push({ update: (t) => toHardware.update(t) });
+
+    const toReal = new Portal({
+      name: '실세계로 돌아가기',
+      position: new THREE.Vector3(0, 0, 10),
+      targetWorld: 'real-world',
+      color: 0x8fae6e,
+    });
+    this.portals.push(toReal);
+    this.scene.add(toReal.group);
+    this.animatedObjects.push({ update: (t) => toReal.update(t) });
   }
 }

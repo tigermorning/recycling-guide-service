@@ -5,6 +5,7 @@ export interface PortalOptions {
   position: THREE.Vector3;
   targetWorld: string;
   color?: number;
+  subtitle?: string;
 }
 
 /**
@@ -71,14 +72,14 @@ export class Portal {
     this.glowMesh.position.set(0, 1.4, 0);
     this.group.add(this.glowMesh);
 
-    const label = this.makeLabel(options.name, color);
+    const label = this.makeLabel(options.name, color, options.subtitle);
     label.position.set(0, 3.5, 0);
     this.group.add(label);
 
     this.group.position.copy(options.position);
   }
 
-  private makeLabel(text: string, color: number): THREE.Mesh {
+  private makeLabel(text: string, color: number, subtitle?: string): THREE.Mesh {
     const c = document.createElement('canvas');
     c.width = 512;
     c.height = 128;
@@ -103,7 +104,7 @@ export class Portal {
 
     ctx.font = '22px Arial';
     ctx.fillStyle = '#a0a0c0';
-    ctx.fillText(' 클릭하여 이동', 256, 95);
+    ctx.fillText(subtitle ?? ' 클릭하여 이동', 256, 95);
 
     return new THREE.Mesh(
       new THREE.PlaneGeometry(2.5, 0.65),

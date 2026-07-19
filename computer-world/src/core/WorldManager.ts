@@ -20,6 +20,7 @@ export class WorldManager {
   private lastPointerY = 0;
   private readonly PAN_SPEED = 0.02;
   private readonly ROTATE_SPEED = 0.005;
+  private selectedBuildingName: string | null = null;
 
   constructor(engine: Engine) {
     this.engine = engine;
@@ -37,6 +38,9 @@ export class WorldManager {
     const world = this.worlds.get(worldName);
     if (!world) return;
 
+    this.selectedBuildingName = null;
+    window.dispatchEvent(new CustomEvent('building-dismissed'));
+
     if (this.currentWorld) {
       this.engine.scene.remove(this.currentWorld.scene);
       this.currentWorld.onExit();
@@ -47,8 +51,12 @@ export class WorldManager {
     this.isInteriorMode = false;
     world.onEnter();
 
+    window.dispatchEvent(new CustomEvent('world-changed', {
+      detail: { worldName: world.name, displayName: world.displayName, isInterior: false },
+    }));
+
     if (cameraTarget) {
-      await this.cameraCtrl.flyTo(cameraTarget, zoom ?? 25);
+      await this.cameraCtrl.flyTo(cameraTarget, zoom ?? 1.8);
     }
   }
 
@@ -68,7 +76,11 @@ export class WorldManager {
     this.isInteriorMode = true;
     interior.onEnter();
 
-    await this.cameraCtrl.flyTo(new THREE.Vector3(0, 5, 8), 18);
+    window.dispatchEvent(new CustomEvent('world-changed', {
+      detail: { worldName: 'interior', displayName: buildingName, isInterior: true, parentWorld: this.previousWorldName },
+    }));
+
+    await this.cameraCtrl.flyTo(new THREE.Vector3(0, 5, 8), 3.0);
   }
 
   async exitInterior(): Promise<void> {
@@ -87,7 +99,11 @@ export class WorldManager {
     this.isInteriorMode = false;
     prevWorld.onEnter();
 
-    await this.cameraCtrl.flyTo(new THREE.Vector3(0, 5, 8), 25);
+    window.dispatchEvent(new CustomEvent('world-changed', {
+      detail: { worldName: prevWorld.name, displayName: prevWorld.displayName, isInterior: false },
+    }));
+
+    await this.cameraCtrl.flyTo(new THREE.Vector3(0, 5, 8), 1.8);
   }
 
   getCurrentWorld(): World | null {
@@ -195,6 +211,8 @@ export class WorldManager {
     if (target.userData?.isPortal) {
       const worldName = target.userData.targetWorld as string;
       if (worldName) {
+        this.selectedBuildingName = null;
+        window.dispatchEvent(new CustomEvent('building-dismissed'));
         if (this.isInteriorMode) {
           this.exitInterior();
         } else {
@@ -202,13 +220,20 @@ export class WorldManager {
         }
       }
     } else if (target.userData?.isBuilding) {
-      window.dispatchEvent(new CustomEvent('building-clicked', {
-        detail: {
-          name: target.userData.buildingName,
-          tag: target.userData.buildingTag,
-          icon: target.userData.buildingIcon,
-        },
-      }));
+      const buildingName = target.userData.buildingName as string;
+      if (buildingName === this.selectedBuildingName) {
+        this.selectedBuildingName = null;
+        window.dispatchEvent(new CustomEvent('building-dismissed'));
+      } else {
+        this.selectedBuildingName = buildingName;
+        window.dispatchEvent(new CustomEvent('building-clicked', {
+          detail: {
+            name: buildingName,
+            tag: target.userData.buildingTag,
+            icon: target.userData.buildingIcon,
+          },
+        }));
+      }
     } else if (target.userData?.isCharacter) {
       window.dispatchEvent(new CustomEvent('character-clicked', {
         detail: {
@@ -216,6 +241,11 @@ export class WorldManager {
           hint: target.userData.characterHint,
         },
       }));
+    } else {
+      if (this.selectedBuildingName) {
+        this.selectedBuildingName = null;
+        window.dispatchEvent(new CustomEvent('building-dismissed'));
+      }
     }
   }
 
@@ -250,7 +280,7 @@ export class WorldManager {
       } else {
         const worldPos = new THREE.Vector3();
         target.getWorldPosition(worldPos);
-        this.cameraCtrl.flyTo(worldPos, 15);
+        this.cameraCtrl.flyTo(worldPos, 3.5);
       }
     }
   }

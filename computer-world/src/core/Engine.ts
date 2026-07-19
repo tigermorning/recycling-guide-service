@@ -2,14 +2,20 @@ import * as THREE from 'three';
 
 export class Engine {
   readonly scene: THREE.Scene;
-  readonly camera: THREE.PerspectiveCamera;
+  readonly camera: THREE.OrthographicCamera;
   readonly renderer: THREE.WebGLRenderer;
   readonly clock: THREE.Clock;
   private animationCallbacks: Array<(dt: number) => void> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 500);
+    const w = window.innerWidth || 1;
+    const h = window.innerHeight || 1;
+    const aspect = w / h;
+    const frustum = 20;
+    this.camera = new THREE.OrthographicCamera(
+      -frustum * aspect, frustum * aspect, frustum, -frustum, 0.1, 500,
+    );
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.clock = new THREE.Clock();
 
@@ -50,7 +56,12 @@ export class Engine {
   private handleResize(): void {
     const w = window.innerWidth || 1;
     const h = window.innerHeight || 1;
-    this.camera.aspect = w / h;
+    const aspect = w / h;
+    const frustum = 20;
+    this.camera.left = -frustum * aspect;
+    this.camera.right = frustum * aspect;
+    this.camera.top = frustum;
+    this.camera.bottom = -frustum;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   }

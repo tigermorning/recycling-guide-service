@@ -14,7 +14,7 @@ interface CameraState {
 }
 
 export class IsometricCamera {
-  readonly camera: THREE.PerspectiveCamera;
+  readonly camera: THREE.OrthographicCamera;
   private state: CameraState;
   private goal: CameraState;
   private isTransitioning = false;
@@ -26,16 +26,17 @@ export class IsometricCamera {
     angleX: 0,
     angleY: 0,
   };
+  private readonly DISTANCE = 50;
 
-  constructor(camera: THREE.PerspectiveCamera) {
+  constructor(camera: THREE.OrthographicCamera) {
     this.camera = camera;
     this.state = {
       target: new THREE.Vector3(0, 0, 0),
-      zoom: 25,
+      zoom: 1.8,
       angleX: Math.PI / 4,
       angleY: Math.PI / 4,
-      MIN_ZOOM: 8,
-      MAX_ZOOM: 60,
+      MIN_ZOOM: 0.5,
+      MAX_ZOOM: 5,
       MIN_ANGLE_Y: 0.2,
       MAX_ANGLE_Y: Math.PI / 2 - 0.1,
     };
@@ -44,7 +45,7 @@ export class IsometricCamera {
   }
 
   private apply(): void {
-    const dist = this.state.zoom;
+    const dist = this.DISTANCE;
     const sinY = Math.sin(this.state.angleY);
     const cosY = Math.cos(this.state.angleY);
     const sinX = Math.sin(this.state.angleX);
@@ -56,6 +57,8 @@ export class IsometricCamera {
       this.state.target.z + dist * sinY * sinX,
     );
     this.camera.lookAt(this.state.target);
+    this.camera.zoom = this.state.zoom;
+    this.camera.updateProjectionMatrix();
   }
 
   setTarget(x: number, y: number, z: number): void {
@@ -81,17 +84,19 @@ export class IsometricCamera {
 
   panBy(dx: number, dy: number): void {
     const right = new THREE.Vector3();
-    const up = new THREE.Vector3();
+    const forward = new THREE.Vector3();
 
     right.setFromMatrixColumn(this.camera.matrixWorld, 0);
-    right.y = 0;
-    right.normalize();
+    forward.setFromMatrixColumn(this.camera.matrixWorld, 2);
 
-    up.set(-right.z, 0, right.x);
+    right.y = 0;
+    forward.y = 0;
+    right.normalize();
+    forward.normalize();
 
     const panOffset = new THREE.Vector3();
     panOffset.addScaledVector(right, dx);
-    panOffset.addScaledVector(up, dy);
+    panOffset.addScaledVector(forward, dy);
 
     this.goal.target.add(panOffset);
   }
