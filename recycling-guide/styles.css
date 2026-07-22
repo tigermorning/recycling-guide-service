@@ -559,9 +559,12 @@ footer {
   background: #b91c1c;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* 모달 */
 .modal {
-  display: none;
   position: fixed;
   z-index: 100;
   left: 0;

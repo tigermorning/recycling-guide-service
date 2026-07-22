@@ -146,11 +146,11 @@ function openModal(type) {
     form.dataset.mode = 'signup';
   }
   
-  modal.style.display = 'block';
+  modal.classList.remove('hidden');
 }
 
 function closeModal() {
-  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('authModal').classList.add('hidden');
   document.getElementById('authForm').reset();
   const errorEl = document.querySelector('.error-message');
   if (errorEl) errorEl.remove();
@@ -789,7 +789,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // 모달 이벤트
-  document.querySelector('.close').addEventListener('click', closeModal);
+  document.querySelector('#authModal .close').addEventListener('click', closeModal);
   document.getElementById('authToggleBtn').addEventListener('click', () => {
     const mode = document.getElementById('authForm').dataset.mode;
     openModal(mode === 'login' ? 'signup' : 'login');
