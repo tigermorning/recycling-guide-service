@@ -5,6 +5,8 @@ DROP POLICY IF EXISTS "All users can view classes" ON classes;
 DROP POLICY IF EXISTS " authenticated users can view classes" ON classes;
 DROP POLICY IF EXISTS "Authenticated users can insert classes" ON classes;
 DROP POLICY IF EXISTS "Authenticated users can update classes" ON classes;
+DROP POLICY IF EXISTS "Only admins can insert classes" ON classes;
+DROP POLICY IF EXISTS "Only admins can update classes" ON classes;
 DROP POLICY IF EXISTS "Users can view own enrollments" ON enrollments;
 DROP POLICY IF EXISTS "Users can insert own enrollments" ON enrollments;
 DROP POLICY IF EXISTS "Users can update own enrollments" ON enrollments;
@@ -54,15 +56,17 @@ CREATE POLICY "All users can view classes"
   ON classes FOR SELECT
   USING (true);
 
-CREATE POLICY "Authenticated users can insert classes"
+-- 관리자만 클래스를 추가/수정할 수 있음 (is_admin()은 admin-functions.sql에서 정의됨 — 이 스크립트는 그 뒤에 실행)
+CREATE POLICY "Only admins can insert classes"
   ON classes FOR INSERT
   TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (is_admin(auth.uid()));
 
-CREATE POLICY "Authenticated users can update classes"
+CREATE POLICY "Only admins can update classes"
   ON classes FOR UPDATE
   TO authenticated
-  USING (true);
+  USING (is_admin(auth.uid()))
+  WITH CHECK (is_admin(auth.uid()));
 
 -- ============================================
 -- 7. 신청 테이블 정책 (행 수준 보안)
