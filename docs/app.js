@@ -594,17 +594,20 @@ async function loadAdminClasses() {
   if (!isAdminUser) return;
   
   try {
-    const { data, error } = await supabaseClient.rpc('admin_get_classes');
+    const { data: classes, error } = await supabaseClient
+      .from('classes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
     if (error) throw error;
-    if (!data.success) throw new Error(data.message);
     
     const list = document.getElementById('adminClassList');
-    if (!data.classes || data.classes.length === 0) {
+    if (!classes || classes.length === 0) {
       list.innerHTML = '<p class="placeholder-text">등록된 클래스가 없습니다.</p>';
       return;
     }
     
-    list.innerHTML = data.classes.map(cls => `
+    list.innerHTML = classes.map(cls => `
       <div class="admin-class-card">
         <div class="admin-class-info">
           <strong>${cls.name}</strong>
@@ -621,7 +624,6 @@ async function loadAdminClasses() {
       </div>
     `).join('');
     
-    // 이벤트 연결
     list.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', () => openEditForm(btn.dataset));
     });
