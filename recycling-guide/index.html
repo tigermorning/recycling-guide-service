@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>서울시 분리수거 가이드</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <h1>서울시 분리수거 가이드</h1>
+        <div id="authSection" class="auth-section">
+          <button id="loginBtn" class="auth-btn">로그인</button>
+        </div>
+      </div>
+      <p class="subtitle">품목을 검색하면 분리수거 방법을 알려드립니다</p>
+    </header>
+
+    <main>
+      <!-- 분리배출 4원칙 카드 -->
+      <div class="principles-card">
+        <h2>분리배출 4원칙</h2>
+        <div class="principles-grid">
+          <div class="principle-item">
+            <div class="principle-icon">1</div>
+            <div class="principle-text">
+              <strong>비운다</strong>
+              <span>용기 내용물 비우기</span>
+            </div>
+          </div>
+          <div class="principle-item">
+            <div class="principle-icon">2</div>
+            <div class="principle-text">
+              <strong>헹군다</strong>
+              <span>이물질 제거하기</span>
+            </div>
+          </div>
+          <div class="principle-item">
+            <div class="principle-icon">3</div>
+            <div class="principle-text">
+              <strong>분리한다</strong>
+              <span>재질별로 분리하기</span>
+            </div>
+          </div>
+          <div class="principle-item">
+            <div class="principle-icon">4</div>
+            <div class="principle-text">
+              <strong>섞지 않는다</strong>
+              <span>종류별로 배출하기</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 지역별 차이 안내 -->
+      <div class="location-tip">
+        <span class="tip-icon">!</span>
+        <span>이 가이드는 서울시 기본 기준입니다. 거주지(아파트, 직장 등)에 따라 배출 방법이 다를 수 있으니 관리사무소에 확인하세요.</span>
+      </div>
+
+      <!-- 검색 입력 -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="품목을 입력하세요 (예: 비닐, 코팅된 종이, 충전선)"
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- 카테고리 필터 탭 -->
+      <div class="category-tabs">
+        <button class="tab-btn active" data-category="all">전체</button>
+        <button class="tab-btn" data-category="종이류">종이류</button>
+        <button class="tab-btn" data-category="플라스틱">플라스틱</button>
+        <button class="tab-btn" data-category="비닐">비닐</button>
+        <button class="tab-btn" data-category="유리">유리</button>
+        <button class="tab-btn" data-category="금속">금속</button>
+        <button class="tab-btn" data-category="대형폐기물">대형</button>
+        <button class="tab-btn" data-category="OTHER">OTHER</button>
+      </div>
+
+      <!-- 검색 결과 (검색 시에만 표시) -->
+      <div id="results" class="results hidden"></div>
+
+      <!-- 클래스 & 빠른 참조 2단 배치 -->
+      <div class="bottom-section">
+        <!-- 클래스 신청 섹션 -->
+        <div id="classSection" class="class-section">
+          <h2>분리수거 교육 클래스</h2>
+          <div id="classList" class="class-list">
+            <p class="placeholder-text">클래스를 불러오는 중...</p>
+          </div>
+          <div id="classPagination" class="pagination"></div>
+        </div>
+
+        <!-- 빠른 참조 표 -->
+        <div class="quick-reference">
+          <h2>헷갈리는 품목 빠른 참조</h2>
+          <div class="ref-filter">
+            <input type="text" id="refSearchInput" placeholder="품목 검색...">
+            <select id="refCategoryFilter">
+              <option value="all">전체</option>
+              <option value="일반쓰레기">일반쓰레기</option>
+              <option value="플라스틱류">플라스틱류</option>
+              <option value="투명페트병">투명페트병</option>
+              <option value="종이류">종이류</option>
+              <option value="유리류">유리류</option>
+              <option value="금속류">금속류</option>
+            </select>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>품목</th>
+                  <th>배출 방법</th>
+                  <th>비고</th>
+                </tr>
+              </thead>
+              <tbody id="refTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="refPagination" class="pagination"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>서울시 분리수거 기준 (2025)</p>
+    </footer>
+  </div>
+
+  <!-- 로그인/회원가입 모달 -->
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="authModalTitle">로그인</h2>
+      <form id="authForm">
+        <div class="form-group">
+          <label for="email">이메일</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" required>
+        </div>
+        <button type="submit" class="submit-btn">로그인</button>
+      </form>
+      <p class="auth-toggle">
+        <span id="authToggleText">계정이 없으신가요?</span>
+        <button id="authToggleBtn" class="link-btn">회원가입</button>
+      </p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
