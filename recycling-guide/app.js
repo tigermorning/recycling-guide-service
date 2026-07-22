@@ -101,6 +101,7 @@ async function initAuth() {
   supabaseClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
     updateAuthUI();
+    checkAdminStatus();
     loadClasses();
   });
 }
@@ -555,12 +556,223 @@ function setupCategoryTabs() {
 }
 
 // ============================================
+// 관리자 관련
+// ============================================
+let isAdminUser = false;
+
+async function checkAdminStatus() {
+  if (!currentUser) {
+    isAdminUser = false;
+    updateAdminUI();
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('admins')
+      .select('user_id')
+      .eq('user_id', currentUser.id)
+      .single();
+    
+    isAdminUser = !error && !!data;
+  } catch {
+    isAdminUser = false;
+  }
+  
+  updateAdminUI();
+}
+
+function updateAdminUI() {
+  const adminPanel = document.getElementById('adminPanel');
+  if (isAdminUser) {
+    adminPanel.classList.remove('hidden');
+    loadAdminClasses();
+  } else {
+    adminPanel.classList.add('hidden');
+  }
+}
+
+async function loadAdminClasses() {
+  if (!isAdminUser) return;
+  
+  try {
+    const { data, error } = await supabaseClient.rpc('admin_get_classes');
+    if (error) throw error;
+    if (!data.success) throw new Error(data.message);
+    
+    const list = document.getElementById('adminClassList');
+    if (!data.classes || data.classes.length === 0) {
+      list.innerHTML = '<p class="placeholder-text">등록된 클래스가 없습니다.</p>';
+      return;
+    }
+    
+    list.innerHTML = data.classes.map(cls => `
+      <div class="admin-class-card">
+        <div class="admin-class-info">
+          <strong>${cls.name}</strong>
+          <span>${cls.description || ''}</span>
+          <span class="class-capacity ${cls.current_count >= cls.max_capacity ? 'full' : ''}">
+            ${cls.current_count}/${cls.max_capacity}
+          </span>
+        </div>
+        <div class="admin-class-actions">
+          <button class="edit-btn" data-id="${cls.id}" data-name="${cls.name}" data-desc="${cls.description || ''}" data-cap="${cls.max_capacity}">수정</button>
+          <button class="delete-btn" data-id="${cls.id}">삭제</button>
+          <button class="enrollments-btn" data-id="${cls.id}" data-name="${cls.name}">명단</button>
+        </div>
+      </div>
+    `).join('');
+    
+    // 이벤트 연결
+    list.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditForm(btn.dataset));
+    });
+    list.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteClass(btn.dataset.id));
+    });
+    list.querySelectorAll('.enrollments-btn').forEach(btn => {
+      btn.addEventListener('click', () => showEnrollments(btn.dataset.id, btn.dataset.name));
+    });
+  } catch (error) {
+    console.error('관리자 클래스 로드 실패:', error);
+  }
+}
+
+function openEditForm(dataset) {
+  document.getElementById('classFormTitle').textContent = '클래스 수정';
+  document.getElementById('editClassId').value = dataset.id;
+  document.getElementById('className').value = dataset.name;
+  document.getElementById('classDescription').value = dataset.desc;
+  document.getElementById('classCapacity').value = dataset.cap;
+  document.getElementById('classForm').classList.remove('hidden');
+  document.getElementById('addClassBtn').classList.add('hidden');
+}
+
+async function saveClass(e) {
+  e.preventDefault();
+  
+  const editId = document.getElementById('editClassId').value;
+  const name = document.getElementById('className').value;
+  const description = document.getElementById('classDescription').value;
+  const capacity = parseInt(document.getElementById('classCapacity').value);
+  
+  try {
+    let result;
+    if (editId) {
+      result = await supabaseClient.rpc('admin_update_class', {
+        p_class_id: editId,
+        p_name: name,
+        p_description: description,
+        p_max_capacity: capacity
+      });
+    } else {
+      result = await supabaseClient.rpc('admin_add_class', {
+        p_name: name,
+        p_description: description,
+        p_max_capacity: capacity
+      });
+    }
+    
+    if (result.error) throw result.error;
+    if (!result.data.success) throw new Error(result.data.message);
+    
+    closeClassForm();
+    loadAdminClasses();
+    loadClasses();
+  } catch (error) {
+    alert('저장 실패: ' + (error.message || '오류가 발생했습니다.'));
+  }
+}
+
+async function deleteClass(classId) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  
+  try {
+    const { data, error } = await supabaseClient.rpc('admin_delete_class', {
+      p_class_id: classId
+    });
+    if (error) throw error;
+    if (!data.success) throw new Error(data.message);
+    
+    loadAdminClasses();
+    loadClasses();
+  } catch (error) {
+    alert('삭제 실패: ' + (error.message || '오류가 발생했습니다.'));
+  }
+}
+
+async function showEnrollments(classId, className) {
+  try {
+    const { data, error } = await supabaseClient.rpc('admin_get_enrollments', {
+      p_class_id: classId
+    });
+    if (error) throw error;
+    if (!data.success) throw new Error(data.message);
+    
+    document.getElementById('enrollmentModalTitle').textContent = className + ' - 신청자 명단';
+    
+    const list = document.getElementById('enrollmentList');
+    if (!data.enrollments || data.enrollments.length === 0) {
+      list.innerHTML = '<p class="placeholder-text">신청자가 없습니다.</p>';
+    } else {
+      list.innerHTML = `
+        <table class="enrollment-table">
+          <thead>
+            <tr>
+              <th>이메일</th>
+              <th>상태</th>
+              <th>신청일</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.enrollments.map(e => `
+              <tr>
+                <td>${e.email}</td>
+                <td>${e.status === 'confirmed' ? '확인' : '취소'}</td>
+                <td>${new Date(e.created_at).toLocaleDateString('ko-KR')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    document.getElementById('enrollmentModal').classList.remove('hidden');
+  } catch (error) {
+    alert('명단 로드 실패: ' + (error.message || '오류가 발생했습니다.'));
+  }
+}
+
+function closeClassForm() {
+  document.getElementById('classForm').classList.add('hidden');
+  document.getElementById('addClassBtn').classList.remove('hidden');
+  document.getElementById('classFormEl').reset();
+  document.getElementById('editClassId').value = '';
+}
+
+function setupAdminEvents() {
+  document.getElementById('addClassBtn').addEventListener('click', () => {
+    document.getElementById('classFormTitle').textContent = '새 클래스 추가';
+    document.getElementById('classForm').classList.remove('hidden');
+    document.getElementById('addClassBtn').classList.add('hidden');
+  });
+  
+  document.getElementById('cancelFormBtn').addEventListener('click', closeClassForm);
+  document.getElementById('classFormEl').addEventListener('submit', saveClass);
+  
+  document.getElementById('closeEnrollmentModal').addEventListener('click', () => {
+    document.getElementById('enrollmentModal').classList.add('hidden');
+  });
+}
+
+// ============================================
 // 초기화
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData();
   await initAuth();
   setupCategoryTabs();
+  setupAdminEvents();
   loadClasses();
   initQuickRef();
   
