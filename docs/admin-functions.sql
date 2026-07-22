@@ -176,18 +176,21 @@ BEGIN
     RETURN json_build_object('success', false, 'message', '관리자 권한이 필요합니다');
   END IF;
   
-  SELECT json_agg(json_build_object(
-    'id', c.id,
-    'name', c.name,
-    'description', c.description,
-    'max_capacity', c.max_capacity,
-    'current_count', c.current_count,
-    'created_at', c.created_at,
-    'updated_at', c.updated_at
-  ))
+  SELECT json_agg(sub.cls)
   INTO v_classes
-  FROM classes c
-  ORDER BY c.created_at DESC;
+  FROM (
+    SELECT json_build_object(
+      'id', c.id,
+      'name', c.name,
+      'description', c.description,
+      'max_capacity', c.max_capacity,
+      'current_count', c.current_count,
+      'created_at', c.created_at,
+      'updated_at', c.updated_at
+    ) AS cls
+    FROM classes c
+    ORDER BY c.created_at DESC
+  ) sub;
   
   RETURN json_build_object(
     'success', true,

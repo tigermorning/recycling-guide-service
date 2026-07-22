@@ -568,13 +568,11 @@ async function checkAdminStatus() {
   }
   
   try {
-    const { data, error } = await supabaseClient
-      .from('admins')
-      .select('user_id')
-      .eq('user_id', currentUser.id)
-      .single();
+    const { data, error } = await supabaseClient.rpc('is_admin', {
+      p_user_id: currentUser.id
+    });
     
-    isAdminUser = !error && !!data;
+    isAdminUser = !error && data === true;
   } catch {
     isAdminUser = false;
   }
