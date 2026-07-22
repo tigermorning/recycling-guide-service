@@ -44,19 +44,24 @@
 
 ## Risks / Trade-offs
 
-### [보안] `classes` 테이블 RLS가 관리자 여부를 확인하지 않음 → 이 change의 task로 수정 예정
+### [해결됨] `classes` 테이블 RLS가 관리자 여부를 확인하지 않음 (2026-07-22)
 
-- 현재 정책: `TO authenticated WITH CHECK (true)` — 로그인만 하면 누구나 클래스를 추가·수정 가능
+- 기존 정책: `TO authenticated WITH CHECK (true)` — 로그인만 하면 누구나 클래스를 추가·수정 가능
 - RPC(`admin_add_class` 등)는 `is_admin()`을 확인하지만, PostgREST로 테이블에 직접 접근(`supabaseClient.from('classes').insert(...)`)하면 그 검증을 우회함
-- 해결 방향: 정책 조건에 `is_admin(auth.uid())` 추가
+- 수정: 정책 조건에 `is_admin(auth.uid())` 추가, `pg_policies` 조회로 `with_check`에 반영됐음을 확인
+- 실제 비관리자 계정으로 직접 접근을 시도해 차단되는지까지는 아직 실증하지 않음 (정책 정의 확인까지만 완료)
 
-### [미해결] 관리자 패널 "명단" 버튼 무반응
+### [해결됨] 관리자 패널 "명단" 버튼 무반응 (2026-07-22)
 
-- 원인 미조사 (브라우저 콘솔 로그 미확보) — 별도 조사 필요
+- 원인: `styles.css`에 `.hidden`에 대한 범용 CSS 규칙이 없었음(`.results.hidden`만 존재). `admin-panel`/`class-form`/`addClassBtn`/`enrollmentModal`가 전부 `classList.add/remove('hidden')`로 표시를 토글했지만 대응하는 CSS가 없어 효과가 없었음. `enrollmentModal`은 `.modal { display: none; }`이 무조건 적용돼 있어 열리지 않았음.
+- 수정: `.hidden { display: none !important; }` 추가, `.modal`의 무조건 `display: none` 제거, `authModal`에도 `hidden` 클래스 부여해 동일한 방식으로 통일.
+- 부수 효과: 관리자 패널과 클래스 추가 폼도 같은 원인이었어서 함께 해결됨 (원래 의도대로 비관리자에겐 숨겨지고, 폼은 클릭 전엔 숨겨짐).
 
-### [검증 부족] 동시 신청을 실제로 돌려 로그로 확인한 적 없음
+### [설계로 검증, 실측 생략] 동시 신청을 실제 부하로 돌려본 적은 없음 (2026-07-22 결정)
 
-- `FOR UPDATE` 락 설계는 맞지만, 실제 동시 요청 테스트 스크립트가 없어 실증되지 않음
+- `enroll_class`는 `SELECT ... FOR UPDATE`로 클래스 행에 잠금을 건 뒤 정원 확인과 저장을 하나의 트랜잭션으로 처리함. Postgres의 행 잠금 특성상, 같은 행에 대한 두 번째 트랜잭션은 첫 번째가 끝날 때까지 대기하므로 "확인 시점엔 둘 다 자리가 있었는데 저장은 둘 다 성공"하는 경쟁 상태(race condition)가 구조적으로 발생할 수 없음
+- 이 패턴(비관적 잠금)은 좌석 예약·티켓 예매 등에서 널리 쓰이는 정석적 방법
+- 실제 테스트 계정 2개를 만들어 동시 요청을 발생시켜 로그로 재확인하는 것은 비용(토큰) 대비 실익이 낮다고 판단해 생략하기로 결정 — 설계 근거로 검증 완료 처리
 
 ## Open Questions
 
