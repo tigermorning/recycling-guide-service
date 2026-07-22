@@ -109,8 +109,8 @@ export class DataFlowDemo {
 
   private createLabel(): void {
     const c = document.createElement('canvas');
-    c.width = 600;
-    c.height = 160;
+    c.width = 900;
+    c.height = 280;
     const ctx = c.getContext('2d')!;
     this.drawLabelBackground(ctx, c.width, c.height);
 
@@ -121,7 +121,7 @@ export class DataFlowDemo {
         depthTest: false,
       }),
     );
-    this.labelSprite.scale.set(5, 1.33, 1);
+    this.labelSprite.scale.set(7, 2.2, 1);
     this.labelSprite.renderOrder = 1000;
     this.labelSprite.visible = false;
     this.engine.scene.add(this.labelSprite);
@@ -153,39 +153,39 @@ export class DataFlowDemo {
 
     // ── 단계 제목 (gold) ──
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 28px Arial';
+    ctx.font = 'bold 38px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(text, w / 2, 38);
+    ctx.fillText(text, w / 2, 55);
 
     // ── 설명 (gray) ──
-    ctx.font = '16px Arial';
+    ctx.font = '26px Arial';
     ctx.fillStyle = '#cccccc';
-    ctx.fillText(subtext, w / 2, 62);
+    ctx.fillText(subtext, w / 2, 95);
 
     // ── WHY 설명 (cyan) ──
     if (why) {
       ctx.fillStyle = '#4fc3f7';
-      ctx.font = 'bold 13px Arial';
-      ctx.fillText('💡 왜 필요한가:', w / 2, 86);
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText('💡 왜 필요한가:', w / 2, 140);
 
-      ctx.font = '12px Arial';
+      ctx.font = '18px Arial';
       ctx.fillStyle = '#b0bec5';
-      const maxWidth = w - 60;
+      const maxWidth = w - 80;
       const words = why.split(' ');
       let line = '';
-      let y = 104;
+      let y = 172;
       for (const word of words) {
         const testLine = line + word + ' ';
         if (ctx.measureText(testLine).width > maxWidth) {
           ctx.fillText(line.trim(), w / 2, y);
           line = word + ' ';
-          y += 15;
-          if (y > h - 12) break;
+          y += 26;
+          if (y > h - 16) break;
         } else {
           line = testLine;
         }
       }
-      if (y <= h - 12) ctx.fillText(line.trim(), w / 2, y);
+      if (y <= h - 16) ctx.fillText(line.trim(), w / 2, y);
     }
 
     spriteMat.map = new THREE.CanvasTexture(canvas);

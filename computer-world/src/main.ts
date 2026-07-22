@@ -25,7 +25,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: '키보드에서 키를 누릅니다',
     why: '모든 컴퓨터 작업은 사용자의 물리적 입력으로 시작됩니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
     position: new THREE.Vector3(0, 2, 2),
   },
   {
@@ -35,7 +35,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: '키보드 신호가 전기 신호로 변환되어 본체로 전달',
     why: '물리적 입력이 디지털 신호로 변환되어 컴퓨터 내부로 들어갑니다',
     zoomLevel: 2.5,
-    pauseMs: 2500,
+    pauseMs: 5000,
     position: new THREE.Vector3(2.8, 1.5, 0),
   },
   {
@@ -45,7 +45,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: 'CPU가 입력신호를 해석하여 명령어로 변환',
     why: 'CPU는 컴퓨터의 두뇌로, 모든 명령의 처리를 시작하는 핵심 칩입니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
   {
     worldName: 'hardware',
@@ -54,7 +54,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: 'CPU는 먼저 내장 캐시(L1/L2)에서 필요한 데이터를 찾습니다',
     why: '캐시는 CPU 안에 있는 가장 빠른 저장장치입니다. 여기 있으면 나노초 만에 사용할 수 있습니다',
     zoomLevel: 3.0,
-    pauseMs: 2500,
+    pauseMs: 5000,
   },
   {
     worldName: 'hardware',
@@ -63,7 +63,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: '캐시 미스 시 RAM에서 데이터를 가져옵니다',
     why: 'RAM은 CPU의 작업공간입니다. 저장장치보다 100배 빠르고, 자주 쓰는 데이터가 보관됩니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
   {
     worldName: 'hardware',
@@ -72,7 +72,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: 'CPU가 데이터를 처리하여 최종 결과를 생성합니다',
     why: 'CPU의 역할은 입력된 명령을 실제 결과로 변환하는 것 — 모든 계산이 여기서 일어납니다',
     zoomLevel: 2.5,
-    pauseMs: 2500,
+    pauseMs: 5000,
   },
   {
     worldName: 'hardware',
@@ -81,7 +81,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: 'CPU의 결과를 GPU가 화면 이미지로 변환합니다',
     why: 'GPU는 수천 개의 코어로 동시에 색상을 계산하여 빠르게 화면을 그립니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
   {
     worldName: 'real-world',
@@ -90,7 +90,7 @@ const LOCAL_PROCESSING_STEPS: FlowStep[] = [
     description: '최종 결과가 모니터에 표시됩니다',
     why: '모니터는 컴퓨터의 처리 결과를 사람이 볼 수 있게 빛의 이미지로 변환합니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
     position: new THREE.Vector3(0, 2.5, -0.5),
   },
 ];
@@ -105,7 +105,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: 'CPU가 인터넷 요청 명령을 만듭니다',
     why: 'CPU는 모든 명령의 출발점 — 네트워크 요청도 CPU에서 시작됩니다',
     zoomLevel: 2.5,
-    pauseMs: 2500,
+    pauseMs: 5000,
   },
   {
     worldName: 'hardware',
@@ -114,7 +114,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: '보낼 데이터가 RAM에 임시로 보관됩니다',
     why: 'RAM은 출발지와 목적지 사이의 임시 정류장입니다',
     zoomLevel: 2.5,
-    pauseMs: 2500,
+    pauseMs: 5000,
   },
   {
     worldName: 'network',
@@ -123,7 +123,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: '데이터가 라우터를 통해 인터넷으로 나갑니다',
     why: '라우터는 데이터의 GPS 같은 역할 — 가장 빠른 경로를 찾아 전 세계로 전달합니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
   {
     worldName: 'network',
@@ -132,7 +132,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: '"naver.com"을 IP 주소로 변환합니다',
     why: 'DNS는 인터넷의 전화번호부 — 이름을 숫자 주소로 변환하여 컴퓨터가 찾을 수 있게 합니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
   {
     worldName: 'network',
@@ -141,7 +141,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: '보안 검사를 통과한 후 서버로 전달됩니다',
     why: '방화벽은 컴퓨터의 보안요원 — 안전하지 않은 요청을 차단하여 시스템을 보호합니다',
     zoomLevel: 2.5,
-    pauseMs: 2500,
+    pauseMs: 5000,
   },
   {
     worldName: 'network',
@@ -150,7 +150,7 @@ const NETWORK_REQUEST_STEPS: FlowStep[] = [
     description: 'HTTP 규칙에 맞춰 서버에 데이터를 보냅니다',
     why: 'HTTP는 웹에서 통신하는 공통 언어 — 서버와 클라이언트가 서로 이해할 수 있는 규칙입니다',
     zoomLevel: 2.5,
-    pauseMs: 3000,
+    pauseMs: 5000,
   },
 ];
 
@@ -222,6 +222,7 @@ const NAME_TO_STATION: Record<string, string> = {
   '라우터 (공유기)': 'router',
   '방화벽 (화재벽)': 'firewall',
   'HTTP (규약)': 'http',
+  'HTTPS (보안규약)': 'https',
 };
 
 const BUILDING_PHASE: Record<string, number> = {
@@ -236,7 +237,56 @@ const BUILDING_PHASE: Record<string, number> = {
   '라우터 (공유기)': 2,
   '방화벽 (화재벽)': 3,
   'HTTP (규약)': 2,
+  'HTTPS (보안규약)': 2,
 };
+
+function showInteriorInfo(buildingName: string, InteriorWorldClass: any): void {
+  const el = document.getElementById('interiorInfo');
+  if (!el) return;
+
+  const info = InteriorWorldClass.getInteriorInfo(buildingName);
+  if (!info) {
+    el.classList.remove('show');
+    return;
+  }
+
+  const compHtml = info.components.map((c: any) => `
+    <div class="ii-component">
+      <div class="ii-comp-dot" style="background:${c.color};box-shadow:0 0 8px ${c.color}"></div>
+      <div>
+        <div class="ii-comp-name">${c.name}</div>
+        <div class="ii-comp-desc">${c.desc}</div>
+      </div>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="ii-header">
+      <span class="ii-icon">${info.icon}</span>
+      <div>
+        <div class="ii-title">${info.title}</div>
+        <div class="ii-subtitle">${info.subtitle}</div>
+      </div>
+    </div>
+    <div class="ii-section">
+      <div class="ii-section-title">내부 구성 요소</div>
+      ${compHtml}
+    </div>
+    <div class="ii-insight">
+      <div class="ii-insight-title">핵심 Insight</div>
+      <div class="ii-insight-text">${info.keyInsight}</div>
+    </div>
+    <div class="ii-exit-hint">
+      포털을 클릭하여 <kbd>나가기</kbd>
+    </div>
+  `;
+  el.classList.add('show');
+}
+
+function hideInteriorInfo(): void {
+  const el = document.getElementById('interiorInfo');
+  if (el) el.classList.remove('show');
+}
 
 async function main(): Promise<void> {
   try {
@@ -273,12 +323,14 @@ async function main(): Promise<void> {
     { id: 'router', icon: '🚦', label: '라우터 (공유기)', tag: '데이터 경로를 결정하는 장치', phase: 2, world: 'network' },
     { id: 'firewall', icon: '🛡️', label: '방화벽 (화재벽)', tag: '보안 위협을 차단하는 보안 장치', phase: 3, world: 'network' },
     { id: 'http', icon: '📜', label: 'HTTP (규약)', tag: '웹 데이터를 전송하는 통신 규칙', phase: 2, world: 'network' },
+    { id: 'https', icon: '🔒', label: 'HTTPS (보안규약)', tag: '암호화된 웹 데이터 전송 규칙', phase: 2, world: 'network' },
   ]);
 
-  const [{ RealWorld }, { HardwareWorld }, { NetworkWorld }] = await Promise.all([
+  const [{ RealWorld }, { HardwareWorld }, { NetworkWorld }, { InteriorWorld }] = await Promise.all([
     import('./worlds/RealWorld.ts'),
     import('./worlds/HardwareWorld.ts'),
     import('./worlds/NetworkWorld.ts'),
+    import('./interior/InteriorWorld.ts'),
   ]);
 
   const realWorld = new RealWorld();
@@ -353,7 +405,17 @@ async function main(): Promise<void> {
   }) as EventListener);
 
   window.addEventListener('enter-interior', ((e: CustomEvent) => {
-    worldManager.enterInterior(e.detail.name);
+    const buildingName: string = e.detail.name;
+    worldManager.enterInterior(buildingName);
+    showInteriorInfo(buildingName, InteriorWorld);
+  }) as EventListener);
+
+  window.addEventListener('world-changed', ((e: CustomEvent) => {
+    if (!e.detail.isInterior) {
+      hideInteriorInfo();
+      learningProgress.markWorldVisited(e.detail.worldName);
+      demoButton.updateStage();
+    }
   }) as EventListener);
 
   window.addEventListener('demo-started', () => {

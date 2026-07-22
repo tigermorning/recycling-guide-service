@@ -85,6 +85,39 @@
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-thumb { background: #6c5ce7; border-radius: 3px; }
 
+      /* ---- Interior Info Panel ---- */
+      #interiorInfo {
+        position: fixed; top: 50%; left: 20px; transform: translateY(-50%);
+        width: 280px; max-height: 70vh; overflow-y: auto;
+        background: rgba(10,9,22,.95); border: 1px solid rgba(108,92,231,.5);
+        border-radius: 16px; padding: 24px 20px; backdrop-filter: blur(12px);
+        z-index: 8; display: none; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        font-family: 'Segoe UI', system-ui, sans-serif; color: #e8e8f6;
+      }
+      #interiorInfo.show { display: block; animation: interiorIn .4s ease; }
+      @keyframes interiorIn { from { opacity: 0; transform: translateY(-50%) translateX(-20px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
+      #interiorInfo .ii-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+      #interiorInfo .ii-icon { font-size: 1.8em; }
+      #interiorInfo .ii-title { font-size: 1.05em; font-weight: 700; color: #fff; }
+      #interiorInfo .ii-subtitle { font-size: .78em; color: #a29bfe; margin-top: 2px; }
+      #interiorInfo .ii-section { margin-bottom: 14px; }
+      #interiorInfo .ii-section-title { font-size: .72em; color: #00cec9; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+      #interiorInfo .ii-component { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; margin-bottom: 4px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); transition: background .2s; }
+      #interiorInfo .ii-component:hover { background: rgba(255,255,255,.08); }
+      #interiorInfo .ii-comp-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+      #interiorInfo .ii-comp-name { font-size: .85em; font-weight: 600; color: #e0e0f0; }
+      #interiorInfo .ii-comp-desc { font-size: .78em; color: #a0a0c0; line-height: 1.5; margin-top: 2px; }
+      #interiorInfo .ii-insight { padding: 10px 12px; background: rgba(108,92,231,.1); border-left: 3px solid #6c5ce7; border-radius: 0 8px 8px 0; margin-top: 12px; }
+      #interiorInfo .ii-insight-title { font-size: .72em; color: #6c5ce7; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+      #interiorInfo .ii-insight-text { font-size: .82em; color: #c0c0e0; line-height: 1.6; }
+      #interiorInfo .ii-exit-hint { margin-top: 14px; font-size: .72em; color: #8a8aa8; text-align: center; padding: 8px; border-radius: 8px; background: rgba(255,255,255,.04); }
+      #interiorInfo .ii-exit-hint kbd { background: rgba(255,255,255,.12); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: .9em; }
+      @media (max-width: 640px) {
+        #interiorInfo { left: 10px; width: calc(100vw - 20px); top: auto; bottom: 10px; transform: none; max-height: 45vh; }
+        #interiorInfo.show { animation: interiorInMobile .4s ease; }
+        @keyframes interiorInMobile { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      }
+
       @media (max-width: 640px) {
         .hud-title { font-size: .95em; }
         #caption { width: 94vw; padding: 18px; }
@@ -94,6 +127,7 @@
   </head>
   <body>
     <canvas id="scene"></canvas>
+    <div id="interiorInfo"></div>
     <div id="hud">
       <div class="hud-title">🏘️ 컴퓨터 마을 견학
         <small>건물 클릭: 설명 · 드래그: 이동 · 오른쪽 드래그: 회전 · 스크롤: 확대 · 더블클릭: 확대 이동</small>

@@ -51,7 +51,7 @@ export class HUD {
     const el = document.createElement('div');
     el.id = 'stage-indicator';
     el.style.cssText = `
-      position: fixed; top: 16px; right: 20px;
+      position: fixed; bottom: 80px; right: 20px;
       background: rgba(13,11,26,.85); border: 1px solid rgba(255,215,0,.3);
       border-radius: 12px; padding: 8px 16px; backdrop-filter: blur(12px);
       z-index: 7; font-family: 'Segoe UI', system-ui, sans-serif;

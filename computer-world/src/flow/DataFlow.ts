@@ -9,63 +9,85 @@ interface FlowRoute {
 }
 
 const ROUTES: FlowRoute[] = [
+  // Internal Network → Firewall → External Internet
   {
-    from: 'dns',
-    to: 'router',
-    path: [
-      new THREE.Vector3(-8, 0.5, 3),
-      new THREE.Vector3(-4, 0.5, 1.5),
-      new THREE.Vector3(0, 0.5, 0),
-    ],
-    type: 'request',
-  },
-  {
-    from: 'router',
-    to: 'firewall',
-    path: [
-      new THREE.Vector3(0, 0.5, 0),
-      new THREE.Vector3(4, 0.5, 0),
-      new THREE.Vector3(8, 0.5, 0),
-    ],
-    type: 'request',
-  },
-  {
-    from: 'firewall',
-    to: 'http',
-    path: [
-      new THREE.Vector3(8, 0.5, 0),
-      new THREE.Vector3(4, 0.5, 3),
-      new THREE.Vector3(0, 0.5, 6),
-    ],
-    type: 'request',
-  },
-  {
-    from: 'http',
-    to: 'firewall',
-    path: [
-      new THREE.Vector3(0, 0.5, 6),
-      new THREE.Vector3(4, 0.5, 3),
-      new THREE.Vector3(8, 0.5, 0),
-    ],
-    type: 'response',
-  },
-  {
-    from: 'firewall',
+    from: 'nic',
     to: 'router',
     path: [
       new THREE.Vector3(8, 0.5, 0),
       new THREE.Vector3(4, 0.5, 0),
       new THREE.Vector3(0, 0.5, 0),
     ],
-    type: 'response',
+    type: 'request',
   },
   {
     from: 'router',
     to: 'dns',
     path: [
       new THREE.Vector3(0, 0.5, 0),
-      new THREE.Vector3(-4, 0.5, 1.5),
-      new THREE.Vector3(-8, 0.5, 3),
+      new THREE.Vector3(-5, 0.5, 1.5),
+      new THREE.Vector3(-10, 0.5, 3),
+    ],
+    type: 'request',
+  },
+  {
+    from: 'router',
+    to: 'http',
+    path: [
+      new THREE.Vector3(0, 0.5, 0),
+      new THREE.Vector3(-5, 0.5, -1.5),
+      new THREE.Vector3(-10, 0.5, -3),
+    ],
+    type: 'request',
+  },
+  {
+    from: 'router',
+    to: 'https',
+    path: [
+      new THREE.Vector3(0, 0.5, 0),
+      new THREE.Vector3(-7, 0.5, 0),
+      new THREE.Vector3(-14, 0.5, 0),
+    ],
+    type: 'request',
+  },
+  // External Internet → Firewall → Internal Network
+  {
+    from: 'dns',
+    to: 'router',
+    path: [
+      new THREE.Vector3(-10, 0.5, 3),
+      new THREE.Vector3(-5, 0.5, 1.5),
+      new THREE.Vector3(0, 0.5, 0),
+    ],
+    type: 'response',
+  },
+  {
+    from: 'http',
+    to: 'router',
+    path: [
+      new THREE.Vector3(-10, 0.5, -3),
+      new THREE.Vector3(-5, 0.5, -1.5),
+      new THREE.Vector3(0, 0.5, 0),
+    ],
+    type: 'response',
+  },
+  {
+    from: 'https',
+    to: 'router',
+    path: [
+      new THREE.Vector3(-14, 0.5, 0),
+      new THREE.Vector3(-7, 0.5, 0),
+      new THREE.Vector3(0, 0.5, 0),
+    ],
+    type: 'response',
+  },
+  {
+    from: 'router',
+    to: 'nic',
+    path: [
+      new THREE.Vector3(0, 0.5, 0),
+      new THREE.Vector3(4, 0.5, 0),
+      new THREE.Vector3(8, 0.5, 0),
     ],
     type: 'response',
   },

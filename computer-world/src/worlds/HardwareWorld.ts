@@ -558,7 +558,7 @@ export class HardwareWorld extends World {
 
     const toNetwork = new Portal({
       name: '네트워크 월드',
-      position: new THREE.Vector3(16, 0, -3),
+      position: new THREE.Vector3(3, 0, -9),
       targetWorld: 'network',
       color: 0x00897b,
     });
