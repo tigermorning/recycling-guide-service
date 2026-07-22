@@ -135,8 +135,10 @@ BEGIN
   END IF;
   
   INSERT INTO enrollments (user_id, class_id, status)
-  VALUES (v_user_id, p_class_id, 'confirmed');
-  
+  VALUES (v_user_id, p_class_id, 'confirmed')
+  ON CONFLICT (user_id, class_id)
+  DO UPDATE SET status = 'confirmed', created_at = NOW();
+
   UPDATE classes
   SET current_count = current_count + 1,
       updated_at = NOW()
