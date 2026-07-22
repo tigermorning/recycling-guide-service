@@ -2,7 +2,7 @@ name: Deploy recycling-guide to Pages
 
 on:
   push:
-    branches: [feature/computer-world-v2]
+    branches: [master]
     paths: ["recycling-guide/**"]
   workflow_dispatch:
 
