@@ -1160,6 +1160,14 @@ footer {
   max-height: 85vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+}
+
+#videoLibraryModal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .video-library-modal h2 {
