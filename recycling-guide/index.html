@@ -55,6 +55,9 @@
         </div>
       </div>
 
+      <!-- 교육 영상 -->
+      <div id="videoBanner" class="video-banner hidden"></div>
+
       <!-- 지역별 차이 안내 -->
       <div class="location-tip">
         <span class="tip-icon">!</span>
@@ -177,6 +180,29 @@
     <footer>
       <p>서울시 분리수거 기준 (2025)</p>
     </footer>
+  </div>
+
+  <!-- 교육 영상 재생 모달 -->
+  <div id="videoPlayerModal" class="modal hidden">
+    <div class="modal-content video-player-modal">
+      <span class="close" id="closeVideoPlayerModal">&times;</span>
+      <div id="videoPlayerContent"></div>
+    </div>
+  </div>
+
+  <!-- 교육 영상 라이브러리 모달 -->
+  <div id="videoLibraryModal" class="modal hidden">
+    <div class="modal-content video-library-modal">
+      <span class="close" id="closeVideoLibraryModal">&times;</span>
+      <h2>교육 영상 라이브러리</h2>
+      <div class="video-library-controls">
+        <input type="text" id="videoSearchInput" placeholder="영상 제목, 키워드로 검색...">
+        <select id="videoCategoryFilter">
+          <option value="all">전체</option>
+        </select>
+      </div>
+      <div id="videoLibraryGrid" class="video-library-grid"></div>
+    </div>
   </div>
 
   <!-- 로그인/회원가입 모달 -->

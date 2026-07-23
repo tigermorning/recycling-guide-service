@@ -6,6 +6,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 // 분리수거 데이터
 let recyclingData = [];
+let allVideos = [];
 let currentCategory = 'all';
 let currentUser = null;
 
@@ -84,9 +85,11 @@ async function loadData() {
     const response = await fetch('data.json');
     const data = await response.json();
     recyclingData = data.items;
+    allVideos = data.videos || [];
   } catch (error) {
     console.error('데이터 로드 실패:', error);
     recyclingData = [];
+    allVideos = [];
   }
 }
 
@@ -775,6 +778,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupAdminEvents();
   loadClasses();
   initQuickRef();
+  renderVideoBanner();
   
   const searchInput = document.getElementById('searchInput');
   let debounceTimer;
@@ -798,7 +802,154 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.addEventListener('click', (e) => {
     if (e.target.id === 'authModal') closeModal();
+    if (e.target.id === 'videoPlayerModal') closeVideoPlayer();
+    if (e.target.id === 'videoLibraryModal') closeVideoLibrary();
   });
+
+  document.getElementById('closeVideoPlayerModal').addEventListener('click', closeVideoPlayer);
+  document.getElementById('closeVideoLibraryModal').addEventListener('click', closeVideoLibrary);
+  document.getElementById('videoSearchInput').addEventListener('input', renderVideoLibrary);
+  document.getElementById('videoCategoryFilter').addEventListener('change', renderVideoLibrary);
   
   searchInput.focus();
 });
+
+// ============================================
+// 교육 영상 섹션
+// ============================================
+let videoCarouselIndex = 0;
+const VIDEO_PER_PAGE = 4;
+
+function getYouTubeId(url) {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&?#]+)/);
+  return match ? match[1] : url;
+}
+
+function renderVideoBanner() {
+  const container = document.getElementById('videoBanner');
+  if (!container || allVideos.length === 0) {
+    if (container) container.classList.add('hidden');
+    return;
+  }
+  container.classList.remove('hidden');
+  videoCarouselIndex = 0;
+  renderVideoCarousel();
+}
+
+function renderVideoCarousel() {
+  const container = document.getElementById('videoBanner');
+  if (!container) return;
+  const totalPages = Math.ceil(allVideos.length / VIDEO_PER_PAGE);
+  const start = videoCarouselIndex * VIDEO_PER_PAGE;
+  const pageVideos = allVideos.slice(start, start + VIDEO_PER_PAGE);
+
+  container.innerHTML = `
+    <div class="video-section-header">
+      <h2>교육 영상</h2>
+      <button class="view-all-btn" onclick="openVideoLibrary()">전체 보기 →</button>
+    </div>
+    <div class="video-carousel">
+      <button class="carousel-arrow" onclick="videoPrev()" ${videoCarouselIndex === 0 ? 'disabled' : ''}>&#9664;</button>
+      <div class="video-grid">
+        ${pageVideos.map(v => `
+          <div class="video-card" onclick="playVideo('${v.id}')" style="cursor:pointer">
+            <div class="video-thumb">
+              <img src="https://img.youtube.com/vi/${getYouTubeId(v.url)}/mqdefault.jpg" alt="${v.title}" loading="lazy">
+              <span class="video-duration">${v.duration || ''}</span>
+            </div>
+            <div class="video-info">
+              <div class="video-title">${v.title}</div>
+              <div class="video-meta">${v.category || ''}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="carousel-arrow" onclick="videoNext()" ${videoCarouselIndex >= totalPages - 1 ? 'disabled' : ''}>&#9654;</button>
+    </div>
+  `;
+}
+
+function videoPrev() {
+  if (videoCarouselIndex > 0) { videoCarouselIndex--; renderVideoCarousel(); }
+}
+
+function videoNext() {
+  const totalPages = Math.ceil(allVideos.length / VIDEO_PER_PAGE);
+  if (videoCarouselIndex < totalPages - 1) { videoCarouselIndex++; renderVideoCarousel(); }
+}
+
+function playVideo(id) {
+  const video = allVideos.find(v => v.id === id);
+  if (!video) return;
+  const modal = document.getElementById('videoPlayerModal');
+  const container = document.getElementById('videoPlayerContent');
+  container.innerHTML = `
+    <div class="video-player-wrapper">
+      <iframe src="https://www.youtube.com/embed/${getYouTubeId(video.url)}?autoplay=1" frameborder="0" allowfullscreen allow="autoplay"></iframe>
+    </div>
+    <div class="video-player-info">
+      <h3>${video.title}</h3>
+      <p>${video.description || ''}</p>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+}
+
+function closeVideoPlayer() {
+  const modal = document.getElementById('videoPlayerModal');
+  modal.classList.add('hidden');
+  document.getElementById('videoPlayerContent').innerHTML = '';
+}
+
+// ============================================
+// 교육 영상 라이브러리
+// ============================================
+function openVideoLibrary() {
+  const modal = document.getElementById('videoLibraryModal');
+  modal.classList.remove('hidden');
+  document.getElementById('videoSearchInput').value = '';
+  const categories = [...new Set(allVideos.map(v => v.category).filter(Boolean))];
+  const select = document.getElementById('videoCategoryFilter');
+  select.innerHTML = '<option value="all">전체</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  renderVideoLibrary();
+}
+
+function closeVideoLibrary() {
+  document.getElementById('videoLibraryModal').classList.add('hidden');
+}
+
+function renderVideoLibrary() {
+  const container = document.getElementById('videoLibraryGrid');
+  const query = document.getElementById('videoSearchInput').value.toLowerCase();
+  const category = document.getElementById('videoCategoryFilter').value;
+
+  let filtered = allVideos;
+  if (category !== 'all') {
+    filtered = filtered.filter(v => v.category === category);
+  }
+  if (query) {
+    filtered = filtered.filter(v =>
+      v.title.toLowerCase().includes(query) ||
+      (v.description && v.description.toLowerCase().includes(query)) ||
+      (v.keywords && v.keywords.some(k => k.toLowerCase().includes(query)))
+    );
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-results"><p>해당 영상이 없습니다.</p></div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(v => `
+    <div class="video-card" onclick="playVideo('${v.id}')" style="cursor:pointer">
+      <div class="video-thumb">
+        <img src="https://img.youtube.com/vi/${getYouTubeId(v.url)}/mqdefault.jpg" alt="${v.title}" loading="lazy">
+        <span class="video-duration">${v.duration || ''}</span>
+      </div>
+      <div class="video-info">
+        <div class="video-title">${v.title}</div>
+        <div class="video-meta">${v.category || ''} · ${v.publishedAt || ''}</div>
+      </div>
+    </div>
+  `).join('');
+}

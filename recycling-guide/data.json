@@ -1332,5 +1332,115 @@
       "disposalMethod": "내용물 비우고 라벨 제거 후 플라스틱류 전용 배출",
       "notes": "무색 투명 PET병이 아닌 모든 유색 PET병은 플라스틱류로 배출. 거주지에 따라 처리 기준이 다를 수 있음"
     }
+  ],
+  "videos": [
+    {
+      "id": "v001",
+      "title": "분리배출할 때 90%가 놓치는 반전 쓰레기 5가지",
+      "url": "https://www.youtube.com/shorts/6DxPFIgogiw",
+      "description": "사실상 일반쓰레기인 재활용 품목 5가지를 소개합니다.",
+      "category": "헷갈리는 사례",
+      "keywords": ["헷갈림", "반전", "일반쓰레기"],
+      "duration": "60초"
+    },
+    {
+      "id": "v002",
+      "title": "투명 페트병 올바르게 분리배출하는 법",
+      "url": "https://www.youtube.com/watch?v=kO1GJnM0YQI",
+      "description": "투명 페트병 분리배출의 모든 것. 라벨 제거부터 압착까지.",
+      "category": "PET",
+      "keywords": ["페트병", "투명", "라벨"],
+      "duration": "3분"
+    },
+    {
+      "id": "v003",
+      "title": "분리배출할 때 90%가 놓치는 반전 쓰레기 5가지",
+      "url": "https://www.youtube.com/watch?v=6K1Ho8jcQHg",
+      "description": "헷갈리는 분리배출! 오늘 딱 정해드립니다.",
+      "category": "헷갈리는 사례",
+      "keywords": ["헷갈림", "반전", "일반쓰레기"],
+      "duration": "5분"
+    },
+    {
+      "id": "v004",
+      "title": "2025년 새분리배출법 완벽 정리",
+      "url": "https://www.youtube.com/watch?v=U61Xj2B9aEY",
+      "description": "올해 달라진 분리배출 기준과 새로운 규칙들",
+      "category": "최신 영상",
+      "keywords": ["2025", "변경", "규정"],
+      "duration": "4분"
+    },
+    {
+      "id": "v005",
+      "title": "투명 페트병 3원칙",
+      "url": "https://www.youtube.com/watch?v=bTjP3K1bMxQ",
+      "description": "비우고, 헹구고, 분리한다 - 투명 페트병 올바른 분리배출",
+      "category": "PET",
+      "keywords": ["페트병", "투명", "라벨"],
+      "duration": "3분"
+    },
+    {
+      "id": "v006",
+      "title": "재활용 동백꽃 캠페인",
+      "url": "https://www.youtube.com/watch?v=pV3U2dC9mQw",
+      "description": "서울시 재활용 시민 캠페인 영상",
+      "category": "캠페인",
+      "keywords": ["캠페인", "서울시", "재활용"],
+      "duration": "4분"
+    },
+    {
+      "id": "v007",
+      "title": "어린이를 위한 페트병 분리배출",
+      "url": "https://www.youtube.com/watch?v=zW7R7fK8JmI",
+      "description": "어린이도 쉽게 이해하는 페트병 분리배출 방법",
+      "category": "교육",
+      "keywords": ["어린이", "페트병", "교육"],
+      "duration": "3분"
+    },
+    {
+      "id": "v008",
+      "title": "재활용 동영상 - 올바른 분리배출",
+      "url": "https://www.youtube.com/watch?v=ZG8g9sK1KQo",
+      "description": "재활용품 올바른 분리배출 방법 총정리",
+      "category": "교육",
+      "keywords": ["재활용", "분리배출", "교육"],
+      "duration": "4분"
+    },
+    {
+      "id": "v009",
+      "title": "서울시 분리수거 20초 가이드",
+      "url": "https://www.youtube.com/watch?v=Bmllr2ZiAuk",
+      "description": "20초만에 알아보는 서울시 분리수거 핵심 요약",
+      "category": "요약",
+      "keywords": ["서울시", "분리수거", "요약"],
+      "duration": "1분"
+    },
+    {
+      "id": "v010",
+      "title": "Daily Recycling Tips",
+      "url": "https://www.youtube.com/watch?v=ruT5TZZidOg",
+      "description": "일상 속 올바른 분리배출 방법을 영어로 안내",
+      "category": "교육",
+      "keywords": ["영어", "일상", "분리배출"],
+      "duration": "6분"
+    },
+    {
+      "id": "v011",
+      "title": "플라스틱 분류 완벽 가이드",
+      "url": "https://www.youtube.com/watch?v=kO1GJnM0YQI",
+      "description": "PET, PVC, PS 등 플라스틱 종류별 올바른 분리배출 방법",
+      "category": "플라스틱",
+      "keywords": ["플라스틱", "분류", "재질"],
+      "duration": "5분"
+    },
+    {
+      "id": "v012",
+      "title": "종이팩 vs 종이류 구분하는 법",
+      "url": "https://www.youtube.com/watch?v=6DxPFIgogiw",
+      "description": "우유팩, 두유팩 등 종이팩은 왜 별도로 배출해야 할까요?",
+      "category": "종이",
+      "keywords": ["종이팩", "우유팩", "종이류"],
+      "duration": "4분"
+    }
   ]
 }
