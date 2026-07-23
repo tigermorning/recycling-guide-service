@@ -443,7 +443,9 @@ function matchesCategory(item, category) {
   }
   
   if (category === 'OTHER') {
-    return itemCategory.includes('OTHER');
+    return itemCategory.includes('OTHER') ||
+           item.name.toUpperCase().includes('OTHER') ||
+           (item.aliases && item.aliases.some(alias => alias.toUpperCase().includes('OTHER')));
   }
   
   if (category === '플라스틱') {
