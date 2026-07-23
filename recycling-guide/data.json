@@ -1354,7 +1354,7 @@
     },
     {
       "id": "v003",
-      "title": "분리배출할 때 90%가 놓치는 반전 쓰레기 5가지",
+      "title": "헷갈리는 분리배출 딱! 정해드립니다",
       "url": "https://www.youtube.com/watch?v=6K1Ho8jcQHg",
       "description": "헷갈리는 분리배출! 오늘 딱 정해드립니다.",
       "category": "헷갈리는 사례",
@@ -1363,12 +1363,12 @@
     },
     {
       "id": "v004",
-      "title": "2025년 새분리배출법 완벽 정리",
-      "url": "https://www.youtube.com/watch?v=U61Xj2B9aEY",
-      "description": "올해 달라진 분리배출 기준과 새로운 규칙들",
-      "category": "최신 영상",
-      "keywords": ["2025", "변경", "규정"],
-      "duration": "4분"
+      "title": "분리배출, 우리가 만드는 자원의 미래",
+      "url": "https://www.youtube.com/watch?v=5yo08Tasr8E",
+      "description": "2025 자원순환교육 영상 - 분리배출의 중요성",
+      "category": "교육",
+      "keywords": ["자원순환", "분리배출", "교육"],
+      "duration": "5분"
     },
     {
       "id": "v005",
@@ -1381,39 +1381,39 @@
     },
     {
       "id": "v006",
-      "title": "재활용 동백꽃 캠페인",
-      "url": "https://www.youtube.com/watch?v=pV3U2dC9mQw",
-      "description": "서울시 재활용 시민 캠페인 영상",
-      "category": "캠페인",
-      "keywords": ["캠페인", "서울시", "재활용"],
+      "title": "분리배출 아세요? 한국환경공단",
+      "url": "https://www.youtube.com/watch?v=dG-u224PqxY",
+      "description": "2024 한국환경공단 신입사원 입문교육 미션어워드 수상작",
+      "category": "교육",
+      "keywords": ["환경공단", "분리배출", "교육"],
       "duration": "4분"
     },
     {
       "id": "v007",
-      "title": "어린이를 위한 페트병 분리배출",
-      "url": "https://www.youtube.com/watch?v=zW7R7fK8JmI",
-      "description": "어린이도 쉽게 이해하는 페트병 분리배출 방법",
+      "title": "자원순환의 날 올바른 분리배출 교육",
+      "url": "https://www.youtube.com/watch?v=EF5VKx06FRk",
+      "description": "화성반월중 자원순환의 날 교육 영상",
       "category": "교육",
-      "keywords": ["어린이", "페트병", "교육"],
-      "duration": "3분"
+      "keywords": ["자원순환", "분리배출", "학교"],
+      "duration": "4분"
     },
     {
       "id": "v008",
-      "title": "재활용 동영상 - 올바른 분리배출",
+      "title": "분리배출 교육용 애니메이션",
       "url": "https://www.youtube.com/watch?v=ZG8g9sK1KQo",
-      "description": "재활용품 올바른 분리배출 방법 총정리",
+      "description": "그냥 버리면 쓰레기지만! 잘 버리면 자원이에요!",
       "category": "교육",
-      "keywords": ["재활용", "분리배출", "교육"],
+      "keywords": ["애니메이션", "분리배출", "교육"],
       "duration": "4분"
     },
     {
       "id": "v009",
-      "title": "서울시 분리수거 20초 가이드",
-      "url": "https://www.youtube.com/watch?v=Bmllr2ZiAuk",
-      "description": "20초만에 알아보는 서울시 분리수거 핵심 요약",
-      "category": "요약",
-      "keywords": ["서울시", "분리수거", "요약"],
-      "duration": "1분"
+      "title": "Confused by Recycling Rules?",
+      "url": "https://www.youtube.com/watch?v=GbBr3ZzBVXg",
+      "description": "비.헹.분.섞이 뭔지 알고 계시나요?",
+      "category": "교육",
+      "keywords": ["영어", "분리배출", "규칙"],
+      "duration": "5분"
     },
     {
       "id": "v010",
@@ -1426,21 +1426,21 @@
     },
     {
       "id": "v011",
-      "title": "플라스틱 분류 완벽 가이드",
-      "url": "https://www.youtube.com/watch?v=kO1GJnM0YQI",
-      "description": "PET, PVC, PS 등 플라스틱 종류별 올바른 분리배출 방법",
-      "category": "플라스틱",
-      "keywords": ["플라스틱", "분류", "재질"],
+      "title": "환경배움주간 분리배출 교육",
+      "url": "https://www.youtube.com/watch?v=ad_8Nld-DrU",
+      "description": "중고등 환경배움주간 분리배출 교육 영상",
+      "category": "교육",
+      "keywords": ["학교", "분리배출", "환경"],
       "duration": "5분"
     },
     {
       "id": "v012",
-      "title": "종이팩 vs 종이류 구분하는 법",
-      "url": "https://www.youtube.com/watch?v=6DxPFIgogiw",
-      "description": "우유팩, 두유팩 등 종이팩은 왜 별도로 배출해야 할까요?",
-      "category": "종이",
-      "keywords": ["종이팩", "우유팩", "종이류"],
-      "duration": "4분"
+      "title": "서울시 분리수거 가이드",
+      "url": "https://www.youtube.com/watch?v=Bmllr2ZiAuk",
+      "description": "서울시 분리수거 핵심 요약",
+      "category": "요약",
+      "keywords": ["서울시", "분리수거", "요약"],
+      "duration": "3분"
     }
   ]
 }
