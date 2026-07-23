@@ -467,7 +467,7 @@ function searchItems(query, category = 'all') {
   
   const normalizedQuery = query.toLowerCase().trim();
   
-  return filtered.filter(item => {
+  const matched = filtered.filter(item => {
     if (item.name.toLowerCase().includes(normalizedQuery)) return true;
     
     if (item.aliases && item.aliases.length > 0) {
@@ -477,6 +477,14 @@ function searchItems(query, category = 'all') {
     }
     
     return false;
+  });
+
+  const seen = new Set();
+  return matched.filter(item => {
+    const key = item.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 
@@ -937,6 +945,7 @@ function renderVideoLibrary() {
 
   if (filtered.length === 0) {
     container.innerHTML = '<div class="no-results"><p>해당 영상이 없습니다.</p></div>';
+    document.getElementById('videoCount').textContent = '';
     return;
   }
 
@@ -952,4 +961,6 @@ function renderVideoLibrary() {
       </div>
     </div>
   `).join('');
+
+  document.getElementById('videoCount').textContent = `총 ${filtered.length}개 영상`;
 }
