@@ -405,13 +405,16 @@ function renderRefPage() {
   if (pageItems.length === 0) {
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">검색 결과가 없습니다.</td></tr>';
   } else {
-    tbody.innerHTML = pageItems.map(item => `
-      <tr>
-        <td>${item.name}</td>
-        <td class="${item.binClass}">${item.bin}</td>
-        <td>${item.note}</td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = pageItems.map(item => {
+      const safeName = item.name.replace(/'/g, "\\'");
+      return `
+        <tr onclick="openItemDetailModal('${safeName}')" style="cursor:pointer" title="클릭하여 상세 가이드 보기">
+          <td>${item.name}</td>
+          <td class="${item.binClass}">${item.bin}</td>
+          <td>${item.note}</td>
+        </tr>
+      `;
+    }).join('');
   }
   
   // 빠른 참조 페이징 렌더링
@@ -525,8 +528,9 @@ function renderResults(items, query) {
   resultsContainer.classList.remove('hidden');
   resultsContainer.innerHTML = items.map(item => {
     const confusing = isConfusingItem(item.name);
+    const safeName = item.name.replace(/'/g, "\\'");
     return `
-      <div class="result-item ${confusing ? 'confusing' : ''}">
+      <div class="result-item ${confusing ? 'confusing' : ''}" onclick="openItemDetailModal('${safeName}')">
         <div class="result-header">
           <span class="result-name">${item.name}</span>
           ${confusing ? '<span class="confusing-badge">헷갈리는 품목</span>' : ''}
@@ -547,9 +551,155 @@ function renderResults(items, query) {
             </div>
           ` : ''}
         </div>
+        <button class="detail-btn" onclick="event.stopPropagation(); openItemDetailModal('${safeName}')">상세 가이드 & 출처 보기 🔍</button>
       </div>
     `;
   }).join('');
+}
+
+// ============================================
+// 품목 상세 가이드 모달
+// ============================================
+function openItemDetailModal(name) {
+  let item = recyclingData.find(i => i.name === name || (i.aliases && i.aliases.includes(name)));
+  
+  if (!item) {
+    const quickRef = quickRefData.find(q => q.name === name);
+    if (quickRef) {
+      item = {
+        name: quickRef.name,
+        aliases: [],
+        category: quickRef.bin,
+        bin: quickRef.bin,
+        disposalMethod: quickRef.note,
+        notes: quickRef.note
+      };
+    }
+  }
+
+  if (!item) return;
+
+  const modal = document.getElementById('itemDetailModal');
+  const container = document.getElementById('itemDetailContent');
+  const confusing = isConfusingItem(item.name);
+  const binClass = getBinClass(item.bin || '');
+
+  let detailedContentHTML = '';
+
+  if (item.name === '유리병' || item.name.includes('유리병')) {
+    detailedContentHTML = `
+      <div class="item-detail-section tip">
+        <h4>🎨 왜 색상별(무색, 녹색, 갈색)로 구분하여 배출해야 하나요?</h4>
+        <p>유리병은 수거 후 고온(1,500℃ 이상)에서 녹여 다시 새로운 유리병으로 재생산됩니다.</p>
+        <p>이때 무색(투명), 녹색, 갈색 유리병이 섞여 용해되면 유리의 투명도와 색상 균일성이 파괴되어 고품질 새 유리병을 만들 수 없습니다. 따라서 3가지 주요 색상별로 분류해 배출해야 순도 높고 고가치 자원으로 재활용됩니다.</p>
+      </div>
+
+      <div class="item-detail-section">
+        <h4>🏷️ 상표(라벨) 제거는 의무인가요?</h4>
+        <p><strong>아닙니다. '가능한 경우 제거'하는 권장 사항입니다.</strong></p>
+        <ul>
+          <li><strong>비닐 상표</strong>: 손으로 쉽게 떼어지는 비닐 포장 라벨은 떼어내어 비닐류로 별도 배출합니다.</li>
+          <li><strong>종이 상표 / 접착 스티커</strong>: 유리병 재활용 공정(고온 알칼리 세척액)에서 세척 중 종이 상표와 접착제가 자동으로 용해되어 제거됩니다. 무리하게 억지로 떼어낼 필요 없이 배출하셔도 됩니다. (투명 페트병과 달리 미이행 시 과태료 부과 대상이 아닙니다.)</li>
+        </ul>
+      </div>
+
+      <div class="item-detail-section tip">
+        <h4>💰 빈용기 보증금 환급 제도</h4>
+        <p>소주병, 맥주병 등 용기 겉면에 <strong>'빈용기보증금'</strong> 문구가 표기된 병은 파손되지 않게 깨끗이 모아 대형마트·슈퍼마켓 등 소매점에 반납하면 보증금(70원~130원)을 현금으로 환급받을 수 있습니다.</p>
+      </div>
+
+      <div class="item-detail-section warning">
+        <h4>⚠️ 배출 시 주의사항 & 재활용 불가 유리</h4>
+        <p>깨진 유리, 거울, 내열 식기, 도자기·사기그릇, 크리스탈, 판유리, 전구 등은 <strong>재활용 대상이 아닙니다.</strong></p>
+        <p>신문지 등으로 여러 겹 싸서 종량제봉투에 담거나, 다량일 경우 특수규격마대에 담아 배출하세요.</p>
+      </div>
+    `;
+  } else if (item.name.includes('깨진 유리') || item.name.includes('거울') || item.name.includes('사기')) {
+    detailedContentHTML = `
+      <div class="item-detail-section warning">
+        <h4>🚨 깨진 유리 및 특수 유리 배출 가이드</h4>
+        <p>깨진 유리, 거울, 내열 유리, 도자기류는 수거 작업자의 부상 위험 및 기계 고장을 일으켜 <strong>재활용이 불가</strong>합니다.</p>
+        <ul>
+          <li><strong>소량 배출</strong>: 신문지나 안 쓰는 상자로 여러 겹 꼼꼼히 싼 후 종량제봉투에 배출하세요.</li>
+          <li><strong>다량 배출</strong>: 지자체 특수규격마대(불연성 쓰레기 봉투)를 구매하여 배출하세요.</li>
+        </ul>
+      </div>
+    `;
+  } else if (item.name.includes('OTHER') || item.name.includes('플라스틱 OTHER')) {
+    detailedContentHTML = `
+      <div class="item-detail-section warning">
+        <h4>⚠️ 7번 OTHER 플라스틱 배출 가이드</h4>
+        <p>용기나 포장재 바닥에 <strong>'7'</strong> 또는 <strong>'OTHER'</strong>로 표기된 플라스틱은 두 가지 이상의 재질이 섞인 복합 플라스틱입니다.</p>
+        <p>재활용 선별장에서 재질별 기계 선별이 불가능하므로 <strong>종량제봉투(일반쓰레기)</strong>에 배출하는 것이 올바른 방법입니다.</p>
+      </div>
+    `;
+  } else if (item.name.includes('투명') || item.name.includes('페트')) {
+    detailedContentHTML = `
+      <div class="item-detail-section tip">
+        <h4>🥤 투명 페트병 전용 분리배출 가이드</h4>
+        <p>무색 투명 페트병은 고품질 의류 원사 및 가방 등으로 재활용되는 귀중한 자원입니다.</p>
+        <ul>
+          <li><strong>라벨 제거 (필수 의무)</strong>: 라벨을 완전히 떼어 비닐류로 따로 배출해야 합니다. (미이행 시 과태료 대상)</li>
+          <li><strong>압착 및 뚜껑</strong>: 내용물을 비우고 압착 후 뚜껑을 닫아 전용 수거함에 배출합니다.</li>
+        </ul>
+      </div>
+    `;
+  } else if (item.name.includes('종이팩') || item.name.includes('우유팩')) {
+    detailedContentHTML = `
+      <div class="item-detail-section tip">
+        <h4>🥛 종이팩(우유팩·두유팩) 배출 가이드</h4>
+        <p>종이팩은 고급 고급 펄프로 제작되어 일반 폐지와 섞이면 재활용되지 못하고 버려집니다.</p>
+        <p>내용물을 비우고 씻은 후 펼쳐서 건조시킨 뒤 <strong>종이팩 전용 수거함</strong> 또는 주민센터 교환 사업(휴지/종량제봉투 교환)에 배출하세요.</p>
+      </div>
+    `;
+  } else {
+    detailedContentHTML = `
+      <div class="item-detail-section">
+        <h4>📋 올바른 분리배출 4원칙</h4>
+        <ul>
+          <li><strong>1. 비운다</strong>: 용기 안의 내용물을 완전히 비웁니다.</li>
+          <li><strong>2. 헹군다</strong>: 음식물이나 이물질을 물로 깨끗이 헹웁니다.</li>
+          <li><strong>3. 분리한다</strong>: 라벨, 뚜껑 등 다른 재질을 분리합니다.</li>
+          <li><strong>4. 섞지 않는다</strong>: 종류별, 재질별로 구분하여 해당 수거함에 배출합니다.</li>
+        </ul>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="item-detail-header">
+      <div class="item-detail-title-row">
+        <span class="item-detail-title">${item.name}</span>
+        ${confusing ? '<span class="confusing-badge">헷갈리는 품목</span>' : ''}
+        <span class="bin-badge ${binClass}">${item.bin}</span>
+      </div>
+      ${item.aliases && item.aliases.length > 0 ? `
+        <div class="item-detail-alias">별명/관련 키워드: ${item.aliases.join(', ')}</div>
+      ` : ''}
+    </div>
+
+    <div class="item-detail-section">
+      <h4>📌 기본 배출 방법</h4>
+      <p>${item.disposalMethod}</p>
+      ${item.notes ? `<p><strong>참고사항:</strong> ${item.notes}</p>` : ''}
+    </div>
+
+    ${detailedContentHTML}
+
+    <div class="source-box">
+      <strong>🏛️ 공식 가이드 및 법적 출처</strong>
+      • 환경부 훈령 「재활용가능자원의 분리수거 등에 관한 지침」 [별표 1]<br>
+      • 서울특별시 자원순환과 분리배출 가이드라인 (2025-2026)<br>
+      • 환경부 공식 앱 「내 손안의 분리배출」
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closeItemDetailModal() {
+  const modal = document.getElementById('itemDetailModal');
+  if (modal) modal.classList.add('hidden');
 }
 
 function setupCategoryTabs() {
@@ -814,7 +964,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.target.id === 'authModal') closeModal();
     if (e.target.id === 'videoPlayerModal') closeVideoPlayer();
     if (e.target.id === 'videoLibraryModal') closeVideoLibrary();
+    if (e.target.id === 'itemDetailModal') closeItemDetailModal();
   });
+
+  const closeItemDetailBtn = document.getElementById('closeItemDetailModal');
+  if (closeItemDetailBtn) {
+    closeItemDetailBtn.addEventListener('click', closeItemDetailModal);
+  }
 
   document.getElementById('closeVideoPlayerModal').addEventListener('click', closeVideoPlayer);
   document.getElementById('closeVideoLibraryModal').addEventListener('click', closeVideoLibrary);
