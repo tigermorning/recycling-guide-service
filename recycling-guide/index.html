@@ -20,6 +20,37 @@
     </header>
 
     <main>
+      <!-- 지역별 차이 안내 -->
+      <div class="location-tip">
+        <span class="tip-icon">!</span>
+        <span>이 가이드는 서울시 기본 기준입니다. 거주지(아파트, 직장 등)에 따라 배출 방법이 다를 수 있으니 관리사무소에 확인하세요.</span>
+      </div>
+
+      <!-- 검색 입력 -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="품목을 입력하세요 (예: 비닐, 코팅된 종이, 충전선)"
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- 카테고리 필터 탭 -->
+      <div class="category-tabs">
+        <button class="tab-btn active" data-category="all">전체</button>
+        <button class="tab-btn" data-category="종이류">종이류</button>
+        <button class="tab-btn" data-category="플라스틱">플라스틱</button>
+        <button class="tab-btn" data-category="비닐">비닐</button>
+        <button class="tab-btn" data-category="유리">유리</button>
+        <button class="tab-btn" data-category="금속">금속</button>
+        <button class="tab-btn" data-category="대형폐기물">대형</button>
+        <button class="tab-btn" data-category="OTHER">OTHER</button>
+      </div>
+
+      <!-- 검색 결과 (검색 시에만 표시) -->
+      <div id="results" class="results hidden"></div>
+
       <!-- 분리배출 4원칙 카드 -->
       <div class="principles-card">
         <h2>분리배출 4원칙</h2>
@@ -57,37 +88,6 @@
 
       <!-- 교육 영상 -->
       <div id="videoBanner" class="video-banner hidden"></div>
-
-      <!-- 지역별 차이 안내 -->
-      <div class="location-tip">
-        <span class="tip-icon">!</span>
-        <span>이 가이드는 서울시 기본 기준입니다. 거주지(아파트, 직장 등)에 따라 배출 방법이 다를 수 있으니 관리사무소에 확인하세요.</span>
-      </div>
-
-      <!-- 검색 입력 -->
-      <div class="search-box">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="품목을 입력하세요 (예: 비닐, 코팅된 종이, 충전선)"
-          autocomplete="off"
-        >
-      </div>
-
-      <!-- 카테고리 필터 탭 -->
-      <div class="category-tabs">
-        <button class="tab-btn active" data-category="all">전체</button>
-        <button class="tab-btn" data-category="종이류">종이류</button>
-        <button class="tab-btn" data-category="플라스틱">플라스틱</button>
-        <button class="tab-btn" data-category="비닐">비닐</button>
-        <button class="tab-btn" data-category="유리">유리</button>
-        <button class="tab-btn" data-category="금속">금속</button>
-        <button class="tab-btn" data-category="대형폐기물">대형</button>
-        <button class="tab-btn" data-category="OTHER">OTHER</button>
-      </div>
-
-      <!-- 검색 결과 (검색 시에만 표시) -->
-      <div id="results" class="results hidden"></div>
 
       <!-- 클래스 & 빠른 참조 2단 배치 -->
       <div class="bottom-section">
@@ -202,6 +202,7 @@
         </select>
       </div>
       <div id="videoLibraryGrid" class="video-library-grid"></div>
+      <div id="videoCount" class="video-count"></div>
     </div>
   </div>
 

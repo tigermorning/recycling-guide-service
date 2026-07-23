@@ -1157,7 +1157,7 @@ footer {
 .video-library-modal {
   max-width: 900px;
   width: 95%;
-  max-height: 85vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1210,6 +1210,21 @@ footer {
   flex: 1;
   min-height: 0;
   padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.video-library-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.video-library-grid::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.video-library-grid::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .video-library-grid .video-card {
@@ -1228,6 +1243,14 @@ footer {
 
 .video-library-grid .video-meta {
   color: #6b7280;
+}
+
+.video-count {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  padding: 8px 0 0;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
