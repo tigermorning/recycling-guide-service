@@ -567,7 +567,7 @@ header h1 {
 /* 2단 배치 섹션 */
 .bottom-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 32px;
   margin-top: 20px;
   padding-top: 16px;
