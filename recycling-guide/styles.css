@@ -142,6 +142,53 @@ header h1 {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* 검색어 지우기(홈으로) 버튼 */
+.search-input-wrap {
+  position: relative;
+}
+
+.search-input-wrap #searchInput {
+  padding-right: 48px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #555;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.clear-search-btn:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.clear-search-btn.hidden {
+  display: none;
+}
+
+/* 클릭 가능한 홈 타이틀 */
+#homeTitle {
+  cursor: pointer;
+}
+
+#homeTitle:hover {
+  opacity: 0.8;
+}
+
 /* 카테고리 탭 */
 .category-tabs {
   display: flex;

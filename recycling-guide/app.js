@@ -702,6 +702,36 @@ function closeItemDetailModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+// 검색 초기화 후 홈 화면으로 복귀
+function resetToHome() {
+  const searchInput = document.getElementById('searchInput');
+  searchInput.value = '';
+
+  // 카테고리 필터를 '전체'로 초기화
+  currentCategory = 'all';
+  document.querySelectorAll('.tab-btn').forEach(t => {
+    t.classList.toggle('active', t.dataset.category === 'all');
+  });
+
+  // 검색 결과 숨김
+  const results = document.getElementById('results');
+  results.classList.add('hidden');
+  results.innerHTML = '';
+
+  // 지우기 버튼 숨김
+  document.getElementById('clearSearchBtn').classList.add('hidden');
+
+  // 화면 최상단으로 이동
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  searchInput.focus();
+}
+
+// 지우기 버튼 표시 여부 갱신
+function updateClearButton() {
+  const hasQuery = document.getElementById('searchInput').value.trim() !== '';
+  document.getElementById('clearSearchBtn').classList.toggle('hidden', !hasQuery);
+}
+
 function setupCategoryTabs() {
   const tabs = document.querySelectorAll('.tab-btn');
   
@@ -944,12 +974,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   let debounceTimer;
   
   searchInput.addEventListener('input', (e) => {
+    updateClearButton();
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       const query = e.target.value;
       const results = searchItems(query, currentCategory);
       renderResults(results, query);
     }, 150);
+  });
+
+  // 검색 지우고 홈으로
+  document.getElementById('clearSearchBtn').addEventListener('click', resetToHome);
+  document.getElementById('homeTitle').addEventListener('click', resetToHome);
+
+  // ESC 키로도 검색 초기화
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') resetToHome();
   });
   
   // 모달 이벤트

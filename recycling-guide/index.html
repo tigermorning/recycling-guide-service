@@ -11,7 +11,7 @@
   <div class="container">
     <header>
       <div class="header-top">
-        <h1>서울시 분리수거 가이드</h1>
+        <h1 id="homeTitle" title="홈으로 돌아가기">서울시 분리수거 가이드</h1>
         <div id="authSection" class="auth-section">
           <button id="loginBtn" class="auth-btn">로그인</button>
         </div>
@@ -28,12 +28,15 @@
 
       <!-- 검색 입력 -->
       <div class="search-box">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="품목을 입력하세요 (예: 비닐, 코팅된 종이, 충전선)"
-          autocomplete="off"
-        >
+        <div class="search-input-wrap">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="품목을 입력하세요 (예: 비닐, 코팅된 종이, 충전선)"
+            autocomplete="off"
+          >
+          <button id="clearSearchBtn" class="clear-search-btn hidden" type="button" title="검색 지우고 홈으로" aria-label="검색 지우기">&times;</button>
+        </div>
       </div>
 
       <!-- 카테고리 필터 탭 -->
