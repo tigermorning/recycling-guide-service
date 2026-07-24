@@ -1656,20 +1656,20 @@ footer {
   padding: 12px 18px;
   border: none;
   border-radius: 28px;
-  background: #f97316;
+  background: #a855f7;
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
   transition: all 0.3s ease;
   z-index: 1000;
 }
 
 .quick-ref-fab:hover {
-  background: #ea580c;
+  background: #9333ea;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
 }
 
 .fab-icon {
@@ -1705,7 +1705,7 @@ footer {
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  background: #f97316;
+  background: #a855f7;
   color: white;
 }
 
