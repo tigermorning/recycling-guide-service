@@ -968,6 +968,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupAdminEvents();
   loadClasses();
   initQuickRef();
+  renderMarkGuide();
+
+  // 마크 가이드 아코디언 토글
+  const markGuideToggle = document.getElementById('markGuideToggle');
+  const markGrid = document.getElementById('markGrid');
+  if (markGuideToggle && markGrid) {
+    markGuideToggle.addEventListener('click', () => {
+      markGuideToggle.classList.toggle('open');
+      markGrid.classList.toggle('mark-grid-collapsed');
+    });
+  }
+
   renderVideoBanner();
   
   const searchInput = document.getElementById('searchInput');
@@ -1019,6 +1031,63 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   searchInput.focus();
 });
+
+// ============================================
+// 분리배출 표시(재질 마크) 가이드
+// ============================================
+// 출처: 환경부 「분리배출 표시에 관한 지침」, 서울시 자원순환과 분리배출 안내(2025)
+const recycleMarks = [
+  { code: 'PET', num: '①', label: '페트 · PET', bin: '무색투명: 페트 전용 / 유색: 플라스틱류', binClass: 'type-pet',
+    tip: '생수·음료 페트병. 무색 투명은 라벨 떼고 압착해 투명페트병 전용함에, 유색·간장통 등은 플라스틱류로.' },
+  { code: 'HDPE', num: '②', label: '고밀도 폴리에틸렌 · HDPE', bin: '플라스틱류', binClass: 'type-plastic',
+    tip: '샴푸·세제 용기, 우유병, 단단한 플라스틱. 내용물 비우고 헹궈 플라스틱류로.' },
+  { code: 'PVC', num: '③', label: '폴리염화비닐 · PVC', bin: '대부분 종량제', binClass: 'type-general', warn: true,
+    tip: '랩·장판·파이프 등. 재활용이 어려워 대부분 종량제봉투. 포장재에는 거의 쓰이지 않음.' },
+  { code: 'LDPE', num: '④', label: '저밀도 폴리에틸렌 · LDPE', bin: '용기: 플라스틱류 / 필름: 비닐류', binClass: 'type-plastic',
+    tip: '지퍼백, 비닐봉투, 짜는 튜브. 필름 형태면 깨끗이 모아 비닐류로.' },
+  { code: 'PP', num: '⑤', label: '폴리프로필렌 · PP', bin: '플라스틱류', binClass: 'type-plastic',
+    tip: '반찬통, 요구르트병, 빨대, 밀폐용기. 내용물 비우고 헹궈 플라스틱류로.' },
+  { code: 'PS', num: '⑥', label: '폴리스티렌 · PS', bin: '깨끗하면 플라스틱류 / 오염 시 종량제', binClass: 'type-plastic',
+    tip: '요구르트병, 일회용 숟가락·컵. 깨끗하면 플라스틱류, 음식물 오염 시 종량제.' },
+  { code: 'OTHER', num: '⑦', label: '복합재질 · OTHER', bin: '대부분 종량제(일반쓰레기)', binClass: 'type-general', warn: true,
+    tip: '두 가지 이상 재질이 섞인 플라스틱. 재질 분리·선별이 안 되므로 종량제봉투로.' },
+  { code: '비닐류', num: '', label: '비닐류(필름)', bin: '비닐류(깨끗할 때)', binClass: 'type-plastic',
+    tip: '라면·과자 봉지, 비닐봉투, 에어캡, 세탁소 비닐. 마크가 없어도 이물질 없이 깨끗하면 비닐류로 배출.' },
+  { code: '비닐류 OTHER', num: '', label: '비닐류 OTHER(복합필름)', bin: '깨끗하면 비닐류 / 오염 시 종량제', binClass: 'type-general', warn: true,
+    tip: '여러 겹 재질을 붙인 파우치·포장 필름. 깨끗하면 비닐류로 배출하되, 이물질 제거가 어려우면 종량제.' },
+  { code: '종이', num: '', label: '종이', bin: '종이류', binClass: 'type-paper',
+    tip: '신문, 책, 상자. 테이프·스프링·비닐코팅을 제거하고 펴서 배출. 코팅된 종이(영수증·전단)는 종량제.' },
+  { code: '종이팩', num: '', label: '종이팩(일반팩·멸균팩)', bin: '종이팩 전용(없으면 종이류)', binClass: 'type-paper',
+    tip: '우유팩·두유팩·주스팩. 내용물 비우고 헹궈 펼쳐 말린 뒤 종이팩 전용 수거함으로. 일반 종이와 섞지 않기.' },
+  { code: '철', num: '', label: '철(철캔)', bin: '캔류(금속)', binClass: 'type-metal',
+    tip: '통조림·부탄가스 캔. 내용물 비우고 압착해 캔류로. 부탄가스는 구멍 뚫어 가스 완전 제거.' },
+  { code: '알미늄', num: '', label: '알미늄(알루미늄캔)', bin: '캔류(금속)', binClass: 'type-metal',
+    tip: '음료수 캔. 내용물 비우고 압착해 캔류로. 담배꽁초 등 이물질 넣지 않기.' },
+  { code: '유리', num: '', label: '유리', bin: '유리류', binClass: 'type-glass',
+    tip: '음료·양념 유리병. 내용물 비우고 뚜껑 분리해 색깔별로. 깨진 유리·거울·도자기는 재활용 불가(종량제).' },
+  { code: '스티로폼', num: '', label: '발포합성수지(스티로폼)', bin: '깨끗한 흰색: 스티로폼 전용 / 오염·유색: 종량제', binClass: 'type-plastic', warn: true,
+    tip: '전자제품 완충재, 흰색 스티로폼 상자. 이물질·테이프 제거하고 깨끗한 흰색만 배출. 색깔·오염된 것은 종량제.' },
+  { code: '도포첩합', num: '', label: '도포·첩합 포장재', bin: '대부분 종량제', binClass: 'type-general', warn: true,
+    tip: '종이에 비닐·알루미늄을 겹쳐 붙인 복합 포장재(일부 파우치·포장지). 재질 분리가 어려워 대부분 종량제.' },
+];
+
+function renderMarkGuide() {
+  const grid = document.getElementById('markGrid');
+  if (!grid) return;
+  grid.innerHTML = recycleMarks.map(m => `
+    <div class="mark-card ${m.warn ? 'warn' : ''}">
+      <div class="mark-symbol ${m.binClass}">
+        <span class="mark-recycle">♺</span>
+        <span class="mark-code">${m.num ? m.num + ' ' : ''}${m.code}</span>
+      </div>
+      <div class="mark-body">
+        <div class="mark-label">${m.label}</div>
+        <span class="bin-badge ${m.binClass}">${m.bin}</span>
+        <p class="mark-tip">${m.tip}</p>
+      </div>
+    </div>
+  `).join('');
+}
 
 // ============================================
 // 교육 영상 섹션
