@@ -1645,3 +1645,47 @@ footer {
   border-color: #2563eb;
 }
 
+/* 빠른 참조 플로팅 버튼 (FAB) */
+.quick-ref-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 28px;
+  background: #2563eb;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.quick-ref-fab:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.fab-icon {
+  font-size: 1.1rem;
+}
+
+.fab-text {
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .quick-ref-fab {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+}
+
