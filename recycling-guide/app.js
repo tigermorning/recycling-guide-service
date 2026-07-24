@@ -1005,10 +1005,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('homeTitle').addEventListener('click', resetToHome);
 
   // 빠른 참조 플로팅 버튼
-  document.getElementById('quickRefFab').addEventListener('click', () => {
-    const quickRef = document.querySelector('.quick-reference');
-    if (quickRef) {
-      quickRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const quickRefFab = document.getElementById('quickRefFab');
+  const quickRefPopup = document.getElementById('quickRefPopup');
+  const closeQuickRefPopup = document.getElementById('closeQuickRefPopup');
+  const popupRefSearch = document.getElementById('popupRefSearch');
+  const popupRefCategory = document.getElementById('popupRefCategory');
+  const popupRefContent = document.getElementById('popupRefContent');
+
+  function renderPopupRefItems() {
+    const searchTerm = popupRefSearch.value.toLowerCase();
+    const category = popupRefCategory.value;
+    const items = quickRefData.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.note.toLowerCase().includes(searchTerm);
+      const matchesCategory = category === 'all' || item.bin === category;
+      return matchesSearch && matchesCategory;
+    });
+
+    if (items.length === 0) {
+      popupRefContent.innerHTML = '<p style="text-align:center; padding:20px; color:#888;">검색 결과가 없습니다.</p>';
+      return;
+    }
+
+    popupRefContent.innerHTML = `
+      <table class="popup-ref-table">
+        <thead><tr><th>품목</th><th>배출 방법</th><th>비고</th></tr></thead>
+        <tbody>
+          ${items.map(item => `
+            <tr onclick="openItemDetailModal('${item.name.replace(/'/g, "\\'")}')" style="cursor:pointer" title="상세 가이드 보기">
+              <td>${item.name}</td>
+              <td class="${item.binClass}">${item.bin}</td>
+              <td>${item.note}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  quickRefFab.addEventListener('click', () => {
+    quickRefPopup.classList.toggle('hidden');
+    if (!quickRefPopup.classList.contains('hidden')) {
+      renderPopupRefItems();
+    }
+  });
+
+  closeQuickRefPopup.addEventListener('click', () => {
+    quickRefPopup.classList.add('hidden');
+  });
+
+  popupRefSearch.addEventListener('input', renderPopupRefItems);
+  popupRefCategory.addEventListener('change', renderPopupRefItems);
+
+  document.addEventListener('click', (e) => {
+    if (!quickRefPopup.contains(e.target) && !quickRefFab.contains(e.target)) {
+      quickRefPopup.classList.add('hidden');
     }
   });
 

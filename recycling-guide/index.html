@@ -272,6 +272,27 @@
     <span class="fab-text">빠른 참조</span>
   </button>
 
+  <!-- 빠른 참조 팝업 -->
+  <div id="quickRefPopup" class="quick-ref-popup hidden">
+    <div class="quick-ref-popup-header">
+      <h3>헷갈리는 품목 빠른 참조</h3>
+      <button id="closeQuickRefPopup" class="quick-ref-popup-close">&times;</button>
+    </div>
+    <div class="quick-ref-popup-body">
+      <input type="text" id="popupRefSearch" placeholder="품목 검색...">
+      <select id="popupRefCategory">
+        <option value="all">전체</option>
+        <option value="일반쓰레기">일반쓰레기</option>
+        <option value="플라스틱류">플라스틱류</option>
+        <option value="투명페트병">투명페트병</option>
+        <option value="종이류">종이류</option>
+        <option value="유리류">유리류</option>
+        <option value="금속류">금속류</option>
+      </select>
+      <div id="popupRefContent"></div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

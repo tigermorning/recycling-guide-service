@@ -1656,20 +1656,20 @@ footer {
   padding: 12px 18px;
   border: none;
   border-radius: 28px;
-  background: #2563eb;
+  background: #f97316;
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
   transition: all 0.3s ease;
   z-index: 1000;
 }
 
 .quick-ref-fab:hover {
-  background: #1d4ed8;
+  background: #ea580c;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
 }
 
 .fab-icon {
@@ -1680,12 +1680,106 @@ footer {
   font-weight: 500;
 }
 
+/* 빠른 참조 팝업 */
+.quick-ref-popup {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-ref-popup.hidden {
+  display: none;
+}
+
+.quick-ref-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #f97316;
+  color: white;
+}
+
+.quick-ref-popup-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.quick-ref-popup-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.quick-ref-popup-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.quick-ref-popup-body input,
+.quick-ref-popup-body select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.quick-ref-popup-body select {
+  margin-left: 0;
+}
+
+.popup-ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.popup-ref-table th,
+.popup-ref-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.popup-ref-table th {
+  background: #f8f8f8;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
 @media (max-width: 640px) {
   .quick-ref-fab {
     bottom: 16px;
     right: 16px;
     padding: 10px 14px;
     font-size: 0.82rem;
+  }
+
+  .quick-ref-popup {
+    right: 12px;
+    left: 12px;
+    bottom: 72px;
+    width: auto;
+    max-height: 55vh;
   }
 }
 
