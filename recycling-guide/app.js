@@ -12,11 +12,8 @@ let currentUser = null;
 
 // 페이지네이션 설정
 const CLASS_PER_PAGE = 4;
-const REF_PER_PAGE = 11;
 let currentClassPage = 1;
-let currentRefPage = 1;
 let allClasses = [];
-let filteredRefItems = [];
 
 // 빠른 참조 데이터
 const quickRefData = [
@@ -370,59 +367,8 @@ function renderPagination(containerId, currentPage, totalPages, onPageChange) {
 
 // ============================================
 // 빠른 참조 관련
+// (하단 표는 제거하고 우하단 FAB 팝업의 renderPopupRefItems()로 일원화함)
 // ============================================
-function initQuickRef() {
-  filteredRefItems = [...quickRefData];
-  renderRefPage();
-  
-  // 검색 이벤트
-  document.getElementById('refSearchInput').addEventListener('input', filterRefItems);
-  document.getElementById('refCategoryFilter').addEventListener('change', filterRefItems);
-}
-
-function filterRefItems() {
-  const searchTerm = document.getElementById('refSearchInput').value.toLowerCase();
-  const category = document.getElementById('refCategoryFilter').value;
-  
-  filteredRefItems = quickRefData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm) || 
-                          item.note.toLowerCase().includes(searchTerm);
-    const matchesCategory = category === 'all' || item.bin === category;
-    return matchesSearch && matchesCategory;
-  });
-  
-  currentRefPage = 1;
-  renderRefPage();
-}
-
-function renderRefPage() {
-  const tbody = document.getElementById('refTableBody');
-  const totalPages = Math.ceil(filteredRefItems.length / REF_PER_PAGE);
-  const startIdx = (currentRefPage - 1) * REF_PER_PAGE;
-  const endIdx = startIdx + REF_PER_PAGE;
-  const pageItems = filteredRefItems.slice(startIdx, endIdx);
-  
-  if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">검색 결과가 없습니다.</td></tr>';
-  } else {
-    tbody.innerHTML = pageItems.map(item => {
-      const safeName = item.name.replace(/'/g, "\\'");
-      return `
-        <tr onclick="openItemDetailModal('${safeName}')" style="cursor:pointer" title="클릭하여 상세 가이드 보기">
-          <td>${item.name}</td>
-          <td class="${item.binClass}">${item.bin}</td>
-          <td>${item.note}</td>
-        </tr>
-      `;
-    }).join('');
-  }
-  
-  // 빠른 참조 페이징 렌더링
-  renderPagination('refPagination', currentRefPage, totalPages, (page) => {
-    currentRefPage = page;
-    renderRefPage();
-  });
-}
 
 // ============================================
 // 검색 기능
@@ -967,7 +913,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCategoryTabs();
   setupAdminEvents();
   loadClasses();
-  initQuickRef();
   renderMarkGuide();
 
   // 마크 가이드 아코디언 토글
