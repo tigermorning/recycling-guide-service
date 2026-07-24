@@ -218,10 +218,6 @@ header h1 {
   transform: rotate(180deg);
 }
 
-.mark-grid-collapsed {
-  display: none;
-}
-
 /* 분리배출 표시(마크) 가이드 */
 .mark-guide-card {
   background: white;
@@ -284,6 +280,10 @@ header h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
+}
+
+.mark-grid-collapsed {
+  display: none;
 }
 
 .mark-card {
