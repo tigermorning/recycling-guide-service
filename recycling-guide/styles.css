@@ -654,32 +654,6 @@ footer {
   margin-bottom: 8px;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* 빠른 참조 버튼 */
-.quick-ref-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.quick-ref-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-}
-
 /* 인증 섹션 */
 .auth-section {
   display: flex;
