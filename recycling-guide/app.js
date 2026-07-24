@@ -973,10 +973,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 마크 가이드 아코디언 토글
   const markGuideToggle = document.getElementById('markGuideToggle');
   const markGrid = document.getElementById('markGrid');
+  const toggleLabel = markGuideToggle ? markGuideToggle.querySelector('.toggle-label') : null;
   if (markGuideToggle && markGrid) {
     markGuideToggle.addEventListener('click', () => {
       markGuideToggle.classList.toggle('open');
       markGrid.classList.toggle('mark-grid-collapsed');
+      if (toggleLabel) {
+        const isOpen = markGuideToggle.classList.contains('open');
+        toggleLabel.innerHTML = (isOpen ? '접기' : '펼치기') + ' <span class="toggle-arrow">▼</span>';
+      }
     });
   }
 
