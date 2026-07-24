@@ -1004,6 +1004,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('clearSearchBtn').addEventListener('click', resetToHome);
   document.getElementById('homeTitle').addEventListener('click', resetToHome);
 
+  // 빠른 참조로 스크롤
+  document.getElementById('quickRefBtn').addEventListener('click', () => {
+    const quickRef = document.querySelector('.quick-reference');
+    if (quickRef) {
+      quickRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
   // ESC 키로도 검색 초기화
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') resetToHome();
