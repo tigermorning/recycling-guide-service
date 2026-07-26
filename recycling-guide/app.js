@@ -37,7 +37,7 @@ const quickRefData = [
   { name: 'PP 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '도시락 용기, 식품 용기 등' },
   { name: 'HDPE 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '샴푸 용기, 세제 용기 등' },
   { name: 'LDPE 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '비닐봉지, 랩 등' },
-  { name: 'OTHER 플라스틱', bin: '플라스틱류', binClass: 'bin-plastic', note: '혼합 소재 플라스틱' },
+  { name: 'OTHER 플라스틱', bin: '일반쓰레기', binClass: 'bin-general', note: '복합재질(7번), 종량제' },
   { name: '비닐 vs 플라스틱', bin: '둘 다 플라스틱류', binClass: 'bin-plastic', note: '비닐은 부드럽고 투명, 플라스틱은 단단함' },
   { name: '랩 필름', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
   { name: '비닐 식탁보', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
