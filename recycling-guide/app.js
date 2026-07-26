@@ -2,7 +2,10 @@
 const SUPABASE_URL = 'https://eeckxfisgkdbncugzroi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlY2t4ZmlzZ2tkYm5jdWd6cm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2OTEyODcsImV4cCI6MjEwMDI2NzI4N30.TK3kPZYPkUS9p5kXr64nGuyFVlB8zta4rBkQZa7Qyrw';
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase 라이브러리(CDN)가 로드되지 않아도 분리수거 가이드·검색·마크가이드는 동작하도록 안전 생성
+const supabaseClient = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 // 분리수거 데이터
 let recyclingData = [];
@@ -79,7 +82,7 @@ const confusingItems = [
 // ============================================
 async function loadData() {
   try {
-    const response = await fetch('data.json');
+    const response = await fetch('data.json?v=' + Date.now());
     const data = await response.json();
     recyclingData = data.items;
     allVideos = data.videos || [];
@@ -94,6 +97,7 @@ async function loadData() {
 // 인증 관련
 // ============================================
 async function initAuth() {
+  if (!supabaseClient) return;
   const { data: { session } } = await supabaseClient.auth.getSession();
   currentUser = session?.user || null;
   updateAuthUI();
@@ -201,7 +205,11 @@ async function logout() {
 // ============================================
 async function loadClasses() {
   const classList = document.getElementById('classList');
-  
+  if (!supabaseClient) {
+    if (classList) classList.innerHTML = '<p class="muted">로그인·수강신청 기능은 현재 이용할 수 없습니다. 분리수거 검색은 정상 동작합니다.</p>';
+    return;
+  }
+
   const { data: classes, error } = await supabaseClient
     .from('classes')
     .select('*')
@@ -910,10 +918,15 @@ function setupAdminEvents() {
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData();
-  await initAuth();
+  // 인증·수강신청(Supabase)이 실패해도 가이드/검색/마크가이드는 반드시 동작하도록 분리
+  try {
+    await initAuth();
+    setupAdminEvents();
+    loadClasses();
+  } catch (e) {
+    console.error('인증·클래스 초기화 실패(가이드는 정상 동작):', e);
+  }
   setupCategoryTabs();
-  setupAdminEvents();
-  loadClasses();
   renderMarkGuide();
 
   // 마크 가이드 아코디언 토글
