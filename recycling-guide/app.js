@@ -17,7 +17,7 @@ let allClasses = [];
 
 // 빠른 참조 데이터
 const quickRefData = [
-  { name: '검은색 플라스틱', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 선별 불가' },
+  { name: '검은색 플라스틱', bin: '일반쓰레기', binClass: 'bin-general', note: '선별 효율 낮음(자치구 확인)' },
   { name: '컵라면 용기', bin: '일반쓰레기', binClass: 'bin-general', note: '국물 오염으로 재활용 불가' },
   { name: '양면 코팅 종이컵', bin: '일반쓰레기', binClass: 'bin-general', note: '코팅으로 재활용 불가' },
   { name: '코팅된 종이', bin: '일반쓰레기', binClass: 'bin-general', note: '명함, 전단지, 포스터' },
@@ -31,7 +31,7 @@ const quickRefData = [
   { name: '알루미늄 호일', bin: '일반쓰레기', binClass: 'bin-general', note: '오염 시 일반쓰레기' },
   { name: '투명 페트병', bin: '투명페트병 전용', binClass: 'bin-pet', note: '라벨 제거, 압착 필수' },
   { name: '유색 페트병', bin: '플라스틱류', binClass: 'bin-plastic', note: '무색 투명 PET병이 아닌 모든 유색' },
-  { name: '재활용 표시 없는 비닐', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗하면 배출 가능' },
+  { name: '재활용 표시 없는 비닐', bin: '비닐류', binClass: 'bin-plastic', note: '표시 없어도 비닐류로 배출 가능' },
   { name: 'PVC 제품', bin: '일반쓰레기', binClass: 'bin-general', note: '장판, PVC 파이프 등' },
   { name: 'PS 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗하면 배출, 오염 시 일반쓰레기' },
   { name: 'PP 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '도시락 용기, 식품 용기 등' },
@@ -43,9 +43,9 @@ const quickRefData = [
   { name: '비닐 식탁보', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
   { name: '의료폐기물', bin: '의료폐기물 전용', binClass: 'bin-general', note: '병원·의원에서 전문 처리' },
   { name: '폐의약품', bin: '폐의약품 전용', binClass: 'bin-general', note: '약국·보건소 수거함' },
-  { name: '폐건전지', bin: '건전지 전용', binClass: 'bin-battery', note: '소형: 종량제봉투, 대형: 전용수거함' },
-  { name: '형광등', bin: '형광등 전용', binClass: 'bin-general', note: '破损 시 유해, 전용 용기에 배출' },
-  { name: 'LED 전구', bin: '일반쓰레기', binClass: 'bin-general', note: '형광등와 달리 일반쓰레기' },
+  { name: '폐건전지', bin: '전지류 전용', binClass: 'bin-battery', note: '모든 건전지 전지류 수거함(종량제 금지)' },
+  { name: '형광등', bin: '형광등 전용', binClass: 'bin-general', note: '파손 시 유해, 전용 용기에 배출' },
+  { name: 'LED 전구', bin: '형광등 전용', binClass: 'bin-general', note: '전구형·직관형은 형광등함(평판·일체형은 종량제)' },
   { name: '폐의류', bin: '의류 수거함', binClass: 'bin-textile', note: '재사용 가능 의류는 수거함' },
   { name: '폐타이어', bin: '대형폐기물', binClass: 'bin-large', note: '폐타이어 전문 수거 업체' },
   { name: '폐유', bin: '폐유 전용', binClass: 'bin-oil', note: '식용유는 음식물, 기계유는 전용' },
@@ -54,8 +54,8 @@ const quickRefData = [
   { name: '스티로폼', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗한 것은 플라스틱류로 배출' },
   { name: '유리병', bin: '유리류', binClass: 'bin-glass', note: '용도별 분리 (음료, 양념, 화장품)' },
   { name: '캔', bin: '금속류', binClass: 'bin-metal', note: '내용물 비우고 압착' },
-  { name: '알루미늄 캔', bin: '금속류', binClass: 'bin-metal', note: ' Steel 캔과 분리' },
-  { name: '鐵 캔', bin: '금속류', binClass: 'bin-metal', note: '알루미늄 캔과 분리' },
+  { name: '알루미늄 캔', bin: '금속류', binClass: 'bin-metal', note: '철 캔과 분리' },
+  { name: '철 캔', bin: '금속류', binClass: 'bin-metal', note: '알루미늄 캔과 분리' },
   { name: '스테인리스', bin: '금속류', binClass: 'bin-metal', note: '일반 금속류와 함께 배출' },
   { name: '냉장고', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
   { name: '세탁기', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
@@ -571,12 +571,13 @@ function openItemDetailModal(name) {
         </ul>
       </div>
     `;
-  } else if (item.name.includes('OTHER') || item.name.includes('플라스틱 OTHER')) {
+  } else if (item.name.includes('OTHER') || item.name.includes('플라스틱 OTHER') || item.name.includes('햇반') || item.name.includes('즉석밥')) {
     detailedContentHTML = `
       <div class="item-detail-section warning">
-        <h4>⚠️ 7번 OTHER 플라스틱 배출 가이드</h4>
-        <p>용기나 포장재 바닥에 <strong>'7'</strong> 또는 <strong>'OTHER'</strong>로 표기된 플라스틱은 두 가지 이상의 재질이 섞인 복합 플라스틱입니다.</p>
-        <p>재활용 선별장에서 재질별 기계 선별이 불가능하므로 <strong>종량제봉투(일반쓰레기)</strong>에 배출하는 것이 올바른 방법입니다.</p>
+        <h4>⚠️ OTHER 플라스틱 배출 가이드</h4>
+        <p>용기나 포장재 바닥에 <strong>'7'</strong> 또는 <strong>'OTHER'</strong>로 표기된 플라스틱은 두 가지 이상의 재질이 섞인 복합 플라스틱입니다. <strong>숫자 없이 'OTHER' 글자만</strong> 찍혀 있는 경우도 많은데(예: 햇반·즉석밥 용기), 동일하게 복합재질입니다.</p>
+        <p>재활용 선별장에서 재질별 기계 선별이 불가능하므로, <strong>지자체 전용 회수처가 없다면 종량제봉투(일반쓰레기)</strong>에 배출하는 것이 올바른 방법입니다. '그냥 플라스틱으로 배출'하면 선별장에서 다시 일반쓰레기로 버려집니다.</p>
+        <p><strong>햇반·즉석밥 용기</strong>: PP·필름 복합(OTHER)이라 지자체 분리배출로는 종량제봉투가 원칙입니다. 다만 제조사(CJ제일제당) 자체 회수 캠페인에 모아 보내는 방법도 있습니다.</p>
       </div>
     `;
   } else if (item.name.includes('투명') || item.name.includes('페트')) {
@@ -593,9 +594,9 @@ function openItemDetailModal(name) {
   } else if (item.name.includes('종이팩') || item.name.includes('우유팩')) {
     detailedContentHTML = `
       <div class="item-detail-section tip">
-        <h4>🥛 종이팩(우유팩·두유팩) 배출 가이드</h4>
-        <p>종이팩은 고급 고급 펄프로 제작되어 일반 폐지와 섞이면 재활용되지 못하고 버려집니다.</p>
-        <p>내용물을 비우고 씻은 후 펼쳐서 건조시킨 뒤 <strong>종이팩 전용 수거함</strong> 또는 주민센터 교환 사업(휴지/종량제봉투 교환)에 배출하세요.</p>
+        <h4>🥛 종이팩(일반팩·멸균팩) 배출 가이드</h4>
+        <p>종이팩은 고급 펄프로 제작되어 일반 폐지와 섞이면 재활용되지 못하고 버려집니다. 내용물을 비우고 씻은 후 펼쳐서 건조시킨 뒤 <strong>종이팩 전용 수거함</strong> 또는 주민센터 교환 사업(휴지/종량제봉투 교환)에 배출하세요.</p>
+        <p><strong>일반팩과 멸균팩은 재질이 달라 구분 배출</strong>합니다. 내부가 <strong>흰 종이면 일반팩</strong>(냉장 우유·주스 등), 내부에 <strong>은박(알루미늄)이 있으면 멸균팩</strong>(상온 두유·주스·소주 등)입니다. 전용 수거함이 일반팩·멸균팩 칸으로 나뉘어 있으면 각각 맞는 칸에 넣고, 전용함이 없으면 일반 종이류와 구분되게 따로 묶어 배출하세요.</p>
       </div>
     `;
   } else {
@@ -1057,16 +1058,16 @@ const recycleMarks = [
     tip: '반찬통, 요구르트병, 빨대, 밀폐용기. 내용물 비우고 헹궈 플라스틱류로.' },
   { code: 'PS', num: '⑥', label: '폴리스티렌 · PS', bin: '깨끗하면 플라스틱류 / 오염 시 종량제', binClass: 'type-plastic',
     tip: '요구르트병, 일회용 숟가락·컵. 깨끗하면 플라스틱류, 음식물 오염 시 종량제.' },
-  { code: 'OTHER', num: '⑦', label: '복합재질 · OTHER', bin: '대부분 종량제(일반쓰레기)', binClass: 'type-general', warn: true,
-    tip: '두 가지 이상 재질이 섞인 플라스틱. 재질 분리·선별이 안 되므로 종량제봉투로.' },
-  { code: '비닐류', num: '', label: '비닐류(필름)', bin: '비닐류(깨끗할 때)', binClass: 'type-plastic',
-    tip: '라면·과자 봉지, 비닐봉투, 에어캡, 세탁소 비닐. 마크가 없어도 이물질 없이 깨끗하면 비닐류로 배출.' },
-  { code: '비닐류 OTHER', num: '', label: '비닐류 OTHER(복합필름)', bin: '깨끗하면 비닐류 / 오염 시 종량제', binClass: 'type-general', warn: true,
-    tip: '여러 겹 재질을 붙인 파우치·포장 필름. 깨끗하면 비닐류로 배출하되, 이물질 제거가 어려우면 종량제.' },
+  { code: 'OTHER', num: '⑦', label: '복합재질 · OTHER', bin: '전용 수거처 없으면 종량제(일반쓰레기)', binClass: 'type-general', warn: true,
+    tip: '두 가지 이상 재질이 섞인 플라스틱. 숫자(7) 없이 OTHER 글자만 찍혀 있어도 동일하다. 재질 분리·선별이 안 되므로, 별도 전용 회수처가 없으면 종량제봉투로 버린다. 예: 햇반·즉석밥 용기, 배달용 검은 용기.' },
+  { code: '비닐류', num: '', label: '비닐류(필름)', bin: '비닐류(플라스틱과 별도)', binClass: 'type-plastic',
+    tip: '라면·과자 봉지, 비닐봉투, 에어캡, 세탁소 비닐. 마크가 없어도 배출 가능하고, 2026년 서울시 개편으로 물·기름이 묻어도 비닐류로 배출(고형물만 헹굼). 플라스틱류와 섞지 않기.' },
+  { code: '비닐류 OTHER', num: '', label: '비닐류 OTHER(복합필름)', bin: '비닐류(심한 오염만 종량제)', binClass: 'type-plastic',
+    tip: '여러 겹 재질을 붙인 파우치·포장 필름(라면봉지 등). 물·기름이 묻어도 비닐류로 배출하고, 고형물만 헹궈서 배출. 심하게 오염된 것만 종량제.' },
   { code: '종이', num: '', label: '종이', bin: '종이류', binClass: 'type-paper',
     tip: '신문, 책, 상자. 테이프·스프링·비닐코팅을 제거하고 펴서 배출. 코팅된 종이(영수증·전단)는 종량제.' },
-  { code: '종이팩', num: '', label: '종이팩(일반팩·멸균팩)', bin: '종이팩 전용(없으면 종이류)', binClass: 'type-paper',
-    tip: '우유팩·두유팩·주스팩. 내용물 비우고 헹궈 펼쳐 말린 뒤 종이팩 전용 수거함으로. 일반 종이와 섞지 않기.' },
+  { code: '종이팩', num: '', label: '종이팩(일반팩·멸균팩)', bin: '종이팩 전용함(일반·멸균 구분)', binClass: 'type-paper',
+    tip: '내부가 흰 종이면 일반팩(냉장 우유·주스), 은박(알루미늄)이면 멸균팩(상온 두유·주스·소주). 재질이 달라 종이팩 전용수거함에서도 일반팩·멸균팩을 서로 구분해 넣는다. 내용물 비우고 헹궈 펼쳐 말린 뒤 배출하고, 일반 종이류와 절대 섞지 않는다. 전용함이 없으면 종이류와 구분되게 따로 묶어 배출.' },
   { code: '철', num: '', label: '철(철캔)', bin: '캔류(금속)', binClass: 'type-metal',
     tip: '통조림·부탄가스 캔. 내용물 비우고 압착해 캔류로. 부탄가스는 구멍 뚫어 가스 완전 제거.' },
   { code: '알미늄', num: '', label: '알미늄(알루미늄캔)', bin: '캔류(금속)', binClass: 'type-metal',

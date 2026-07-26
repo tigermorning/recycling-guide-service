@@ -23,4 +23,4 @@
 
 ## 5. 남겨둔 것 (범위 밖)
 
-- [ ] 5.1 `feature/computer-world-v2`, `feature/computer-world-analysis`, `improve-computer-structure` 브랜치 정리(삭제 여부는 별도 확인 필요)
+- [x] 5.1 `feature/computer-world-v2`, `feature/computer-world-analysis`, `improve-computer-structure` 브랜치 정리 (2026-07-26: 3개 모두 master에 병합 확인 후 `git branch -d`로 로컬 삭제. `feature/video-carousel`은 범위 밖이라 유지 — 이 역시 병합됨)
