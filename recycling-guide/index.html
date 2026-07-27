@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>서울시 분리수거 가이드</title>
-  <link rel="stylesheet" href="styles.css?v=20260726b">
+  <link rel="stylesheet" href="styles.css?v=20260726d">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -236,32 +236,35 @@
   </div>
 
   <!-- 빠른 참조 플로팅 버튼 -->
-  <button id="quickRefFab" class="quick-ref-fab" title="빠른 참조로 이동">
-    <span class="fab-icon">📋</span>
-    <span class="fab-text">빠른 참조</span>
+  <button id="quickRefFab" class="quick-ref-fab" title="자주 헷갈리는 분리배출을 한눈에 — 눌러서 바로 찾기">
+    <span class="fab-icon">🗑️</span>
+    <span class="fab-text">이건 어디에 버려요?</span>
   </button>
 
   <!-- 빠른 참조 팝업 -->
   <div id="quickRefPopup" class="quick-ref-popup hidden">
     <div class="quick-ref-popup-header">
-      <h3>헷갈리는 품목 빠른 참조</h3>
+      <h3>이건 어디에 버려요? · 빠른 찾기</h3>
       <button id="closeQuickRefPopup" class="quick-ref-popup-close">&times;</button>
     </div>
     <div class="quick-ref-popup-body">
-      <input type="text" id="popupRefSearch" placeholder="품목 검색...">
+      <p class="quick-ref-popup-hint">자주 헷갈리는 품목을 자주 찾는 순서로 모았습니다. 품목을 누르면 상세 배출법이 열려요.</p>
+      <input type="text" id="popupRefSearch" placeholder="예: 햇반, 영수증, 아이스팩...">
       <select id="popupRefCategory">
         <option value="all">전체</option>
-        <option value="일반쓰레기">일반쓰레기</option>
+        <option value="일반쓰레기">일반쓰레기(종량제)</option>
         <option value="플라스틱류">플라스틱류</option>
+        <option value="비닐류">비닐류</option>
         <option value="투명페트병">투명페트병</option>
-        <option value="종이류">종이류</option>
-        <option value="유리류">유리류</option>
-        <option value="금속류">금속류</option>
+        <option value="종이">종이류·종이팩</option>
+        <option value="유리">유리류</option>
+        <option value="금속">금속류</option>
+        <option value="대형폐기물">대형폐기물</option>
       </select>
       <div id="popupRefContent"></div>
     </div>
   </div>
 
-  <script src="app.js?v=20260726b"></script>
+  <script src="app.js?v=20260726d"></script>
 </body>
 </html>

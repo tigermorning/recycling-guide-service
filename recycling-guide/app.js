@@ -18,55 +18,79 @@ const CLASS_PER_PAGE = 4;
 let currentClassPage = 1;
 let allClasses = [];
 
-// 빠른 참조 데이터
+// 빠른 참조 데이터 (상단일수록 자주 검색·혼동되는 품목 — 인기순 배치)
 const quickRefData = [
+  // ▼ 가장 자주 찾고 헷갈리는 품목
+  { name: '햇반 용기', bin: '일반쓰레기', binClass: 'bin-general', note: 'OTHER 복합재질 — 전용 회수처 없으면 종량제' },
+  { name: '컵라면 용기', bin: '일반쓰레기', binClass: 'bin-general', note: 'PSP·국물 오염으로 종량제' },
+  { name: '아이스팩', bin: '일반쓰레기', binClass: 'bin-general', note: '젤은 통째로 종량제(하수구 금지), 물은 비우고 포장은 비닐류' },
+  { name: '영수증', bin: '일반쓰레기', binClass: 'bin-general', note: '감열지라 재활용 불가 — 종량제' },
+  { name: '종이컵', bin: '종이류', binClass: 'bin-paper', note: 'PE코팅 — 헹궈서 종이류(오염 시 종량제)' },
+  { name: '페트병 라벨', bin: '비닐류', binClass: 'bin-plastic', note: '떼어서 비닐류로 배출' },
+  { name: '페트병 뚜껑', bin: '투명페트병', binClass: 'bin-pet', note: '닫아서 페트병과 함께 배출(자동 분리됨)' },
+  { name: '플라스틱 빨대', bin: '일반쓰레기', binClass: 'bin-general', note: '작은 플라스틱 — 선별 불가, 종량제' },
+  { name: '비닐장갑', bin: '비닐류', binClass: 'bin-plastic', note: '재활용 가능(비닐류) — 고무장갑과 반대' },
+  { name: '고무장갑', bin: '일반쓰레기', binClass: 'bin-general', note: '합성고무 — 종량제' },
+  { name: '물티슈', bin: '일반쓰레기', binClass: 'bin-general', note: '합성섬유 — 종량제(변기에 버리지 말 것)' },
+  { name: '치약 용기', bin: '일반쓰레기', binClass: 'bin-general', note: '헹굴 수 없는 구조 — 종량제' },
+  { name: '칫솔', bin: '일반쓰레기', binClass: 'bin-general', note: '혼합재질 — 종량제' },
+  { name: '화장품 용기', bin: '플라스틱류', binClass: 'bin-plastic', note: '액체는 건조 후 종량제, 빈 용기는 헹궈 배출' },
+  { name: '펌프', bin: '일반쓰레기', binClass: 'bin-general', note: '스프링 마개는 종량제, 본체만 플라스틱류' },
   { name: '검은색 플라스틱', bin: '일반쓰레기', binClass: 'bin-general', note: '선별 효율 낮음(자치구 확인)' },
-  { name: '컵라면 용기', bin: '일반쓰레기', binClass: 'bin-general', note: '국물 오염으로 재활용 불가' },
+  { name: '배달 용기', bin: '플라스틱류', binClass: 'bin-plastic', note: '기름때 남으면 종량제, 깨끗하면 플라스틱류' },
+  { name: '거울', bin: '일반쓰레기', binClass: 'bin-general', note: '코팅유리라 재활용 불가(불연성 마대/자치구 확인)' },
   { name: '양면 코팅 종이컵', bin: '일반쓰레기', binClass: 'bin-general', note: '코팅으로 재활용 불가' },
   { name: '코팅된 종이', bin: '일반쓰레기', binClass: 'bin-general', note: '명함, 전단지, 포스터' },
-  { name: '영수증(감열지)', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
-  { name: '고무장갑', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
   { name: '충전선', bin: '일반쓰레기', binClass: 'bin-general', note: '혼합 소재로 재활용 불가' },
-  { name: '거울', bin: '일반쓰레기', binClass: 'bin-general', note: '유리가 아니므로 일반쓰레기' },
   { name: '화장지', bin: '일반쓰레기', binClass: 'bin-general', note: '오염된 종이로 재활용 불가' },
-  { name: '티백', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
+  { name: '티백', bin: '일반쓰레기', binClass: 'bin-general', note: '음식물 아님 — 종량제' },
   { name: '봉제인형', bin: '일반쓰레기', binClass: 'bin-general', note: '소형: 특수규격봉투' },
-  { name: '알루미늄 호일', bin: '일반쓰레기', binClass: 'bin-general', note: '오염 시 일반쓰레기' },
-  { name: '투명 페트병', bin: '투명페트병 전용', binClass: 'bin-pet', note: '라벨 제거, 압착 필수' },
-  { name: '유색 페트병', bin: '플라스틱류', binClass: 'bin-plastic', note: '무색 투명 PET병이 아닌 모든 유색' },
-  { name: '재활용 표시 없는 비닐', bin: '비닐류', binClass: 'bin-plastic', note: '표시 없어도 비닐류로 배출 가능' },
-  { name: 'PVC 제품', bin: '일반쓰레기', binClass: 'bin-general', note: '장판, PVC 파이프 등' },
+  { name: '알루미늄 호일', bin: '일반쓰레기', binClass: 'bin-general', note: '깨끗해도 캔류 아님 — 종량제' },
+  { name: '유리컵', bin: '특수규격마대', binClass: 'bin-general', note: '유리병 아님 — 불연성 마대/종량제(소량)' },
+  { name: '계란 껍질', bin: '일반쓰레기', binClass: 'bin-general', note: '음식물 아님 — 종량제' },
+  { name: '커피 찌꺼기', bin: '일반쓰레기', binClass: 'bin-general', note: '음식물 아님 — 종량제(물기 제거)' },
+  { name: '음식물쓰레기 구분', bin: '구분 안내', binClass: 'bin-general', note: '뼈·껍데기·씨·찌꺼기는 종량제, 과육·연한 껍질은 음식물' },
+  { name: '텀블러', bin: '금속류', binClass: 'bin-metal', note: '분리되면 금속+플라스틱, 안되면 종량제' },
+  { name: '프라이팬', bin: '금속류', binClass: 'bin-metal', note: '본체는 고철, 큰 것은 대형폐기물' },
+  { name: '기저귀', bin: '일반쓰레기', binClass: 'bin-general', note: '위생용품 — 종량제' },
+  { name: '담배꽁초', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용품에 넣지 말 것 — 종량제' },
+  // ▼ 페트·플라스틱·비닐
+  { name: '투명 페트병', bin: '투명페트병', binClass: 'bin-pet', note: '라벨 제거·압착·뚜껑 닫아 배출' },
+  { name: '유색 페트병', bin: '플라스틱류', binClass: 'bin-plastic', note: '무색 아닌 유색 PET는 플라스틱류' },
+  { name: '재활용 표시 없는 비닐', bin: '비닐류', binClass: 'bin-plastic', note: '표시 없어도 깨끗한 비닐류는 배출 가능' },
+  { name: '비닐', bin: '비닐류', binClass: 'bin-plastic', note: '플라스틱류와 별도로 모아 배출(섞지 말 것)' },
+  { name: 'PVC 제품', bin: '일반쓰레기', binClass: 'bin-general', note: '장판, PVC 파이프 등 — 종량제' },
   { name: 'PS 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗하면 배출, 오염 시 일반쓰레기' },
-  { name: 'PP 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '도시락 용기, 식품 용기 등' },
-  { name: 'HDPE 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '샴푸 용기, 세제 용기 등' },
-  { name: 'LDPE 제품', bin: '플라스틱류', binClass: 'bin-plastic', note: '비닐봉지, 랩 등' },
-  { name: 'OTHER 플라스틱', bin: '일반쓰레기', binClass: 'bin-general', note: '복합재질(7번), 종량제' },
-  { name: '비닐 vs 플라스틱', bin: '둘 다 플라스틱류', binClass: 'bin-plastic', note: '비닐은 부드럽고 투명, 플라스틱은 단단함' },
-  { name: '랩 필름', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
-  { name: '비닐 식탁보', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가' },
-  { name: '의료폐기물', bin: '의료폐기물 전용', binClass: 'bin-general', note: '병원·의원에서 전문 처리' },
-  { name: '폐의약품', bin: '폐의약품 전용', binClass: 'bin-general', note: '약국·보건소 수거함' },
-  { name: '폐건전지', bin: '전지류 전용', binClass: 'bin-battery', note: '모든 건전지 전지류 수거함(종량제 금지)' },
-  { name: '형광등', bin: '형광등 전용', binClass: 'bin-general', note: '파손 시 유해, 전용 용기에 배출' },
-  { name: 'LED 전구', bin: '형광등 전용', binClass: 'bin-general', note: '전구형·직관형은 형광등함(평판·일체형은 종량제)' },
-  { name: '폐의류', bin: '의류 수거함', binClass: 'bin-textile', note: '재사용 가능 의류는 수거함' },
-  { name: '폐타이어', bin: '대형폐기물', binClass: 'bin-large', note: '폐타이어 전문 수거 업체' },
-  { name: '폐유', bin: '폐유 전용', binClass: 'bin-oil', note: '식용유는 음식물, 기계유는 전용' },
-  { name: '골판지', bin: '종이류', binClass: 'bin-paper', note: '테이프 제거 후 묶어서 배출' },
-  { name: '종이팩', bin: '종이팩 전용', binClass: 'bin-paper', note: '우유팩, 두유팩 등 전용수거함' },
-  { name: '스티로폼', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗한 것은 플라스틱류로 배출' },
-  { name: '유리병', bin: '유리류', binClass: 'bin-glass', note: '용도별 분리 (음료, 양념, 화장품)' },
+  { name: 'PP', bin: '플라스틱류', binClass: 'bin-plastic', note: '도시락 용기, 식품 용기 등' },
+  { name: 'HDPE', bin: '플라스틱류', binClass: 'bin-plastic', note: '샴푸 용기, 세제 용기 등' },
+  { name: 'LDPE', bin: '플라스틱류', binClass: 'bin-plastic', note: '비닐봉지, 지퍼백 등' },
+  { name: '플라스틱 OTHER', bin: '일반쓰레기', binClass: 'bin-general', note: '복합재질(7번/OTHER) — 종량제' },
+  { name: '랩 필름', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가 — 종량제' },
+  { name: '비닐 식탁보', bin: '일반쓰레기', binClass: 'bin-general', note: '재활용 불가 — 종량제' },
+  { name: '스티로폼', bin: '플라스틱류', binClass: 'bin-plastic', note: '깨끗한 흰색만 배출, 오염·색상은 종량제' },
+  // ▼ 종이·유리·금속
+  { name: '골판지', bin: '종이류', binClass: 'bin-paper', note: '테이프 제거 후 접어서 배출' },
+  { name: '종이팩', bin: '종이팩', binClass: 'bin-paper', note: '일반팩·멸균팩 구분, 전용수거함' },
+  { name: '유리병', bin: '유리류', binClass: 'bin-glass', note: '색상별 분리, 빈용기보증금 반납' },
+  { name: '깨진 유리', bin: '일반쓰레기', binClass: 'bin-general', note: '신문지에 싸서 종량제(다량은 특수규격마대)' },
   { name: '캔', bin: '금속류', binClass: 'bin-metal', note: '내용물 비우고 압착' },
   { name: '알루미늄 캔', bin: '금속류', binClass: 'bin-metal', note: '철 캔과 분리' },
   { name: '철 캔', bin: '금속류', binClass: 'bin-metal', note: '알루미늄 캔과 분리' },
-  { name: '스테인리스', bin: '금속류', binClass: 'bin-metal', note: '일반 금속류와 함께 배출' },
+  // ▼ 유해·특수
+  { name: '폐건전지', bin: '전지류 전용', binClass: 'bin-battery', note: '모든 건전지 전지류 수거함(종량제 금지)' },
+  { name: '형광등', bin: '형광등 전용', binClass: 'bin-general', note: '파손 시 유해, 전용 용기에 배출' },
+  { name: 'LED 조명', bin: '형광등 전용', binClass: 'bin-general', note: '전구형·직관형만 형광등함(그 외 종량제)' },
+  { name: '의료폐기물', bin: '의료폐기물 전용', binClass: 'bin-general', note: '병원·의원에서 전문 처리' },
+  { name: '폐의약품', bin: '폐의약품 전용', binClass: 'bin-general', note: '약국·보건소·주민센터·우체통 수거' },
+  { name: '폐유', bin: '폐유 전용', binClass: 'bin-oil', note: '하수구·종량제 금지, 전용수거함' },
+  { name: '의류', bin: '의류 수거함', binClass: 'bin-textile', note: '재사용 가능 의류는 수거함' },
+  { name: '폐타이어', bin: '대형폐기물', binClass: 'bin-large', note: '폐타이어 전문 수거 업체' },
+  // ▼ 대형폐기물
   { name: '냉장고', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
   { name: '세탁기', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
   { name: '에어컨', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
   { name: 'TV', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
-  { name: '모니터', bin: '대형폐기물', binClass: 'bin-large', note: '무료 수거 또는 폐가전 수거' },
-  { name: '가구', bin: '대형폐기물', binClass: 'bin-large', note: '폐소형가전 수거함 또는 대형폐기물' },
-  { name: '매트리스', bin: '대형폐기물', binClass: 'bin-large', note: '대형폐기물 배출' },
+  { name: '컴퓨터', bin: '대형폐기물', binClass: 'bin-large', note: '데스크톱·노트북 — 대형폐기물/역회수' },
 ];
 
 const confusingItems = [
@@ -74,7 +98,10 @@ const confusingItems = [
   '감열지', '고무장갑', '충전선', '거울', '알루미늄 호일',
   '화장지', '랩 필름', '티백', '의료폐기물', '폐의약품',
   'PVC 제품', 'PS 제품', '재활용 표시 없는 플라스틱', '재활용 표시 없는 비닐',
-  '비닐 vs 플라스틱 구분', '재활용 표시 없는 비닐류'
+  '비닐 vs 플라스틱 구분',
+  '햇반 용기', '아이스팩', '종이컵', '플라스틱 빨대', '비닐장갑',
+  '물티슈', '화장품 용기', '펌프', '치약 용기', '칫솔', '배달 용기',
+  '사기', '종이팩', '깨진 유리', 'LED 조명'
 ];
 
 // ============================================
@@ -976,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const category = popupRefCategory.value;
     const items = quickRefData.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.note.toLowerCase().includes(searchTerm);
-      const matchesCategory = category === 'all' || item.bin === category;
+      const matchesCategory = category === 'all' || item.bin.includes(category);
       return matchesSearch && matchesCategory;
     });
 
